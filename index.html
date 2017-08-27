@@ -39,7 +39,7 @@
     <dialog class="mdl-dialog">
       <h5 class="mdl-dialog__title">Frube?</h5>
       <div class="mdl-dialog__content">
-        <p>Only meddling for now.</p>
+        <p>They may take away the content, your taste, you can keep!</p>
       </div>
       <div class="mdl-dialog__actions">
         <form name="frube-close-dialog">
@@ -54,11 +54,24 @@
             <form name="frube-homerun">
               <button type="submit" class="mdl-layout-title mdl-button mdl-js-button mdl-js-ripple-effect">Frube</button>
             </form>
+            
+            <button id="demo-menu-lower-left" class="mdl-button mdl-js-button mdl-button--icon">
+              <i class="material-icons">more_vert</i>
+            </button>
+            <ul class="mdl-menu mdl-menu--bottom-left mdl-js-menu mdl-js-ripple-effect" for="demo-menu-lower-left">
+              <li class="mdl-menu__item mdl-menu__item--full-bleed-divider" name="frube-connector-dropbox">
+                <span class="mdl-list__item-primary-content"><i class="material-icons mdl-list__item-icon">do_not_disturb</i>Dropbox</span>
+              </li>
+              <li class="mdl-menu__item" name="frube-open-dialog">About</li>
+            </ul>
+            
+            <!--
             <nav class="mdl-navigation mdl-layout--large-screen-only">
               <form name="frube-open-dialog">
                 <button type="submit" class="mdl-button">About</button>
               </form>
             </nav>
+            -->
             <div class="mdl-layout-spacer"></div>
             <nav class="mdl-navigation">
               <form name="frube-search-source">
@@ -138,3 +151,4 @@
       </div>
   </body>
 </html>
+

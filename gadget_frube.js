@@ -3,6 +3,7 @@
 (function (window, rJS, RSVP, Autolinker, YT, JSON, jIO, loopEventListener) {
   "use strict";
 
+  // https://github.com/boramalper/Essential-YouTube
   // https://developers.google.com/youtube/iframe_api_reference
   // https://developers.google.com/youtube/player_parameters?playerVersion=HTML5
   // https://getmdl.io/components/index.html
@@ -354,7 +355,7 @@
             dislikes,
             tab_title,
             slider;
-
+          console.log(response)
           video_title.textContent = item.snippet.title;
           video_desc.innerHTML = gadget.property_dict.autolinker.link(
             response.items[0].snippet.description.split("\n").join("<br>")
@@ -615,9 +616,6 @@
         case "frube-homerun":
           element.getElementsByTagName("main")[0].scrollTop = 0;
           break;
-        case "frube-open-dialog":
-          showDialog(element, "frube");
-          break;
         case "frube-close-dialog":
           hideDialog(element, "frube");
           break;
@@ -671,6 +669,9 @@
         action = event.target.getAttribute("data-action");
 
       switch (event.target.getAttribute("name")) {
+        case "frube-open-dialog":
+          showDialog(gadget.element, "frube");
+          break;
         case "frube-search-input":
           if (event.target.value.length) {
             promise_list.push(gadget.enterSearch());
@@ -784,3 +785,4 @@
     });
 
 }(window, rJS, RSVP, Autolinker, YT, JSON, jIO, loopEventListener));
+
