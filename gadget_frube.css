@@ -1,0 +1,204 @@
+.hidden {
+  height: 0px;
+  visibility: hidden;
+}
+
+.page-content {
+  margin-top: 16px;
+}
+
+@media (min-width: 1024px) {
+  .page-content {
+    margin-left: 17%;
+    margin-right: 17%;
+  }
+}
+
+@media (max-width: 1023px) {
+  .page-content {
+    margin-left: 16px;
+    margin-right: 16px;
+  } 
+}
+
+.mdl-card {
+  width: 100%;
+}
+
+#main-grid {
+  padding-left: 0px;
+  padding-right: 0px;
+  margin-left: -8px;
+  margin-right: -8px;
+}
+
+#repeat-card {
+  min-height: 58.5px;
+  height: 58.5px;
+}
+
+#repeat-container {
+  display: flex;
+  justify-content: space-between;
+}
+
+#repeat-container label {
+  width: auto;
+}
+
+#repeat-container span {
+    vertical-align: top;
+}
+
+#video-statistics {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+#view-count {
+  vertical-align: super;
+  font-size: large;
+}
+
+#like-dislike {
+  width: 30%;
+}
+
+#video-desc {
+  padding-top: 8px;
+}
+
+#video-desc a {
+  color: rgba(0, 0, 0, .54);
+}
+
+.mdl-slider__container {
+  width: 100%;
+}
+
+/* ==== modified ==== */
+/* ---- site header ---- */
+.mdl-layout__header .mdl-navigation {
+  padding-top: 3px;
+}
+.mdl-layout__header .mdl-navigation .mdl-button {
+  color: white;
+  font-weight: normal;
+  text-transform: none;
+}
+.mdl-layout-title {
+  color: white;
+  text-decoration: none;
+}
+
+/* ---- search results ---- */
+#search-results {
+  margin-top: -16px;
+  padding-top: 0px;
+}
+
+#search-results li h3 {
+  cursor: pointer;
+  color: black;
+  text-decoration: none;
+}
+
+#search-results .mdl-card__title {
+  white-space: nowrap;
+  max-width: calc(100% - 8px - 1 * 32px - 16px);
+}
+
+#search-results img {
+  padding: 0;
+  margin: 0;
+  border: 0 none;
+  pointer-events: none;
+  cursor: pointer; 
+  width: 180px;
+  height: 135px;
+}
+
+#search-results .mdl-card__supporting-text, .entry-details .mdl-card__supporting-text {
+  padding-top: 0;
+  text-align: justify;
+}
+
+.entry-detais .mdl-card__supporting-text a {
+  color: rgba(0, 0, 0, .54);
+}
+
+.entry-details {
+  display: flex;
+  justify-content: space-between;
+}
+.entry-details-button {
+  padding: 0;
+  border: 0 none;
+  margin-left: 16px;
+  margin-bottom: 16px;
+}
+.entry-icon-spacing {
+  display: inherit;
+  top: 0;
+  padding-top: 8px;
+}
+
+/* ---- queue list ---- */
+#queue {
+  margin-left: -16px;
+  margin-right: -16px;
+}
+#queue li h3 {
+  cursor: pointer;
+}
+#queue .mdl-list__item:first-child h3 a {
+  color: black;
+  text-decoration: none;
+}
+
+#queue .mdl-list__item:first-child img {
+  padding: 0;
+  margin: 0;
+  border: 0 none;
+  cursor: pointer;
+  pointer-events: none; 
+  width: 90px;
+  height: 67.5px;
+}
+
+#queue .mdl-list__item:first-child .mdl-card {
+  min-height: 150.5px;
+  height: 150.5px;
+}
+
+#queue .mdl-list__item:not(:first-child) .mdl-card {
+  min-height: 50px;
+  height: 50px;
+}
+
+#queue .mdl-list__item:not(:first-child) .mdl-card__supporting-text {
+  max-width: calc(100% - 8px - 3 * 32px - 16px - 8px);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+#queue .mdl-list__item:not(:first-child) {
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
+label.mdl-textfield__label {
+  color: white;
+}
+
+/* controller */
+#controller-buttons {
+  display: flex;
+  justify-content: space-between;
+}
+#controller-buttons form {
+  display: inline;
+}
+
+
