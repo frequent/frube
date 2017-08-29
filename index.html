@@ -27,7 +27,6 @@
 
     <script src="autolinker.js"></script>
     <script src="rsvp.latest.js"></script>
-    <script src="jio.latest.js"></script>
     <script src="renderjs.latest.js"></script>
     <script src="gadget_global.js"></script>
     <script src="gadget_frube.js"></script>
@@ -59,8 +58,8 @@
               <i class="material-icons">more_vert</i>
             </button>
             <ul class="mdl-menu mdl-menu--bottom-left mdl-js-menu mdl-js-ripple-effect" for="demo-menu-lower-left">
-              <li class="mdl-menu__item mdl-menu__item--full-bleed-divider" name="frube-connector-dropbox">
-                <span class="mdl-list__item-primary-content"><i class="material-icons mdl-list__item-icon">do_not_disturb</i>Dropbox</span>
+              <li class="mdl-menu__item mdl-menu__item--full-bleed-divider">
+                <span class="mdl-list__item-primary-content" name="frube-connector-dropbox"><i class="material-icons mdl-list__item-icon">check_box_outline_blank</i>Dropbox</span>
               </li>
               <li class="mdl-menu__item" name="frube-open-dialog">About</li>
             </ul>
@@ -148,6 +147,11 @@
             </div>
           </div>
         </main>
+      </div>
+      
+      <div data-gadget-url="gadget_jio.html"
+       data-gadget-scope="jio_gadget"
+       data-gadget-sandbox="public">
       </div>
   </body>
 </html>
