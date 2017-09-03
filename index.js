@@ -1,13 +1,17 @@
-/*jslint indent: 2 */
+/*jslint maxlen: 80, indent: 2 */
 /*global window, rJS, RSVP */
 (function (window, rJS, RSVP) {
   "use strict";
 
-  var CONFIGURATION = {};
 
   /////////////////////////////
-  // some methods
+  // some parameters
   /////////////////////////////
+  var OPTION_DICT = {
+    "youtube_id": "AIzaSyD_ZX5na0fPbcLbO5sZ2hWD-FxR-Xd2_TM",
+    "dropbox_id": "rz2ua0dyty5lxx7",
+    "youtube_default_video": "WFxPkhLNrcc"
+  };
 
   rJS(window)
 
@@ -15,31 +19,107 @@
     // ready
     /////////////////////////////
     .ready(function () {
-      return this.getDeclaredGadget("frube")
+      var gadget = this;
+      return gadget.getDeclaredGadget("frube")
         .push(function (my_frube_gadget) {
-          return my_frube_gadget.render(CONFIGURATION);
+          return my_frube_gadget.render(OPTION_DICT);
         })
         .push(null, function (my_error) {
           console.log(my_error);
           throw my_error;
         });
-    });
+    })
 
-    /////////////////////////////
-    // acquired methods
-    /////////////////////////////
-    
     /////////////////////////////
     // published methods
     /////////////////////////////
 
-    /////////////////////////////
-    // declared methods
-    /////////////////////////////
+    // bridge to frube JIO
+    .allowPublicAcquisition('frube_create', function (my_option_dict) {
+      return this.getDeclaredGadget("frube_jio")
+        .push(function (my_gadget) {
+          return my_gadget.createJIO.apply(my_gadget, my_option_dict);
+        });
+    })
+    .declareMethod("frube_allDocs", function (my_param_list) {
+      return this.getDeclaredGadget("frube_jio")
+        .push(function (my_gadget) {
+          return my_gadget.allDocs.apply(my_gadget, my_param_list);
+        });
+    })
+    .declareMethod("frube_remove", function (my_param_list) {
+      return this.getDeclaredGadget("frube_jio")
+        .push(function (my_gadget) {
+          return my_gadget.remove.apply(my_gadget, my_param_list);
+        });
+    })
+    .declareMethod("frube_post", function (my_param_list) {
+      return this.getDeclaredGadget("frube_jio")
+        .push(function (my_gadget) {
+          return my_gadget.post.apply(my_gadget, my_param_list);
+        });
+    })
+    .declareMethod("frube_put", function (my_param_list) {
+      return this.getDeclaredGadget("frube_jio")
+        .push(function (my_gadget) {
+          return my_gadget.put.apply(my_gadget, my_param_list);
+        });
+    })
+    .declareMethod("frube_get", function (my_param_list) {
+      return this.getDeclaredGadget("frube_jio")
+        .push(function (my_gadget) {
+          return my_gadget.get.apply(my_gadget, my_param_list);
+        });
+    })
+    .declareMethod("frube_allAttachments", function (my_param_list) {
+      return this.getDeclaredGadget("frube_jio")
+        .push(function (my_gadget) {
+          return my_gadget.allAttachments.apply(my_gadget, my_param_list);
+        });
+    })
+    .declareMethod("frube_getAttachment", function (my_param_list) {
+      return this.getDeclaredGadget("frube_jio")
+        .push(function (my_gadget) {
+          return my_gadget.getAttachment.apply(my_gadget, my_param_list);
+        });
+    })
+    .declareMethod("frube_putAttachment", function (my_param_list) {
+      return this.getDeclaredGadget("frube_jio")
+        .push(function (my_gadget) {
+          return my_gadget.putAttachment.apply(my_gadget, my_param_list);
+        });
+    })
+    .declareMethod("frube_removeAttachment", function (my_param_list) {
+      return this.getDeclaredGadget("frube_jio")
+        .push(function (my_gadget) {
+          return my_gadget.removeAttachment.apply(my_gadget, my_param_list);
+        });
+    })
+    .declareMethod("frube_repair", function (my_param_list) {
+      return this.getDeclaredGadget("frube_jio")
+        .push(function (my_gadget) {
+          return my_gadget.repair.apply(my_gadget, my_param_list);
+        });
+    })
 
-    /////////////////////////////
-    // declared service
-    /////////////////////////////
+    // briget to (you)tube JIO
+    .allowPublicAcquisition('tube_create', function (my_option_dict) {
+      return this.getDeclaredGadget("tube_jio")
+        .push(function (my_gadget) {
+          return my_gadget.createJIO.apply(my_gadget, my_option_dict);
+        });
+    })
+    .allowPublicAcquisition('tube_allDocs', function (my_option_dict) {
+      return this.getDeclaredGadget("tube_jio")
+        .push(function (my_gadget) {
+          return my_gadget.allDocs.apply(my_gadget, my_option_dict);
+        });
+    })
+    .allowPublicAcquisition('tube_get', function (my_id) {
+      return this.getDeclaredGadget("tube_jio")
+        .push(function (my_gadget) {
+          return my_gadget.get.apply(my_gadget, my_id);
+        });
+    });
 
 }(window, rJS, RSVP));
-

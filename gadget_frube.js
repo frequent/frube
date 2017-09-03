@@ -1,6 +1,6 @@
 /*jslint nomen: true, indent: 2, maxerr: 3 */
-/*global window, rJS, RSVP, Autolinker, YT, JSON, loopEventListener */
-(function (window, rJS, RSVP, Autolinker, YT, JSON, loopEventListener) {
+/*global window, rJS, jIO, RSVP, Autolinker, YT, JSON, loopEventListener */
+(function (window, rJS, jIO, RSVP, Autolinker, YT, JSON, loopEventListener) {
   "use strict";
 
   // https://github.com/boramalper/Essential-YouTube
@@ -9,127 +9,84 @@
   // https://getmdl.io/components/index.html
 
   /////////////////////////////
-  // parameters
+  // some parameters
   /////////////////////////////
-  var API_KEY = "AIzaSyD_ZX5na0fPbcLbO5sZ2hWD-FxR-Xd2_TM";
-  var DEFAULT_VIDEO_ID = 'WFxPkhLNrcc';
-  var DELAY = 500;
-  var SLIDER_INTERVAL = 500;
-  var SCROLL_TRIGGER = 300;
-
-  /////////////////////////////
-  // templates
-  /////////////////////////////
-  var FIRST_ENTRY_TEMPLATE = "" +
-    '<li class="mdl-list__item">' +
-       '<div class="mdl-card mdl-shadow--2dp">' +
-         '<div class="mdl-card__title">' +
-           '<h3 class="mdl-card__title-text" data-action="next">Next</h3>' +
-         '</div>' +
-         '<div class="mdl-card__menu entry-icon-spacing">' +
-           '<form>' +
-            '<button type="submit" class="mdl-button mdl-button--icon mdl-js-button" data-action="up" data-position="{pos}" disabled>' +
-              '<i class="material-icons">arrow_upward</i>' +
-            '</button>' +
-          '</form>' +
-          '<form>' +
-             '<button type="submit" class="mdl-button mdl-button--icon mdl-js-button" data-action="down" data-position="{pos}" title="Move downwards in queue">' +
-               '<i class="material-icons">arrow_downward</i>' +
-             '</button>' +
-           '</form>' +
-           '<form>' +
-             '<button type="submit" class="mdl-button mdl-button--icon mdl-js-button" data-action="remove" data-position="{pos}" title="Remove from queue">' +
-               '<i class="material-icons">remove</i>' +
-             '</button>' +
-            '</form>' +
-         '</div>' +
-         '<div class="entry-details">' +
-           '<div>' +
-              '<form>' +
-                '<button type="submit" class="entry-details-button" data-action="next">' +
-                  '<img src="{thumbnail_url}" alt="">' +
-                '</button>' +
-              '</form>' +
-           '</div>' +
-           '<div class="mdl-card__supporting-text">' +
-             '{title}' +
-           '</div>' +
-         '</div>' +
-       '</div>' +
-     '</li>';
-
-    var CONSECUTIVE_ENTRY_TEMPLATE = "" +
-      '<li class="mdl-list__item">' +
-        '<div class="mdl-card mdl-shadow--2dp">' +
-          '<div class="mdl-card__supporting-text">' +
-            '{title}' +
-          '</div>' +
-          '<div class="mdl-card__menu entry-icon-spacing">' +
-            '<form>' +
-              '<button type="submit" class="mdl-button mdl-button--icon mdl-js-button" data-action="up" data-position="{pos}" title="Move upwards in queue">' +
-                '<i class="material-icons">arrow_upward</i>' +
-              '</button>' +
-            '</form>' +
-            '<form>' +
-              '<button type="submit" class="mdl-button mdl-button--icon mdl-js-button" data-action="down" data-position="{pos}" title="Move downwards in queue" {isDisabled}>' +
-                '<i class="material-icons">arrow_downward</i>' +
-              '</button>' +
-            '</form>' +
-            '<form>' +
-              '<button type="submit" class="mdl-button mdl-button--icon mdl-js-button" data-action="remove" data-position="{pos}" title="Remove from queue">' +
-                '<i class="material-icons">remove</i>' +
-              '</button>' +
-            '</form>' +
-          '</div>' +
-        '</div>' +
-      '</li>';
-
-  var SEARCH_RESULT_TEMPLATE = "" +
-    '<li class="mdl-list__item">' +
-      '<div class="mdl-card mdl-shadow--2dp">' +
-        '<div class="mdl-card__title">' +
-          '<h3 class="mdl-card__title-text" data-video="{video_id}">{title}</h3>' +
-        '</div>' +
-        '<div class="mdl-card__menu">' +
-            '<form>' +
-              '<button type="submit" data-video="{video_id}" class="mdl-button mdl-button--icon mdl-js-button" title="Add to queue">' +
-                '<i class="material-icons">playlist_add</i>' +
-              '</button>' +
-            '</form>' +
-        '</div>' +
-        '<div class="entry-details">' +
-          '<div>' +
-            '<form>' +
-              '<button class="entry-details-button" type="submit" data-video="{video_id}" data-action="play">' +
-                '<img src="{thumbnail_url}" alt="">' +
-              '</button>' +
-            '</form>' +
-          '</div>' +
-          '<div class="mdl-card__supporting-text">' +
-            '{description}' +
-          '</div>' +
-        '</div>' +
-      '</div>' +
-    '</li>';
+  var TEMPLATE_SELECTOR = "script[type='text/x-supplant-template']"; 
 
   /////////////////////////////
   // some methods
   /////////////////////////////
-  function assessDependenciesLoaded(dict) {
-    return YT && YT.loaded && window.MaterialProgress;
+  function buildTemplateDict(my_template_dict) {
+    var template_list = window.document.querySelectorAll(TEMPLATE_SELECTOR),
+      len = template_list.length,
+      template,
+      i;
+    for (i = 0; i < len; i += 1) {
+      template = template_list[i];
+      my_template_dict[template.id] = template.textContent;
+    }
+    return my_template_dict;
   }
 
-  function showDialog(element, name) {
-    var dialog = element.querySelector("dialog");
+  function mergeDict(my_return_dict, my_new_dict) {
+    var param;
+    for (param in my_new_dict) {
+      if (my_new_dict.hasOwnProperty(param)) {
+        my_return_dict[param] = my_new_dict[param];
+      }
+    }
+    return my_return_dict;
+  }
+
+  function getTimeStamp() {
+    return new window.Date().getTime();
+  }
+
+  function getVideoId() {
+    return window.location.hash.slice(1, 1 + 11);
+  }
+
+  function setTitle(my_title) {
+    window.document.title = my_title;
+  }
+
+  function showDialog(my_element) {
+    var dialog = my_element.querySelector("dialog");
+    //// XXX crossbrowser support!
     //if (!dialog.showModal) {
     //  dialogPolyfill.registerDialog(dialog);
     //}
     dialog.showModal();
   }
-  
-  function hideDialog(element, name) {
-    var dialog = element.querySelector("dialog");
+
+  function hideDialog(my_element) {
+    var dialog = my_element.querySelector("dialog");
     dialog.close();
+  }
+
+  function setVolume(my_player, my_event) {
+    var button_icon = my_event.target.querySelector("button i");
+    if (my_player.isMuted()) {
+      button_icon.textContent = "volume_up";
+      my_player.unMute();
+    } else {
+      my_player.mute();
+      button_icon.textContent = "volume_off";
+    }
+  }
+
+  function playOrPause(my_player) {
+    if (my_player.getPlayerState() === YT.PlayerState.PLAYING) {
+      my_player.pauseVideo();
+    } else {
+      my_player.playVideo();
+    }   
+  }
+
+  function anyAttribute(my_element) {
+    return my_element.getAttribute("data-video") ||
+      my_element.getAttribute("data-action") ||
+        my_element.getAttribute("name");
   }
 
   // http://javascript.crockford.com/remedial.html
@@ -176,11 +133,17 @@
     // state
     /////////////////////////////
     .setState({
-      init: null,
-      state: "watching",
+      scroll_trigger: 300,
+      scroll_buffer: 250,
+      search_buffer: 500,
+      slider_interval: 500,
+      //state_interval: 50,
+      //previous_state: null,
+      mode: "watching",
+      search_time: null,
       video_duration: null,
       last_key_stroke: null,
-      previous_state: null,
+      last_main_pos: 0,
       next_page_token: null,
       slider_in_use: false,
       is_searching: false,
@@ -190,27 +153,40 @@
     // ready
     /////////////////////////////
     .ready(function () {
-      var gadget = this;
-      
+      var gadget = this,
+        element = gadget.element;
+
       gadget.property_dict = {
-        materialized: gadget.element.querySelector("#like-dislike"),
         search_result_dict: {},
         video_queue: [],
         player: null,
+
+        video_like: element.querySelector(".frube-like"),
+        video_slider: element.querySelector(".frube-slider"),
+        video_title: element.querySelector(".frube-video-title"),
+        video_description: element.querySelector(".frube-video-description"),
+        video_count: element.querySelector(".frube-video-count"),
+        video_info: element.querySelector(".frube-video-info"),
+        search_results: element.querySelector(".frube-search-results"),
+        player_container: element.querySelector(".frube-player-container"),
+        player_controller: element.querySelector(".frube-player-controller"),
+
         autolinker: new Autolinker({mention: false, hashtag: false})
       };
 
-      return gadget.checkState();
+      gadget.template_dict = buildTemplateDict({});
+
+      //return gadget.checkState();
     })
 
     /////////////////////////////
     // acquired methods
     /////////////////////////////
-    .declareAcquiredMethod('jio_create', 'jio_create')
-    .declareAcquiredMethod('jio_put', 'jio_put')
-    .declareAcquiredMethod('jio_get', 'jio_get')
-    
-    
+    .declareAcquiredMethod('frube_create', 'frube_create')
+    .declareAcquiredMethod('tube_create', 'tube_create')
+    .declareAcquiredMethod('tube_allDocs', 'tube_allDocs')
+    .declareAcquiredMethod('tube_get', 'tube_get')
+
     /////////////////////////////
     // published methods
     /////////////////////////////
@@ -218,39 +194,124 @@
     /////////////////////////////
     // declared methods
     /////////////////////////////
-    .declareMethod("render", function (opts) {
+    .declareMethod("render", function (my_option_dict) {
+      var gadget = this,
+        dict = gadget.property_dict;
+
+      // ensure material design is applied to injected DOM
       window.componentHandler.upgradeDom();
+      mergeDict(dict, my_option_dict);
+
+      return new RSVP.Queue()
+        .push(function () {
+          return RSVP.all([
+            gadget.tube_create({"type": "youtube", "api_key": dict.youtube_id}),
+            gadget.frube_create({"type": "indexeddb", "database": "frube"})
+          ]);
+        })
+        .push(function () {
+          return gadget.playFirstVideo();
+        });        
+    })
+
+    .declareMethod("changeVideo", function (video_id) {
+      var gadget = this;
+      if (!video_id) {
+        return;
+      }
+      return new RSVP.Queue()
+        .push(function () {
+          return gadget.exitSearch();
+        })
+        .push(function () {
+          window.location.hash = video_id;
+        });  
+    })
+
+    .declareMethod("loadVideo", function (my_video_id) {
+      var gadget = this,
+        dict = gadget.property_dict,
+        element = gadget.element,
+        player = dict.player,
+        page_content = element.querySelector(".page-content");
+
+      // destroying and creating is tricky with async
+      if (player && player.getPlayerState) {
+        gadget.property_dict.player.destroy();
+      }
+
+      gadget.property_dict.player = new YT.Player('player', {
+        videoId: my_video_id,
+        width: page_content.clientWidth,
+        height: page_content.clientWidth * 9 / 16,
+        events: {
+          'onReady': function (event) {
+            event.target.playVideo();
+          },
+          'onStateChange': function (event) {
+            return gadget.videoOnStateChange();
+          }
+        },
+        playerVars: { 
+          autohide: 1,
+          showinfo: 0,
+          disablekb: 1,
+          iv_load_policy: 3,
+          rel: 0
+        }
+      });
+
+      return new RSVP.Queue()
+        .push(function () {
+          return gadget.tube_get(my_video_id);
+        })
+        .push(function (my_response) {
+          var item = my_response.items[0],
+            likes = parseInt(item.statistics.likeCount, 10),
+            dislikes = parseInt(item.statistics.dislikeCount, 10);
+
+          setTitle(item.snippet.title);
+          dict.video_title.textContent = item.snippet.title;
+          dict.video_description.innerHTML = dict.autolinker.link(
+            item.snippet.description.split("\n").join("<br>")
+          );
+          dict.video_count.textContent =
+            parseInt(item.statistics.viewCount, 10).toLocaleString();
+          dict.video_like.MaterialProgress.setProgress(
+            likes * 100 / (likes + dislikes)
+          );
+          dict.video_slider.setAttribute(
+            "max",
+            parseDuration(item.contentDetails.duration)
+          );
+          dict.video_slider.value = 0;
+        });
     })
 
     .declareMethod("videoOnStateChange", function () {
       var gadget = this,
-        element = gadget.element,
         player = gadget.property_dict.player,
         current_state = player.getPlayerState(), 
-        button = document.getElementById("play-pause"),
+        play_icon = gadget.element.querySelector(".frube-btn-play-pause i"),
         jump_to_next = null;
 
       if (current_state === YT.PlayerState.ENDED) {
-        if (document.getElementById("loopSwitch").checked) {
+        if (gadget.element.querySelector(".frube-btn-repeat").checked) {
           player.seekTo(0, true);
           player.playVideo();
         } else {
-          button.innerHTML = '<i class="material-icons">play_arrow</i>';
+          play_icon.textContent = "play_arrow";
           jump_to_next = true;
         }
       } else if (current_state === YT.PlayerState.PLAYING) {
-        button.innerHTML = '<i class="material-icons">pause</i>';
+        play_icon.textContent = "pause";
       } else {
-        button.innerHTML = '<i class="material-icons">play_arrow</i>';
+        play_icon.textContent = "play_arrow";
       }
 
       if (jump_to_next) {
         return gadget.nextVideo();
       }
-    })
-
-    .declareMethod("changeVideo", function (video_id) {
-      window.location.hash = video_id;  
     })
 
     .declareMethod("nextVideo", function () {
@@ -268,22 +329,252 @@
       dict.player.stopVideo();
       return gadget.updateSlider();
     })
-    
-    .declareMethod("updateSlider", function () {
+
+    .declareMethod("handleAction", function (my_event) {
       var gadget = this,
         dict = gadget.property_dict,
-        slider;
+        button = my_event.target.querySelector("button"),
+        pos = button.getAttribute("data-position"),
+        attr = anyAttribute(button),
+        i;
 
-      if (gadget.state.slider_in_use) {
+      switch (attr) {
+        case "up":
+          i = parseInt(pos, 10);
+          dict.video_queue.splice(i - 1, 0, dict.video_queue.splice(i, 1)[0]);
+          return gadget.refreshQueue();
+        case "down":
+          i = parseInt(pos, 10);
+          dict.video_queue.splice(i + 1, 0, dict.video_queue.splice(i, 1)[0]);
+          return gadget.refreshQueue();
+        case "remove":
+          i = parseInt(pos, 10);
+          dict.video_queue.splice(i, 1);
+          return gadget.refreshQueue();
+        case "next":
+          return gadget.nextVideo();
+        case "play":
+          return gadget.changeVideo(button.getAttribute("data-video"));
+        // phusing it a bit
+        // case "add":
+        default:
+          return gadget.addToQueue(button.getAttribute("data-video"));
+      }
+    })
+
+    .declareMethod("updateSlider", function () {
+      var gadget = this,
+        state = gadget.state,
+        player = gadget.property_dict.player,
+        slider = gadget.element.querySelector(".frube-slider");
+
+      if (state.slider_in_use || !slider.MaterialSlider) {
         return;
       }
-      slider = document.getElementById("slider");
-      slider.MaterialSlider.change(dict.player.getCurrentTime());
+      slider.MaterialSlider.change(player.getCurrentTime());
+    })
+
+    .declareMethod("connectAndSyncWithDropbox", function(my_event) {
+      var gadget = this,
+        dict = gadget.property_dict;
+
+      return new RSVP.Queue()
+        .push(function () {
+          return gadget.getDeclaredGadget("dropbox");
+        })
+        .push(function (my_dropbox_gadget) {
+          return my_dropbox_gadget.setDropboxConnect(dict.dropbox_id);
+        })
+        .push(function (my_ouath_dict) {
+          return gadget.frube_create({
+            "type": "replicate",
+            "check_local_modification": true,
+            "check_local_creation": true,
+            "check_local_deletion": true,
+            "local_sub_storage": {
+              "type": "query",
+              "sub_storage": {
+                "type": "indexeddb",
+                "database": "frube"
+              }
+            },
+            "remote_sub_storage": {
+              "type": "query",
+              "sub_storage": {
+                "type": "drivetojiomapping",
+                "sub_storage": {
+                  "type": "dropbox",
+                  "access_token": my_ouath_dict.access_token,
+                  "root": "sandbox"
+                }
+              }
+            }
+          });
+        })
+        .push(function () {
+          my_event.target.querySelector("i").textContent = "done";
+          //return gadget.frube_repair();
+        });
+    })
+
+    .declareMethod("refreshSearch", function (my_event) {
+      var gadget = this,
+        promise_list = [];
+
+      if (my_event.target.value.length) {
+        promise_list.push(gadget.enterSearch());
+          
+        if (Object.keys(gadget.property_dict.search_result_dict).length) {
+          promise_list.push(gadget.refreshSearchResults());
+        } else {
+          promise_list.push(gadget.runSearch(true));
+        }
+      }
+      return RSVP.all(promise_list);
+    })
+
+    .declareMethod("enterSearch", function () {
+      var gadget = this;
+      if (gadget.state.mode === "searching") {
+        return;
+      }
+      return gadget.changeState({"mode": "searching"});
+    })
+
+    .declareMethod("exitSearch", function () {
+      var gadget = this;
+      if (gadget.state.mode === "watching") {
+        return;
+      }
+      return gadget.changeState({"mode": "watching"});
+    })
+
+    .declareMethod("triggerSearchFromScroll", function (my_event) {
+      var gadget = this,
+        state = gadget.state,
+        main = event.target,
+        main_pos = main.scrollTop,
+        height_trigger,
+        sec_trigger;
+
+      if (state.mode === "searching") {
+        if (main_pos >= state.last_main_pos) {
+          return new RSVP.Queue()
+            .push(function () {
+              return gadget.changeState({"last_main_pos": main_pos});
+            })
+            .push(function () {
+              height_trigger = main_pos + main.clientHeight + state.scroll_trigger;
+              if (height_trigger >= main.scrollHeight) {
+                sec_trigger = getTimeStamp() - state.search_time > state.scroll_buffer;
+
+                if (!state.is_searching && sec_trigger) {
+                  return RSVP.all([
+                    gadget.enterSearch(),
+                    gadget.runSearch(true, true)
+                  ]);
+                }
+
+              }
+            });
+        }      
+      }
+    })
+
+    .declareMethod("triggerSearchFromInput", function (event) {
+      var gadget = this;
+
+      if (event.target.value.length === 0) {
+        return gadget.exitSearch();
+      }
+
+      return new RSVP.Queue()
+        .push(function () {
+          return RSVP.all([
+            gadget.enterSearch(),
+            gadget.changeState({"last_key_stroke": getTimeStamp()}),
+            RSVP.delay(gadget.state.search_buffer)
+          ]);
+        })
+        .push(function() {
+          return gadget.runSearch();
+        });
+    })
+
+    .declareMethod("runSearch", function (my_no_delay, my_next_page) {
+      var gadget = this,
+        dict = gadget.property_dict,
+        state = gadget.state,
+        time = getTimeStamp();
+
+      if (!my_no_delay && time - state.last_key_stroke < state.search_buffer) {
+        return gadget.changeState({"is_searching": false});
+      }
+      if (state.is_searching) {
+        return gadget.changeState({"is_searching": false});
+      }
+
+      // unless we're adding more results, blank our index
+      if (!my_next_page) {
+        dict.search_result_dict = {};
+      }
+
+      return new RSVP.Queue()
+        .push(function () {
+          return gadget.enterSearch();
+        })
+        .push(function () {
+          return gadget.changeState({
+            "is_searching": true,
+            "search_time": time
+          });
+        })
+        .push(function () {
+          var search_input = gadget.element.querySelector(".frube-search-input"),
+            token = "";
+
+          if (my_next_page && gadget.state.next_page_token) {
+            token = gadget.state.next_page_token;
+          }
+
+          return gadget.tube_allDocs({
+            "query": search_input.value,
+            "token": token
+          });
+        })  
+        .push(function (response) {
+          var item,
+            i;
+
+          if (response.data.total_rows > 0) {
+            response.nextPageToken = response.data.rows.nextPageToken;
+          }
+          for (i = 0; i < response.data.total_rows; i += 1) {
+            item = response.data.rows[i];
+            dict.search_result_dict[item.id.videoId] = item;
+          }
+          return RSVP.all([
+            gadget.refreshSearchResults(),
+            gadget.changeState({"next_page_token": response.nextPageToken}),
+            gadget.changeState({"is_searching": false})
+          ]);
+        })
+        .push(undefined, function (error) {
+          return new RSVP.Queue()
+            .push(function () {
+              return gadget.changeState({"is_searching": false});
+            })
+            // XXX can't throw from here and requests fail often with 403
+            //.push(function () {
+            //  throw error;
+            //});
+        });
     })
 
     .declareMethod("refreshQueue", function () {
       var gadget = this,
         element = gadget.element,
+        temp = gadget.template_dict,
         video_queue = gadget.property_dict.video_queue,
         queue_list = element.querySelector("#queue"),
         len = video_queue.length,
@@ -296,7 +587,7 @@
 
       // create first entry
       if (len > 0) {
-        queue_list.innerHTML = FIRST_ENTRY_TEMPLATE.supplant({
+        queue_list.innerHTML = temp.first_entry_template.supplant({
           "title": video_queue[0].snippet.title,
           "thumbnail_url": video_queue[0].snippet.thumbnails.high.url,
           "pos": 0
@@ -305,7 +596,7 @@
 
       // create rest of the entries
       for (i = 1; i < len; ++i) {
-        queue_list.innerHTML += CONSECUTIVE_ENTRY_TEMPLATE.supplant({
+        queue_list.innerHTML += temp.consecutive_entry_template.supplant({
           "title": video_queue[i].snippet.title,
           "pos": i,
           "isDisabled": i == len - 1 ? "disabled" : ""
@@ -313,92 +604,13 @@
       }
     })
 
-    .declareMethod("loadVideo", function (video_id) {
+    .declareMethod("addToQueue", function (video_id) {
       var gadget = this,
-        element = gadget.element,
-        player = gadget.property_dict.player,
-        page_content = element.querySelector(".page-content");
-
-      // destroying and creating is tricky with async
-      if (player && player.getPlayerState) {
-        gadget.property_dict.player.destroy();
+        dict = gadget.property_dict;
+      if (dict.search_result_dict.hasOwnProperty(video_id)) {      
+        dict.video_queue.push(dict.search_result_dict[video_id]);
       }
-      
-      gadget.property_dict.player = new YT.Player('player', {
-        videoId: video_id,
-        width: page_content.clientWidth,
-        height: page_content.clientWidth * 9 / 16,
-        events: {'onReady': function (event) {
-          event.target.playVideo();
-        }},
-        playerVars: { 
-          autohide: 1,
-          showinfo: 0,
-          disablekb: 1,
-          iv_load_policy: 3,
-          rel: 0
-        }
-      });
-
-      return new RSVP.Queue()
-        .push(function () {
-          return jIO.util.ajax({
-            "url": "https://www.googleapis.com/youtube/v3/videos?" +
-              "part=snippet,statistics,contentDetails" +
-              "&id=" + video_id + 
-              "&key=" + API_KEY
-          });
-        })
-        .push(function (result) {
-          var response = JSON.parse(result.target.responseText),
-            video_title = element.querySelector("#video-title"),
-            video_desc = element.querySelector("#video-desc"),
-            view_count = element.querySelector("#view-count"),
-            item = response.items[0],
-            likes,
-            dislikes,
-            tab_title,
-            slider;
-
-          video_title.textContent = item.snippet.title;
-          video_desc.innerHTML = gadget.property_dict.autolinker.link(
-            response.items[0].snippet.description.split("\n").join("<br>")
-          );
-          view_count.textContent =
-            parseInt(item.statistics.viewCount, 10).toLocaleString();
-  
-          likes = parseInt(item.statistics.likeCount, 10);
-          dislikes = parseInt(item.statistics.dislikeCount, 10);
-          
-          element.querySelector("#like-dislike").MaterialProgress.setProgress(
-            likes * 100 / (likes + dislikes)
-          );
-  
-          tab_title = document.getElementsByTagName("title")[0];
-          tab_title.textContent = response.items[0].snippet.title;
-          slider = document.getElementById("slider");
-          slider.setAttribute("max", parseDuration(item.contentDetails.duration));
-          slider.value = 0;
-        })
-        .push(undefined, function (error) {
-          throw error;
-        });
-    })
-
-    .declareMethod("enterSearch", function () {
-      var gadget = this;
-      if (gadget.state.state === "searching") {
-        return;
-      }
-      return gadget.changeState({"state": "searching"});
-    })
-
-    .declareMethod("exitSearch", function () {
-      var gadget = this;
-      if (gadget.state.state === "watching") {
-        return;
-      }
-      return gadget.changeState({"state": "watching"});
+      return gadget.refreshQueue();
     })
 
     .declareMethod("refreshSearchResults", function () {
@@ -411,7 +623,7 @@
       for (item_id in catalog) {
         if (catalog.hasOwnProperty(item_id)) {
           item = catalog[item_id];
-          response += SEARCH_RESULT_TEMPLATE.supplant({
+          response += gadget.template_dict.search_entry_template.supplant({
             "video_id": item.id.videoId,
             "title": item.snippet.title,
             "thumbnail_url": item.snippet.thumbnails.high.url,
@@ -419,102 +631,97 @@
           });
         }
       }
-      gadget.element.querySelector("#search-results").innerHTML = response;
+      gadget.element.querySelector(".frube-search-results").innerHTML = response;
     })
 
-    .declareMethod("triggerSearch", function (event) {
-      var gadget = this;
-      if (event.target.value.length === 0) {
-        return gadget.exitSearch();
-      }
-      return new RSVP.Queue()
-        .push(function () {
-          return RSVP.all([
-            gadget.enterSearch(),
-            gadget.changeState({"last_key_stroke": new Date().getTime()}),
-            RSVP.delay(DELAY)
-          ]);
-        })
-        .push(function() {
-          return gadget.runSearch();
-        });
-    })
-
-    .declareMethod("runSearch", function (no_delay, next_page) {
+    /////////////////////////////
+    // declared jobs
+    /////////////////////////////
+    .declareJob("playFirstVideo", function () {
       var gadget = this,
-        dict = gadget.property_dict,
+        video_id = getVideoId();
+
+      if (video_id.length === 11) {
+        return gadget.loadVideo(video_id);
+      }
+      return gadget.changeVideo(gadget.property_dict.youtube_default_video);
+    })
+
+    /*
+    .declareJob("checkState", function () {
+      var gadget = this,
+        queue = new RSVP.Queue(),
         state = gadget.state,
-        time = new Date().getTime();
-      
-      if (!no_delay && time - state.last_key_stroke < DELAY) {
-        return;
-      }
-      if (state.is_searching) {
-        return;
-      }
+        player = gadget.property_dict.player,
+        current_state;
 
-      // unless we're adding more results, blank our index
-      if (!next_page) {
-        dict.search_result_dict = {};
+      // set flag whether a player is active, issues is it takes time to 
+      // create and destroy the player so this whole checkstate loop plus
+      // this logic could be wrapped into a single simple loop
+
+      if (player && player.getPlayerState) {
+        current_state = player.getPlayerState();
       }
 
-      return new RSVP.Queue()
+      return queue
         .push(function () {
-          return gadget.changeState({"is_searching": true});
+          return RSVP.delay(state.state_interval);
         })
         .push(function () {
-          var search_input = gadget.element.querySelector("#search"),
-            token = '';
-
-          if (next_page && gadget.state.next_page_token) {
-            token = '&pageToken=' + gadget.state.next_page_token;
+          // check for a new player state every 50ms
+          // http://stackoverflow.com/a/17078152/4466589
+          if ((current_state || current_state === 0)
+            && current_state !== state.previous_state) {
+            return RSVP.all([
+              gadget.videoOnStateChange(),
+              gadget.changeState({"previous_state": current_state})
+            ]);
           }
-
-          return jIO.util.ajax({
-            "url": "https://www.googleapis.com/youtube/v3/search?" +
-              "part=snippet" +
-              "&q=" + encodeURIComponent(search_input.value) + 
-              "&type=video" +
-              "&maxResults=10" +
-              "&key=" + API_KEY +
-              token
-          });
+          return gadget.changeState({"previous_state": current_state});
         })
-        .push(function (result) {
-          var response = JSON.parse(result.target.responseText),
-            len = response.items.length,
-            item,
-            i;
-          for (i = 0; i < len; ++i) {
-            item = response.items[i];
-            dict.search_result_dict[item.id.videoId] = item;
-          }
-          return RSVP.all([
-            gadget.refreshSearchResults(),
-            gadget.changeState({"next_page_token": response.nextPageToken}),
-            gadget.changeState({"is_searching": false})
-          ]);
-        })
-        /*
         .push(function () {
-          if (!next_page) {
-            dict.search_result_dict = {};
-          }
-          return gadget.changeState({"is_searching": false});
-        })
-        */
-        .push(undefined, function (error) {
-          return gadget.changeState({"is_searching": false});
+          return gadget.checkState();
         });
     })
-    
-    .declareMethod("addToQueue", function (video_id) {
+    */
+
+    // onLoop broken
+    .declareJob("loopSlider", function () {
+      var gadget = this;
+      return new RSVP.Queue()
+        .push(function () {
+          return RSVP.delay(gadget.state.slider_interval);
+        })
+        .push(function () {
+          return gadget.updateSlider();
+        })
+        .push(function () {
+          return gadget.loopSlider();
+        });
+    })
+
+    /////////////////////////////
+    // declared service
+    /////////////////////////////
+    .declareService(function () {
       var gadget = this,
-        dict = gadget.property_dict;
-      if (dict.search_result_dict.hasOwnProperty(video_id)) {      
-        dict.video_queue.push(dict.search_result_dict[video_id]);
+        main = gadget.element.querySelector("main");
+
+      function handleHash() {
+        var video_id = getVideoId();
+        if (video_id.length === 11) {
+          return gadget.loadVideo(video_id);
+        }
       }
-      return gadget.refreshQueue();
+
+      function handleScroll(event) {
+        return gadget.triggerSearchFromScroll(event);
+      }
+
+      return RSVP.all([
+        loopEventListener(window, "hashchange", false, handleHash),
+        loopEventListener(main, "scroll", false, handleScroll)
+      ]);
     })
 
     /////////////////////////////
@@ -522,27 +729,19 @@
     /////////////////////////////
     .onStateChange(function (modification_dict) {
       var gadget = this,
-        player_container,
-        controllers,
-        video_info,
-        search_results;
-      
-      if (modification_dict.hasOwnProperty("state")) {
-        player_container = document.getElementById("player-container");
-        controllers = document.getElementById("controllers");
-        video_info = document.getElementById("info");
-        search_results = document.getElementById("search-results");
-          
-        if (modification_dict.state === "searching") {
-          player_container.classList.add("hidden");
-          controllers.classList.remove("hidden");
-          video_info.classList.add("hidden");
-          search_results.classList.remove("hidden");
+        dict = gadget.property_dict;
+
+      if (modification_dict.hasOwnProperty("mode")) {
+        if (modification_dict.mode === "searching") {
+          dict.player_container.classList.add("hidden");
+          dict.player_controller.classList.remove("hidden");
+          dict.video_info.classList.add("hidden");
+          dict.search_results.classList.remove("hidden");
         } else {
-          search_results.classList.add("hidden");
-          controllers.classList.add("hidden");
-          player_container.classList.remove("hidden");
-          video_info.classList.remove("hidden");
+          dict.search_results.classList.add("hidden");
+          dict.player_controller.classList.add("hidden");
+          dict.player_container.classList.remove("hidden");
+          dict.video_info.classList.remove("hidden");
         }
       }      
       
@@ -551,97 +750,6 @@
     /////////////////////////////
     // on Event
     /////////////////////////////
-    .onEvent("submit", function (event) {
-      var gadget = this,
-        dict = gadget.property_dict,
-        form_name = event.target.getAttribute("name"),
-        element = gadget.element,
-        submit_button = event.target.querySelector("button"),
-        video_id,
-        position_id,
-        i,
-        action;
-
-      if (submit_button) {
-        video_id = submit_button.getAttribute("data-video");
-        action = submit_button.getAttribute("data-action");
-        if (video_id) {
-          if (action === "play") {
-            return RSVP.all([
-              gadget.exitSearch(),
-              gadget.changeVideo(video_id)
-            ]);  
-          }
-          return gadget.addToQueue(video_id);
-        }
-
-        if (action) {
-          position_id = submit_button.getAttribute("data-position");
-          switch (action) {
-            case "up":
-              i = parseInt(position_id, 10);
-              dict.video_queue.splice(i - 1, 0, dict.video_queue.splice(i, 1)[0]);
-              return gadget.refreshQueue();
-            case "down":
-              i = parseInt(position_id, 10);
-              dict.video_queue.splice(i + 1, 0, dict.video_queue.splice(i, 1)[0]);
-              return gadget.refreshQueue();
-            case "remove":
-              i = parseInt(position_id, 10);
-              dict.video_queue.splice(i, 1);
-              return gadget.refreshQueue();
-            case "next":
-              return gadget.nextVideo();
-          }
-        }
-      }
-
-      switch (event.target.getAttribute("name")) {
-        case "frube-play-pause":
-          if (dict.player.getPlayerState() === YT.PlayerState.PLAYING) {
-            dict.player.pauseVideo();
-          } else {
-            dict.player.playVideo();
-          }
-          break;
-        case "frube-exit-search":
-          return gadget.exitSearch();
-        case "frube-next-video":
-          return gadget.nextVideo();
-        case "frube-set-volume":
-          if (dict.player.isMuted()) {
-            submit_button.innerHTML = '<i class="material-icons">volume_up</i>';
-            dict.player.unMute();
-          } else {
-            dict.player.mute();
-            submit_button.innerHTML = '<i class="material-icons">volume_off</i>';
-          }
-          break;
-        case "frube-homerun":
-          element.getElementsByTagName("main")[0].scrollTop = 0;
-          break;
-        case "frube-close-dialog":
-          hideDialog(element, "frube");
-          break;
-        case "frube-search-source":
-          return new RSVP.Queue()
-            .push(function () {
-              return gadget.enterSearch();
-            })
-            .push(function () {
-              return gadget.runSearch(true);
-            });
-      }
-    }, false, true)
-    
-    .onEvent("input", function (event) {
-      var gadget = this;
-      switch (event.target.getAttribute("name")) {
-        case "frube-search-input":
-          return gadget.triggerSearch(event);
-      }
-    }, false, false)
-    
     .onEvent("change", function (event) {
       var gadget = this,
         is_slider = event.target.id === "slider";
@@ -666,135 +774,62 @@
       }
     }, false, false)
 
-    .onEvent("click", function (event) {
-      var gadget = this,
-        promise_list = [],
-        video_id = event.target.getAttribute("data-video"),
-        action = event.target.getAttribute("data-action");
+    .onEvent("input", function (event) {
+      var gadget = this;
 
       switch (event.target.getAttribute("name")) {
-        case "frube-open-dialog":
-          showDialog(gadget.element, "frube");
-          break;
-        case "frube-connector-dropbox":
-          return new RSVP.Queue()
-            .push(function () {
-              return gadget.getDeclaredGadget("dropbox");
-            })
-            .push(function (dropbox_gadget) {
-              return dropbox_gadget.setDropboxConnection();
-            });
         case "frube-search-input":
-          if (event.target.value.length) {
-            promise_list.push(gadget.enterSearch());
-          
-            if (Object.keys(gadget.property_dict.search_result_dict).length) {
-              promise_list.push(gadget.refreshSearchResults());
-            } else {
-              promise_list.push(gadget.runSearch(true));
-            }
-          }
+          return gadget.triggerSearchFromInput(event);
       }
-
-      if (action) {
-        promise_list.push(gadget.nextVideo());
-      }
-
-      if (video_id) {
-        promise_list.push(gadget.exitSearch());
-        promise_list.push(gadget.changeVideo(video_id));
-      }
-
-      return RSVP.all(promise_list);
     }, false, false)
 
-    /////////////////////////////
-    // declared jobs
-    /////////////////////////////
-    .declareJob("playFirstVideo", function () {
+    .onEvent("click", function (event) {
       var gadget = this,
-        video_id = window.location.hash.slice(1, 1 + 11);
-  
-      if (video_id.length === 11) {
-        return gadget.loadVideo(video_id);
+        attr = anyAttribute(event.target);
+      
+      switch (attr) {
+        case "frube-connector-dropbox":
+          return gadget.connectAndSyncWithDropbox(event);
+        case "frube-search-input":
+          return gadget.refreshSearch(event);
+        case "next":
+          return gadget.nextVideo();
+        default:
+          return gadget.changeVideo(attr);
       }
-      return gadget.changeVideo(DEFAULT_VIDEO_ID);
-    })
+    }, false, false)
 
-    .declareJob("checkState", function () {
+    .onEvent("submit", function (event) {
       var gadget = this,
-        queue = new RSVP.Queue(),
-        dict = gadget.property_dict,
-        current_state;
+        attr = anyAttribute(event.target);
+      
+      switch (attr) {
+        case "frube-home":
+          gadget.element.getElementsByTagName("main")[0].scrollTop = 0;
+          break;
+        case "frube-close-dialog":
+          hideDialog(gadget.element);
+          break;
+        case "frube-open-dialog":
+          showDialog(gadget.element);
+          break;
+        case "frube-exit-search":
+          return gadget.exitSearch();
+        case "frube-next-video":
+          return gadget.nextVideo();
+        case "frube-search-source":
+          return gadget.runSearch(true);
+        case "frube-play-pause":
+          playOrPause(gadget.property_dict.player);
+          break;
+        case "frube-set-volume":
+          setVolume(gadget.property_dict.player, event);
+          break;
 
-      // wait until YT and MDL have loaded 
-      if (assessDependenciesLoaded(dict) && !gadget.state.init) {
-        queue.push(function () {
-          return RSVP.all([
-            gadget.playFirstVideo(),
-            gadget.changeState({"init": 1})
-          ]);
-        });
+        // form without an attribute MUST have a submit button with data-action
+        default:
+          return gadget.handleAction(event);
       }
+    }, false, true);
 
-      // set flag whether a player is active, issues is it takes time to 
-      // create and destroy the player so this whole checkstate loop plus
-      // this logic could be wrapped into a single simple loop
-      if (dict.player && dict.player.getPlayerState) {
-        current_state = dict.player.getPlayerState();
-        queue.push(gadget.updateSlider());
-      }
-
-      return queue
-        .push(function () {
-          return RSVP.delay(50);
-        })
-        .push(function () {
-          // check for a new player state every 50ms
-          // http://stackoverflow.com/a/17078152/4466589
-          // https://stackoverflow.com/questions/17078094/youtube-iframe-player-api-onstatechange-not-firing
-          if ((current_state || current_state === 0) && current_state !== gadget.state.previous_state) {
-            return RSVP.all([
-              gadget.videoOnStateChange(),
-              gadget.changeState({"previous_state": current_state})
-            ]);
-          }
-          return gadget.changeState({"previous_state": current_state});
-        })
-        .push(function () {
-          return gadget.checkState();
-        });
-    })
-
-    /////////////////////////////
-    // declared service
-    /////////////////////////////
-    .declareService(function () {
-      var gadget = this,
-        main = gadget.element.querySelector("main");
-
-      function handleHash() {
-        var video_id = window.location.hash.slice(1, 1 + 11);
-        if (video_id.length === 11) {
-          return gadget.loadVideo(video_id);
-        }
-      }
-
-      function handleScroll(event) {
-        var main = event.target,
-          state = gadget.state.state,
-          pos = main.scrollTop + main.clientHeight + SCROLL_TRIGGER;
-
-        if (state === "searching" && pos >= main.scrollHeight) {
-          return gadget.runSearch(true, true);
-        }
-      }
-
-      return RSVP.all([
-        loopEventListener(window, "hashchange", false, handleHash),
-        loopEventListener(main, "scroll", false, handleScroll)
-      ]);
-    });
-
-}(window, rJS, RSVP, Autolinker, YT, JSON, loopEventListener));
-
+}(window, rJS, jIO, RSVP, Autolinker, YT, JSON, loopEventListener));

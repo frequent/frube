@@ -19,22 +19,122 @@
 
     <title>Frube</title>
 
-    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
-    <link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.red-indigo.min.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
+    <link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.red-indigo.min.css" />
     <script src="https://code.getmdl.io/1.3.0/material.min.js"></script>
 
     <script type="text/javascript" src="https://www.youtube.com/iframe_api"></script>
 
-    <script src="autolinker.js"></script>
-    <script src="rsvp.latest.js"></script>
-    <script src="renderjs.latest.js"></script>
-    <script src="index.js"></script>
+    <script type="text/javascript" src="autolinker.js"></script>
+    <script type="text/javascript" src="rsvp.latest.js"></script>
+    <script type="text/javascript" src="jio.latest.js"></script>
+    <script type="text/javascript" src="jio_youtube_storage.js"></script>
+    <script type="text/javascript" src="renderjs.latest.js"></script>
+    <script type="text/javascript" src="index.js"></script>
+
+    <!-- must be on first page unless renderjs can handle templates -->
+    <script id="first_entry_template" type="text/x-supplant-template">
+      <li class="mdl-list__item">
+        <div class="mdl-card mdl-shadow--2dp">
+          <div class="mdl-card__title">
+            <h3 class="mdl-card__title-text" data-action="next">Next</h3>
+          </div>
+          <div class="mdl-card__menu entry-icon-spacing">
+            <form>
+              <button type="submit" class="mdl-button mdl-button--icon mdl-js-button" data-action="up" data-position="{pos}" disabled>
+                <i class="material-icons">arrow_upward</i>
+              </button>
+            </form>
+            <form>
+              <button type="submit" class="mdl-button mdl-button--icon mdl-js-button" data-action="down" data-position="{pos}" title="Move downwards in queue">
+                <i class="material-icons">arrow_downward</i>
+              </button>
+            </form>
+            <form>
+              <button type="submit" class="mdl-button mdl-button--icon mdl-js-button" data-action="remove" data-position="{pos}" title="Remove from queue">
+                <i class="material-icons">remove</i>
+              </button>
+            </form>
+          </div>
+          <div class="entry-details">
+            <div>
+              <form>
+                <button type="submit" class="entry-details-button" data-action="next">
+                  <img src="{thumbnail_url}" alt="">
+                </button>
+              </form>
+            </div>
+            <div class="mdl-card__supporting-text">{title}</div>
+          </div>
+        </div>
+      </li>
+    </script>
+
+  <script id="consecutive_entry_template" type="text/x-supplant-template">
+    <li class="mdl-list__item">
+      <div class="mdl-card mdl-shadow--2dp">
+        <div class="mdl-card__supporting-text">{title}</div>
+        <div class="mdl-card__menu entry-icon-spacing">
+          <form>
+            <button type="submit" class="mdl-button mdl-button--icon mdl-js-button" data-action="up" data-position="{pos}" title="Move upwards in queue">
+              <i class="material-icons">arrow_upward</i>
+            </button>
+          </form>
+          <form>
+            <button type="submit" class="mdl-button mdl-button--icon mdl-js-button" data-action="down" data-position="{pos}" title="Move downwards in queue" {isDisabled}>
+              <i class="material-icons">arrow_downward</i>
+            </button>
+          </form>
+          <form>
+            <button type="submit" class="mdl-button mdl-button--icon mdl-js-button" data-action="remove" data-position="{pos}" title="Remove from queue">
+              <i class="material-icons">remove</i>
+            </button>
+          </form>
+        </div>
+      </div>
+    </li>
+  </script>
+
+  <script id="search_entry_template" type="text/x-supplant-template">
+    <li class="mdl-list__item">
+      <div class="mdl-card mdl-shadow--2dp">
+        <div class="mdl-card__title">
+          <h3 class="mdl-card__title-text" data-video="{video_id}">{title}</h3>
+        </div>
+        <div class="mdl-card__menu">
+          <form>
+            <button type="submit" data-video="{video_id}" data-action="add" class="mdl-button mdl-button--icon mdl-js-button" title="Add to queue">
+              <i class="material-icons">playlist_add</i>
+            </button>
+          </form>
+        </div>
+        <div class="entry-details">
+          <div>
+            <form>
+              <button class="entry-details-button" type="submit" data-video="{video_id}" data-action="play">
+                <img src="{thumbnail_url}" alt="" />
+              </button>
+            </form>
+          </div>
+          <div class="mdl-card__supporting-text">{description}</div>
+        </div>
+      </div>
+    </li>
+  </script>
+
   </head>
   <body>
+    <div data-gadget-url="gadget_jio.html"
+      data-gadget-scope="tube_jio"
+      data-gadget-sandbox="public">
+    </div>
+    <div data-gadget-url="gadget_jio.html"
+      data-gadget-scope="frube_jio"
+      data-gadget-sandbox="public">
+    </div>
     <div data-gadget-url="gadget_frube.html"
-       data-gadget-scope="frube"
-       data-gadget-sandbox="public">
+      data-gadget-scope="frube"
+      data-gadget-sandbox="public">
     </div>
   </body>
 </html>
-

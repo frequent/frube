@@ -5,14 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Frube Gadget</title>
 
-    <script src="jio.latest.js"></script>
-    <script src="rsvp.latest.js"></script>
-    <script src="renderjs.latest.js"></script>
-    <script src="gadget_global.js"></script>
-    <script src="gadget_frube.js"></script>
+    <script type="text/javascript" src="rsvp.latest.js"></script>
+    <script type="text/javascript" src="jio.latest.js"></script>
+    <script type="text/javascript" src="renderjs.latest.js"></script>
+    <script type="text/javascript" src="gadget_global.js"></script>
+    <script type="text/javascript" src="gadget_frube.js"></script>
 
     <link rel="stylesheet" href="gadget_frube.css" />
-
+  
   </head>
   <body>
 
@@ -29,104 +29,108 @@
     </dialog>
     
     <div class="mdl-layout mdl-js-layout mdl-layout--fixed-header">
-        <header class="mdl-layout__header">
-          <div class="mdl-layout__header-row">
-            <form name="frube-homerun">
-              <button type="submit" class="mdl-layout-title mdl-button mdl-js-button mdl-js-ripple-effect">Frube</button>
-            </form>
-            
-            <button id="demo-menu-lower-left" class="mdl-button mdl-js-button mdl-button--icon">
-              <i class="material-icons">more_vert</i>
-            </button>
-            <ul class="mdl-menu mdl-menu--bottom-left mdl-js-menu mdl-js-ripple-effect" for="demo-menu-lower-left">
-              <li class="mdl-menu__item mdl-menu__item--full-bleed-divider">
-                <span class="mdl-list__item-primary-content" name="frube-connector-dropbox"><i class="material-icons mdl-list__item-icon">check_box_outline_blank</i>Dropbox</span>
-              </li>
-              <li class="mdl-menu__item" name="frube-open-dialog">About</li>
-            </ul>
-            <div class="mdl-layout-spacer"></div>
-            <nav class="mdl-navigation">
-              <form name="frube-search-source">
-                <div class="mdl-textfield mdl-js-textfield">
-                  <label class="mdl-textfield__label" for="search">Search...</label>
-                  <input class="mdl-textfield__input" type="text" name="frube-search-input" id="search" />
-                </div>
+      <header class="mdl-layout__header">
+        <div class="mdl-layout__header-row">
+          <form name="frube-home">
+            <button type="submit" class="mdl-layout-title mdl-button mdl-js-button mdl-js-ripple-effect">Frube</button>
+          </form>
+          <!--form name="frube-open-menu-->
+          <button id="frube-open-menu" class="mdl-button mdl-js-button mdl-button--icon">
+            <i class="material-icons">more_vert</i>
+          </button>
+          <!--/form-->
+          <ul class="mdl-menu mdl-menu--bottom-left mdl-js-menu mdl-js-ripple-effect" for="frube-open-menu">
+            <li class="mdl-menu__item mdl-menu__item--full-bleed-divider">
+              <span class="mdl-list__item-primary-content" name="frube-connector-dropbox"><i class="material-icons mdl-list__item-icon">check_box_outline_blank</i>Dropbox</span>
+            </li>
+            <li class="mdl-menu__item frube-custom-menu-action">
+              <form name="frube-open-dialog">
+                <button type="submit" class="mdl-button mdl-js-button mdl-js-ripple-effect">About</button>
               </form>
-            </nav>
-          </div>
-        </header>
-        <main class="mdl-layout__content">
-          <div class="page-content">
-            <div id="player-container">
-              <div id="player"></div>
-            </div>
-  
-            <ul id="controllers" class="mdl-list hidden">
-              <li class="mdl-list__item">
-                <input id="slider" class="mdl-slider mdl-js-slider" type="range" min="0" max="100" value="0" tabindex="0" />
-              </li>
-              <li id="controller-buttons" class="mdl-list__item">
-                <div>
-                  <form name="frube-play-pause">
-                    <button id="play-pause" class="mdl-button mdl-js-button" type="submit"><i class="material-icons">pause</i></button>
-                  </form>
-                  <form name="frube-next-video">
-                    <button class="mdl-button mdl-js-button" type="submit"><i class="material-icons">skip_next</i></button>
-                  </form>
-                  <form name="frube-set-volume">
-                    <button class="mdl-button mdl-js-button" type="submit"><i class="material-icons">volume_up</i></button>
-                  </form>
+            </li>
+          </ul>
+          <div class="mdl-layout-spacer"></div>
+          <nav class="mdl-navigation">
+            <form name="frube-search-source">
+              <div class="mdl-textfield mdl-js-textfield mdl-textfield--expandable mdl-textfield--floating-label mdl-textfield--align-right">
+                <label class="mdl-button mdl-js-button mdl-button--icon" for="fixed-header-drawer-exp"><i class="material-icons">search</i></label>
+                <div class="mdl-textfield__expandable-holder">
+                  <input class="mdl-textfield__input frube-search-input" name="frube-search-input" type="text" id="fixed-header-drawer-exp">
                 </div>
-                <form name="frube-exit-search">
-                  <button class="mdl-button mdl-js-button videoControl" type="submit" title="Exit the search"><i class="material-icons">close</i></button>
-                </form>
-              </li>
-            </ul>
-            
-            <div id="main-grid" class="mdl-grid">
-              <!-- Video Metadata Column -->
-              <div id="main-column" class="mdl-cell mdl-cell--8-col">
-                <div id="info" class="mdl-card mdl-shadow--2dp">
-                  <div class="mdl-card__title">
-                    <h3 class="mdl-card__title-text" id="video-title">Title</h3>
-                  </div>
-                  <div class="mdl-card__supporting-text">
-                    <div id="video-statistics">
-                      <div><span id="view-count"></span> <i class="material-icons">remove_red_eye</i></div>
-                      <div id="like-dislike" class="mdl-progress mdl-js-progress"></div>
-                    </div>
-                    <div id="video-desc">Description...</div>
-                  </div>
-                </div>
-                <ul id="search-results" class="mdl-list hidden"></ul>
               </div>
-              
-  
-              <!-- Queue Column -->
-              <div class="mdl-cell mdl-cell--4-col">
-                <div id="repeat-card" class="mdl-card mdl-shadow--2dp">
-                  <div class="mdl-card__supporting-text">
-                    <div id="repeat-container">
-                      <div><i class="material-icons">repeat_one</i><span> Repeat the video</span></div>
-                      <label class="mdl-switch mdl-js-switch" for="loopSwitch">
-                        <input type="checkbox" id="loopSwitch" class="mdl-switch__input">
-                          <span class="mdl-switch__label"></span>
-                      </label>
-                    </div>
-                  </div>
-                </div>
-                <ul id="queue" class="mdl-list"></ul>
-              </div>
-            </div>
+            </form>
+          </nav>
+        </div>
+      </header>
+      <main class="mdl-layout__content">
+        <div class="page-content">
+          <div class="frube-player-container">
+            <div id="player"></div>
           </div>
-        </main>
-      </div>
 
-      <div data-gadget-url="gadget_dropbox_connect.html"
-        data-gadget-scope="dropbox"
-        data-gadget-sandbox="public">
-      </div>
-      
+          <ul class="frube-player-controller mdl-list hidden">
+            <li class="mdl-list__item">
+              <input class="mdl-slider mdl-js-slider frube-slider" type="range" min="0" max="100" value="0" tabindex="0" />
+            </li>
+            <li id="controller-buttons" class="mdl-list__item">
+              <div>
+                <form name="frube-play-pause">
+                  <button class="frube-btn-play-pause mdl-button mdl-js-button" type="submit"><i class="material-icons">pause</i></button>
+                </form>
+                <form name="frube-next-video">
+                  <button class="mdl-button mdl-js-button" type="submit"><i class="material-icons">skip_next</i></button>
+                </form>
+                <form name="frube-set-volume">
+                  <button class="mdl-button mdl-js-button" type="submit"><i class="material-icons">volume_up</i></button>
+                </form>
+              </div>
+              <form name="frube-exit-search">
+                <button class="mdl-button mdl-js-button videoControl" type="submit" title="Exit the search"><i class="material-icons">close</i></button>
+              </form>
+            </li>
+          </ul>
+          
+          <div id="main-grid" class="mdl-grid">
+            <!-- Video Metadata Column -->
+            <div id="main-column" class="mdl-cell mdl-cell--8-col">
+              <div class="frube-video-info mdl-card mdl-shadow--2dp">
+                <div class="mdl-card__title">
+                  <h3 class="mdl-card__title-text frube-video-title">Title</h3>
+                </div>
+                <div class="mdl-card__supporting-text">
+                  <div id="video-statistics">
+                    <div><span class="frube-video-count"></span> <i class="material-icons">remove_red_eye</i></div>
+                    <div class="frube-like mdl-progress mdl-js-progress"></div>
+                  </div>
+                  <div class="frube-video-description">Description...</div>
+                </div>
+              </div>
+              <ul class="frube-search-results mdl-list hidden"></ul>
+            </div>
+
+            <!-- Queue Column -->
+            <div class="mdl-cell mdl-cell--4-col">
+              <div id="repeat-card" class="mdl-card mdl-shadow--2dp">
+                <div class="mdl-card__supporting-text">
+                  <div id="repeat-container">
+                    <div><i class="material-icons">repeat_one</i><span> Repeat the video</span></div>
+                    <label class="mdl-switch mdl-js-switch">
+                      <input type="checkbox" class="frube-btn-repeat mdl-switch__input">
+                        <span class="mdl-switch__label"></span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+              <ul id="queue" class="mdl-list"></ul>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <div data-gadget-url="gadget_dropbox_connect.html"
+      data-gadget-scope="dropbox"
+      data-gadget-sandbox="public">
+    </div>
   </body>
 </html>
-

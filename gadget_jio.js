@@ -12,8 +12,9 @@
       return this;
     })
 
-    .declareMethod('createJIO', function (jio_options) {
-      this.state_parameter_dict.jio_storage = jIO.createJIO(jio_options);
+    .declareMethod('createJIO', function () {
+      this.state_parameter_dict.jio_storage =
+        jIO.createJIO.apply(jIO, arguments);
     })
     .declareMethod('allDocs', function () {
       var storage = this.state_parameter_dict.jio_storage;
