@@ -14,7 +14,6 @@
   var ALLDOCS_TEMPLATE = UriTemplate.parse(ALLDOCS_URL);
          
   function handleError(error, id) {
-    console.log("YOUTUBE REQUEST ERROR");
     if (error.target && error.target.status === 404) {
       throw new jIO.util.jIOError("Cannot find document: " + id, 404);
     }
@@ -70,7 +69,6 @@
       .push(function (data) {
         var obj = JSON.parse(data.target.response || data.target.responseText),
           i;
-        console.log(obj)
         for (i = 0; i < obj.items.length; i += 1) {
           obj.items[i].value = {};
         }

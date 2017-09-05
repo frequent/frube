@@ -3,7 +3,7 @@
 (function (window, rJS, jIO, RSVP, Autolinker, YT, JSON, loopEventListener) {
   "use strict";
 
-  // https://github.com/boramalper/Essential-YouTube
+  // KUDOS: https://github.com/boramalper/Essential-YouTube
   // https://developers.google.com/youtube/iframe_api_reference
   // https://developers.google.com/youtube/player_parameters?playerVersion=HTML5
   // https://getmdl.io/components/index.html
@@ -11,7 +11,7 @@
   /////////////////////////////
   // some parameters
   /////////////////////////////
-  var TEMPLATE_SELECTOR = "script[type='text/x-supplant-template']"; 
+  var TEMPLATE_SELECTOR = "script[type='text/x-supplant-template']";
 
   /////////////////////////////
   // some methods
@@ -161,12 +161,13 @@
         video_queue: [],
         player: null,
 
+        page_content: element.querySelector(".frube-page-content"),
         video_like: element.querySelector(".frube-like"),
         video_slider: element.querySelector(".frube-slider"),
         video_title: element.querySelector(".frube-video-title"),
         video_description: element.querySelector(".frube-video-description"),
         video_count: element.querySelector(".frube-video-count"),
-        video_info: element.querySelector(".frube-video-info"),
+        sync_button: element.querySelector(".frube-btn-sync"),
         search_results: element.querySelector(".frube-search-results"),
         player_container: element.querySelector(".frube-player-container"),
         player_controller: element.querySelector(".frube-player-controller"),
@@ -183,6 +184,8 @@
     // acquired methods
     /////////////////////////////
     .declareAcquiredMethod('frube_create', 'frube_create')
+    .declareAcquiredMethod('frube_repair', 'frube_repair')
+    .declareAcquiredMethod('frube_put', 'frube_put')
     .declareAcquiredMethod('tube_create', 'tube_create')
     .declareAcquiredMethod('tube_allDocs', 'tube_allDocs')
     .declareAcquiredMethod('tube_get', 'tube_get')
@@ -233,7 +236,7 @@
         dict = gadget.property_dict,
         element = gadget.element,
         player = dict.player,
-        page_content = element.querySelector(".page-content");
+        page_content = dict.page_content;
 
       // destroying and creating is tricky with async
       if (player && player.getPlayerState) {
@@ -243,7 +246,7 @@
       gadget.property_dict.player = new YT.Player('player', {
         videoId: my_video_id,
         width: page_content.clientWidth,
-        height: page_content.clientWidth * 9 / 16,
+        height: Math.max(page_content.clientWidth * 0.66 * 9 / 16, 250),
         events: {
           'onReady': function (event) {
             event.target.playVideo();
@@ -358,7 +361,8 @@
         // phusing it a bit
         // case "add":
         default:
-          return gadget.addToQueue(button.getAttribute("data-video"));
+          return gadget.addToSelection(button.getAttribute("data-video"));
+          //return gadget.addToQueue(button.getAttribute("data-video"));
       }
     })
 
@@ -413,7 +417,8 @@
         })
         .push(function () {
           my_event.target.querySelector("i").textContent = "done";
-          //return gadget.frube_repair();
+          dict.sync_button.querySelector("i").textContent = "sync";
+          return gadget.frube_repair();
         });
     })
 
@@ -604,6 +609,20 @@
       }
     })
 
+    .declareMethod("addToSelection", function (video_id) {
+      var gadget = this,
+        dict = gadget.property_dict;
+      /*
+      if (dict.search_result_dict.hasOwnProperty(video_id)) { 
+        console.log(dict.search_result_dict[video_id]);
+        new RSVP.Queue()
+          .push(function () {
+            return gadget.frube_put(video_id, {});
+          });
+      }
+      */
+    })    
+
     .declareMethod("addToQueue", function (video_id) {
       var gadget = this,
         dict = gadget.property_dict;
@@ -735,13 +754,11 @@
         if (modification_dict.mode === "searching") {
           dict.player_container.classList.add("hidden");
           dict.player_controller.classList.remove("hidden");
-          dict.video_info.classList.add("hidden");
           dict.search_results.classList.remove("hidden");
         } else {
           dict.search_results.classList.add("hidden");
           dict.player_controller.classList.add("hidden");
           dict.player_container.classList.remove("hidden");
-          dict.video_info.classList.remove("hidden");
         }
       }      
       

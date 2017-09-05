@@ -41,61 +41,61 @@
           return my_gadget.createJIO.apply(my_gadget, my_option_dict);
         });
     })
-    .declareMethod("frube_allDocs", function (my_param_list) {
+    .allowPublicAcquisition("frube_allDocs", function (my_param_list) {
       return this.getDeclaredGadget("frube_jio")
         .push(function (my_gadget) {
           return my_gadget.allDocs.apply(my_gadget, my_param_list);
         });
     })
-    .declareMethod("frube_remove", function (my_param_list) {
+    .allowPublicAcquisition("frube_remove", function (my_param_list) {
       return this.getDeclaredGadget("frube_jio")
         .push(function (my_gadget) {
           return my_gadget.remove.apply(my_gadget, my_param_list);
         });
     })
-    .declareMethod("frube_post", function (my_param_list) {
+    .allowPublicAcquisition("frube_post", function (my_param_list) {
       return this.getDeclaredGadget("frube_jio")
         .push(function (my_gadget) {
           return my_gadget.post.apply(my_gadget, my_param_list);
         });
     })
-    .declareMethod("frube_put", function (my_param_list) {
+    .allowPublicAcquisition("frube_put", function (my_param_list) {
       return this.getDeclaredGadget("frube_jio")
         .push(function (my_gadget) {
           return my_gadget.put.apply(my_gadget, my_param_list);
         });
     })
-    .declareMethod("frube_get", function (my_param_list) {
+    .allowPublicAcquisition("frube_get", function (my_param_list) {
       return this.getDeclaredGadget("frube_jio")
         .push(function (my_gadget) {
           return my_gadget.get.apply(my_gadget, my_param_list);
         });
     })
-    .declareMethod("frube_allAttachments", function (my_param_list) {
+    .allowPublicAcquisition("frube_allAttachments", function (my_param_list) {
       return this.getDeclaredGadget("frube_jio")
         .push(function (my_gadget) {
           return my_gadget.allAttachments.apply(my_gadget, my_param_list);
         });
     })
-    .declareMethod("frube_getAttachment", function (my_param_list) {
+    .allowPublicAcquisition("frube_getAttachment", function (my_param_list) {
       return this.getDeclaredGadget("frube_jio")
         .push(function (my_gadget) {
           return my_gadget.getAttachment.apply(my_gadget, my_param_list);
         });
     })
-    .declareMethod("frube_putAttachment", function (my_param_list) {
+    .allowPublicAcquisition("frube_putAttachment", function (my_param_list) {
       return this.getDeclaredGadget("frube_jio")
         .push(function (my_gadget) {
           return my_gadget.putAttachment.apply(my_gadget, my_param_list);
         });
     })
-    .declareMethod("frube_removeAttachment", function (my_param_list) {
+    .allowPublicAcquisition("frube_removeAttachment", function (my_param_list) {
       return this.getDeclaredGadget("frube_jio")
         .push(function (my_gadget) {
           return my_gadget.removeAttachment.apply(my_gadget, my_param_list);
         });
     })
-    .declareMethod("frube_repair", function (my_param_list) {
+    .allowPublicAcquisition("frube_repair", function (my_param_list) {
       return this.getDeclaredGadget("frube_jio")
         .push(function (my_gadget) {
           return my_gadget.repair.apply(my_gadget, my_param_list);
