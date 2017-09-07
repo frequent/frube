@@ -46,19 +46,6 @@
   vertical-align: super;
   color: rgb(117, 117, 117);
 }
-.frube-video-description {
-  padding-top: 8px;
-  padding-left: 36px;
-  padding-right: 36px;
-  -moz-box-sizing: border-box;
-  -webkit-box-sizing: border-box;
-  box-sizing: border-box;
-}
-
-.frube-video-description a {
-  color: rgba(0, 0, 0, .54);
-}
-
 .mdl-slider__container {
   width: 100%;
 }
@@ -78,32 +65,37 @@
 }
 
 /* ---- search results ---- */
-.frube-search-results {
-  margin-top: -16px;
-  padding-top: 0;
+.frube-search-results .mdl-card__media > img {
+  max-width: 100%;
+  pointer-events: none;
+  cursor: pointer; 
 }
-
-.frube-search-results li h3 {
+.frube-search-results figure {
+  margin: 12px;
+}
+.frube-search-results .mdl-card__actions {
+  display: flex;
+  box-sizing:border-box;
+  align-items: center;
+}
+.frube-search-results .mdl-card__actions > .mdl-button--icon {
+  margin-right: 3px;
+  margin-left: 3px;
+}
+/* move bottom bar to bottom */
+.frube-search-results .mdl-card {
+  height: 100%;
+}
+.frube-search-results .mdl-card__title {
+  display: inline;
+  flex-grow: 2;
+}
+.frube-search-results h3 {
+  font-size: 17px;
   cursor: pointer;
   color: black;
   text-decoration: none;
 }
-
-.frube-search-results .mdl-card__title {
-  white-space: nowrap;
-  max-width: calc(100% - 8px - 1 * 32px - 16px);
-}
-
-.frube-search-results img {
-  padding: 0;
-  margin: 0;
-  border: 0 none;
-  pointer-events: none;
-  cursor: pointer; 
-  width: 180px;
-  height: 135px;
-}
-
 .frube-search-results .mdl-card__supporting-text, .entry-details .mdl-card__supporting-text {
   padding-top: 0;
   text-align: justify;
@@ -182,12 +174,17 @@ label.mdl-textfield__label {
   display: flex;
   padding-top: 0;
   justify-content: space-between;
+  padding-right: 32px;
 }
 .frube-controller-buttons form {
   display: inline;
 }
 
 @media (max-width: 1023px) {
+  .frube-controller-buttons {
+    padding-right: 14px;
+    padding-left: 4px;
+  }
   .frube-controller-video {
     width: 84%;
   }
@@ -229,8 +226,7 @@ label.mdl-textfield__label {
   display: inline-block;
   height: 48px;
 }
-
-.frube.btn-more {
+.frube-configure .frube-configure-label {
   color: rgb(117, 117, 117);  
 }
 
@@ -245,6 +241,10 @@ label.mdl-textfield__label {
   padding-bottom: 0;
   margin-bottom: 0;
   padding-top: 0;
+}
+.frube-player-controller ul li:first-child {
+  padding-left: 0;
+  padding-right: 0;
 }
 .frube-video-card {
   max-height: 200px;
@@ -267,6 +267,10 @@ label.mdl-textfield__label {
 }
 
 @media (max-width: 1023px) {
+  .frube-player-controller ul li:first-child {
+    padding-left: 20px;
+    padding-right: 30px;
+  }
   .frube-video-count {
     display: inline-block;
     vertical-align: middle;
@@ -407,15 +411,6 @@ label.mdl-textfield__label {
 }
 
 /* action-container */
-.frube-showtime {
-  padding: 0;
-  float: right;
-}
-.frube-showtime button {
-  font-size: 12px;
-  bottom: 4px;
-  color: rgb(117, 117, 117);
-}
 .frube-action-controls {
   display: inline-block;
   vertical-align: middle;

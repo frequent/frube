@@ -1,6 +1,6 @@
 /*jslint nomen: true, indent: 2, maxerr: 3 */
-/*global window, rJS, jIO, RSVP, Autolinker, YT, JSON, loopEventListener */
-(function (window, rJS, jIO, RSVP, Autolinker, YT, JSON, loopEventListener) {
+/*global window, rJS, jIO, RSVP, YT, JSON, loopEventListener */
+(function (window, rJS, jIO, RSVP, YT, JSON, loopEventListener) {
   "use strict";
 
   // KUDOS: https://github.com/boramalper/Essential-YouTube
@@ -50,8 +50,8 @@
     window.document.title = my_title;
   }
 
-  function showDialog(my_element) {
-    var dialog = my_element.querySelector("dialog");
+  function showDialog(my_element, my_selector) {
+    var dialog = my_element.querySelector(my_selector);
     //// XXX crossbrowser support!
     //if (!dialog.showModal) {
     //  dialogPolyfill.registerDialog(dialog);
@@ -59,8 +59,8 @@
     dialog.showModal();
   }
 
-  function hideDialog(my_element) {
-    var dialog = my_element.querySelector("dialog");
+  function hideDialog(my_element, my_selector) {
+    var dialog = my_element.querySelector(my_selector);
     dialog.close();
   }
 
@@ -137,8 +137,6 @@
       scroll_buffer: 250,
       search_buffer: 500,
       slider_interval: 500,
-      //state_interval: 50,
-      //previous_state: null,
       mode: "watching",
       search_time: null,
       video_duration: null,
@@ -165,14 +163,11 @@
         video_like: element.querySelector(".frube-like"),
         video_slider: element.querySelector(".frube-slider"),
         video_title: element.querySelector(".frube-video-title"),
-        video_description: element.querySelector(".frube-video-description"),
         video_count: element.querySelector(".frube-video-count"),
         sync_button: element.querySelector(".frube-btn-sync"),
         search_results: element.querySelector(".frube-search-results"),
         player_container: element.querySelector(".frube-player-container"),
         player_controller: element.querySelector(".frube-player-controller"),
-
-        autolinker: new Autolinker({mention: false, hashtag: false})
       };
 
       gadget.template_dict = buildTemplateDict({});
@@ -275,9 +270,6 @@
 
           setTitle(item.snippet.title);
           dict.video_title.textContent = item.snippet.title;
-          dict.video_description.innerHTML = dict.autolinker.link(
-            item.snippet.description.split("\n").join("<br>")
-          );
           dict.video_count.textContent =
             parseInt(item.statistics.viewCount, 10).toLocaleString();
           dict.video_like.MaterialProgress.setProgress(
@@ -612,14 +604,20 @@
     .declareMethod("addToSelection", function (video_id) {
       var gadget = this,
         dict = gadget.property_dict;
-      /*
-      if (dict.search_result_dict.hasOwnProperty(video_id)) { 
+        console.log("HEARYE, HEARYE")
         console.log(dict.search_result_dict[video_id]);
-        new RSVP.Queue()
-          .push(function () {
-            return gadget.frube_put(video_id, {});
-          });
-      }
+        
+      /*
+      id.videoId
+      id.kind youtube#video
+      title       => original title
+      thumbnails.high.url
+      use_artist
+      use_title
+      use_thumbnail
+      timestamp? => how to rank from new to old
+      trendups
+      trenddown
       */
     })    
 
@@ -646,7 +644,6 @@
             "video_id": item.id.videoId,
             "title": item.snippet.title,
             "thumbnail_url": item.snippet.thumbnails.high.url,
-            "description": gadget.property_dict.autolinker.link(item.snippet.description)
           });
         }
       }
@@ -665,44 +662,6 @@
       }
       return gadget.changeVideo(gadget.property_dict.youtube_default_video);
     })
-
-    /*
-    .declareJob("checkState", function () {
-      var gadget = this,
-        queue = new RSVP.Queue(),
-        state = gadget.state,
-        player = gadget.property_dict.player,
-        current_state;
-
-      // set flag whether a player is active, issues is it takes time to 
-      // create and destroy the player so this whole checkstate loop plus
-      // this logic could be wrapped into a single simple loop
-
-      if (player && player.getPlayerState) {
-        current_state = player.getPlayerState();
-      }
-
-      return queue
-        .push(function () {
-          return RSVP.delay(state.state_interval);
-        })
-        .push(function () {
-          // check for a new player state every 50ms
-          // http://stackoverflow.com/a/17078152/4466589
-          if ((current_state || current_state === 0)
-            && current_state !== state.previous_state) {
-            return RSVP.all([
-              gadget.videoOnStateChange(),
-              gadget.changeState({"previous_state": current_state})
-            ]);
-          }
-          return gadget.changeState({"previous_state": current_state});
-        })
-        .push(function () {
-          return gadget.checkState();
-        });
-    })
-    */
 
     // onLoop broken
     .declareJob("loopSlider", function () {
@@ -760,8 +719,7 @@
           dict.player_controller.classList.add("hidden");
           dict.player_container.classList.remove("hidden");
         }
-      }      
-      
+      }
     })
 
     /////////////////////////////
@@ -807,6 +765,9 @@
       switch (attr) {
         case "frube-connector-dropbox":
           return gadget.connectAndSyncWithDropbox(event);
+        case "frube-dialog-configure-close":
+          hideDialog(gadget.element, ".frube-configure");
+          break;
         case "frube-search-input":
           return gadget.refreshSearch(event);
         case "next":
@@ -821,14 +782,19 @@
         attr = anyAttribute(event.target);
       
       switch (attr) {
+        case "frube-dialog-configure-set":
+          return;
         case "frube-home":
           gadget.element.getElementsByTagName("main")[0].scrollTop = 0;
           break;
-        case "frube-close-dialog":
-          hideDialog(gadget.element);
+        case "frube-dialog-configure-open":
+          showDialog(gadget.element, ".frube-configure");
           break;
-        case "frube-open-dialog":
-          showDialog(gadget.element);
+        case "frube-dialog-about-close":
+          hideDialog(gadget.element, ".frube-about");
+          break;
+        case "frube-dialog-about-open":
+          showDialog(gadget.element, ".frube-about");
           break;
         case "frube-exit-search":
           return gadget.exitSearch();
@@ -849,4 +815,4 @@
       }
     }, false, true);
 
-}(window, rJS, jIO, RSVP, Autolinker, YT, JSON, loopEventListener));
+}(window, rJS, jIO, RSVP, YT, JSON, loopEventListener));
