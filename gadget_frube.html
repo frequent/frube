@@ -100,6 +100,7 @@
             <div id="player"></div>
           </div>
         </div>
+        
         <!-- control grid -->
         <div class="mdl-grid">
           <div class="mdl-cell mdl-cell--12-col">
@@ -111,13 +112,13 @@
                   </li>
                   <li class="frube-controller-buttons mdl-list__item">
                     <div class="frube-controller-video">
-                      <form name="frube-previous-video">
+                      <form name="frube-playlist-previous">
                         <button class="mdl-button mdl-js-button" type="submit"><i class="frube-icon material-icons">skip_previous</i></button>
                       </form>
                       <form name="frube-play-pause">
                         <button class="frube-btn-play-pause mdl-button mdl-js-button" type="submit"><i class="frube-icon material-icons">pause</i></button>
                       </form>
-                      <form name="frube-next-video">
+                      <form name="frube-playlist-next">
                         <button class="mdl-button mdl-js-button" type="submit"><i class="frube-icon material-icons">skip_next</i></button>
                       </form>
                       <form name="frube-set-volume">
@@ -134,45 +135,9 @@
               </div>
              
               <!-- current video info -->
-              <div class="mdl-card__title frube-title-container">
-                <h3 class="mdl-card__title-text frube-video-title">Title</h3>
-              </div>
-              <div class="frube-subtitle-container">
-                <div class="frube-statistics-container mdl-card--border">
-                  <div>
-                    <i class="frube-icon material-icons">remove_red_eye</i>
-                    <span class="frube-video-count"></span>
-                  </div>
-                  <div class="frube-like mdl-progress mdl-js-progress"></div>
-                </div>
-                <div class="frube-action-controls">
-                  <div class="frube-action-container">
-                    <form name="frube-trending-up">
-                      <button type="submit" class="frube-icon mdl-button mdl-button--icon mdl-js-button">
-                        <i class="material-icons">trending_up</i>
-                      </button>
-                    </form>
-                  </div>
-                  <div class="frube-action-container">
-                    <form name="frube-trending-down">
-                      <button type="submit" class="frube-icon mdl-button mdl-button--icon mdl-js-button">
-                        <i class="material-icons">trending_down</i>
-                      </button>
-                    </form>
-                  </div>
-                  <div class="frube-action-container">
-                    <form name="frube-playlist-add">
-                      <button type="submit" data-video="{video_id}" data-action="add" class="frube-icon mdl-button mdl-button--icon mdl-js-button" title="Add to queue">
-                        <i class="material-icons">playlist_add</i>
-                      </button>
-                    </form>
-                  </div>
-                </div>
-              </div>
-              <div class="frube-video-description mdl-card__supporting-text hidden">Description...</div>
+              <div class="frube-video-info"></div>
             </div>
           </div>
-        
           <div class="frube-playlist-menu mdl-cell mdl-cell--12-col">
             <div class="mdl-card mdl-shadow--2dp frube-playlist">
               <div class="frube-playlist-controller-repeat mdl-card__supporting-text mdl-card--border">
@@ -208,17 +173,13 @@
               </div>
             </div>
           </div>
+        </div>
         
         <!-- search grid -->
-        <div class="mdl-grid hidden frube-search-results">
-          
-
+        <div class="mdl-grid hidden frube-search-results"></div>
         
-
-          <div class="mdl-cell mdl-cell--12-col">
-            <ul id="queue" class="mdl-list"></ul>
-          </div>
-        </div>
+        <!-- queue grid -->
+        <div class="mdl-grid frube-playlist-results"></div>
       </main>
     </div>
 

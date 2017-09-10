@@ -31,8 +31,46 @@
     <script type="text/javascript" src="renderjs.latest.js"></script>
     <script type="text/javascript" src="index.js"></script>
 
-    <script id="playlist_entry_template" type="text/x-supplant-template">
-      <div class="mdl-cell mdl-cell--3-col mdl-cell--6-col-phone mdl-shadow--2dp">
+    <script id="video_entry_template" type="text/x-supplant-template">
+      <div class="mdl-card__title frube-title-container">
+        <h3 class="mdl-card__title-text frube-video-title">{title}</h3>
+      </div>
+      <div class="frube-subtitle-container">
+        <div class="frube-statistics-container mdl-card--border">
+          <div>
+            <i class="frube-icon material-icons">remove_red_eye</i>
+            <span class="frube-video-count">{views}</span>
+          </div>
+          <div class="frube-like mdl-progress mdl-js-progress"></div>
+        </div>
+        <div class="frube-action-controls">
+          <div class="frube-action-container">
+            <form name="frube-trending-up">
+              <button type="submit" data-video="{video_id}" data-action="wii" class="frube-icon mdl-button mdl-button--icon mdl-js-button">
+                <i class="material-icons">trending_up</i>
+              </button>
+            </form>
+          </div>
+          <div class="frube-action-container">
+            <form name="frube-trending-down">
+              <button type="submit" data-video="{video_id}" data-action="meh" class="frube-icon mdl-button mdl-button--icon mdl-js-button">
+                <i class="material-icons">trending_down</i>
+              </button>
+            </form>
+          </div>
+          <div class="frube-action-container">
+            <form name="frube-playlist-add">
+              <button type="submit" data-video="{video_id}" data-action="add" class="frube-icon mdl-button mdl-button--icon mdl-js-button" title="Add to queue">
+                <i class="material-icons">playlist_add</i>
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </script>
+
+    <script id="queue_entry_template" type="text/x-supplant-template">
+      <div class="mdl-cell {overlay} mdl-cell--3-col mdl-cell--6-col-phone mdl-shadow--2dp" data-video="{video_id}">
         <div class="mdl-card">
           <figure class="mdl-card__media">
             <img src="{thumbnail_url}" alt="" />
@@ -42,14 +80,20 @@
           </div>
           <div class="mdl-card__actions mdl-card--border">
             <div class="mdl-layout-spacer"></div>
-            <form>
-              <button type="submit" class="mdl-button mdl-button--icon mdl-js-button mdl-js-ripple-effect" data-video="{video_id}" data-action="up"><i class="material-icons frube-icon">arrow_upward</i></button>
+            <form name="frube-playlist-front">
+              <button type="submit" class="mdl-button mdl-button--icon mdl-js-button mdl-js-ripple-effect" data-position="{pos}" data-video="{video_id}" {disable_first}>
+                <i class="material-icons frube-icon">arrow_left</i>
+              </button>
             </form>
-            <form>
-              <button type="submit" class="mdl-button mdl-button--icon mdl-js-button mdl-js-ripple-effect" data-video="{video_id}" data-action="remove"><i class="material-icons frube-icon">remove</i></button>
+            <form name="frube-playlist-remove">
+              <button type="submit" class="mdl-button mdl-button--icon mdl-js-button mdl-js-ripple-effect" data-position="{pos}" data-video="{video_id}">
+                <i class="material-icons frube-icon">delete_sweep</i>
+              </button>
             </form>
-            <form>
-              <button type="submit" class="mdl-button mdl-button--icon mdl-js-button mdl-js-ripple-effect" data-video="{video_id}" data-action="down"><i class="material-icons frube-icon">arrow_downward</i></button>
+            <form name="frube-playlist-back">
+              <button type="submit" class="mdl-button mdl-button--icon mdl-js-button mdl-js-ripple-effect" data-position="{pos}" data-video="{video_id}" {disable_last}>
+                <i class="material-icons frube-icon">arrow_right</i>
+              </button>
             </form>
           </div>
         </div>
@@ -57,7 +101,7 @@
     </script>
 
     <script id="search_entry_template" type="text/x-supplant-template">
-      <div class="mdl-cell mdl-cell--3-col mdl-cell--6-col-phone mdl-shadow--2dp">
+      <div class="mdl-cell {overlay} mdl-cell--3-col mdl-cell--6-col-phone mdl-shadow--2dp" data-video="{video_id}">
         <div class="mdl-card">
           <figure class="mdl-card__media">
             <img src="{thumbnail_url}" alt="" />
@@ -70,8 +114,10 @@
           </div>
           <div class="mdl-card__actions mdl-card--border">
             <div class="mdl-layout-spacer"></div>
-            <form>
-              <button type="submit" class="mdl-button mdl-button--icon mdl-js-button mdl-js-ripple-effect" data-video="{video_id}" data-action="add"><i class="material-icons frube-icon">playlist_add</i></button>
+            <form name="frube-playlist-add">
+              <button type="submit" class="mdl-button mdl-button--icon mdl-js-button mdl-js-ripple-effect" data-video="{video_id}">
+                <i class="material-icons frube-icon">playlist_add</i>
+              </button>
             </form>
           </div>
         </div>

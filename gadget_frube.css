@@ -1,32 +1,9 @@
+/* --- helper --- */
 .hidden {
-  height: 0px;
+  height: 0;
   visibility: hidden;
 }
-
-#repeat-card {
-  min-height: 58.5px;
-  height: 58.5px;
-}
-
-#repeat-container {
-  display: flex;
-  justify-content: space-between;
-}
-
-#repeat-container label {
-  width: auto;
-}
-
-#repeat-container span {
-    vertical-align: top;
-}
-
-
-
-
-
-/* ==== modified ==== */
-
+/* --- content --- */
 .frube-page-content {
   width: 100%;
 }
@@ -63,110 +40,49 @@
   color: white;
   text-decoration: none;
 }
-
-/* ---- search results ---- */
+/* ---- search/queue results ---- */
+.frube-playlist-results .mdl-card__media > img,
 .frube-search-results .mdl-card__media > img {
   max-width: 100%;
   pointer-events: none;
   cursor: pointer; 
 }
-.frube-search-results figure {
-  margin: 12px;
+.frube-search-results figure,
+.frube-playlist-results figure {
+  margin: 0;
 }
+.frube-playlist-results .mdl-card__actions,
 .frube-search-results .mdl-card__actions {
   display: flex;
   box-sizing:border-box;
   align-items: center;
 }
+.frube-playlist-results .mdl-card__actions > .mdl-button--icon,
 .frube-search-results .mdl-card__actions > .mdl-button--icon {
   margin-right: 3px;
   margin-left: 3px;
 }
 /* move bottom bar to bottom */
+.frube-playlist-results .mdl-card,
 .frube-search-results .mdl-card {
   height: 100%;
 }
+.frube-playlist-results .mdl-card__title,
 .frube-search-results .mdl-card__title {
   display: inline;
   flex-grow: 2;
 }
+.frube-playlist-results h3,
 .frube-search-results h3 {
-  font-size: 17px;
+  font-size: 14px;
   cursor: pointer;
   color: black;
   text-decoration: none;
 }
-.frube-search-results .mdl-card__supporting-text, .entry-details .mdl-card__supporting-text {
+.frube-playlist-results .mdl-card__supporting-text,
+.frube-search-results .mdl-card__supporting-text {
   padding-top: 0;
   text-align: justify;
-}
-
-.entry-detais .mdl-card__supporting-text a {
-  color: rgba(0, 0, 0, .54);
-}
-
-.entry-details {
-  display: flex;
-  justify-content: space-between;
-}
-.entry-details-button {
-  padding: 0;
-  border: 0 none;
-  margin-left: 16px;
-  margin-bottom: 16px;
-}
-.entry-icon-spacing {
-  display: inherit;
-  top: 0;
-  padding-top: 8px;
-}
-
-/* ---- queue list ---- */
-#queue {
-  margin-left: -16px;
-  margin-right: -16px;
-}
-#queue li h3 {
-  cursor: pointer;
-}
-#queue .mdl-list__item:first-child h3 a {
-  color: black;
-  text-decoration: none;
-}
-
-#queue .mdl-list__item:first-child img {
-  padding: 0;
-  margin: 0;
-  border: 0 none;
-  cursor: pointer;
-  pointer-events: none; 
-  width: 90px;
-  height: 67.5px;
-}
-
-#queue .mdl-list__item:first-child .mdl-card {
-  min-height: 150.5px;
-  height: 150.5px;
-}
-
-#queue .mdl-list__item:not(:first-child) .mdl-card {
-  min-height: 50px;
-  height: 50px;
-}
-
-#queue .mdl-list__item:not(:first-child) .mdl-card__supporting-text {
-  max-width: calc(100% - 8px - 3 * 32px - 16px - 8px);
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-
-#queue .mdl-list__item:not(:first-child) {
-  padding-top: 8px;
-  padding-bottom: 8px;
-}
-
-label.mdl-textfield__label {
-  color: white;
 }
 
 /* controller */
@@ -286,9 +202,6 @@ label.mdl-textfield__label {
    -webkit-box-sizing: border-box;
    -moz-box-sizing: border-box;
     box-sizing: border-box;
-  }    
-  .mdl-grid {
-    margin-right: 16px;
   }
   .mdl-layout__header-row {
     padding-left: 16px;
@@ -421,3 +334,45 @@ label.mdl-textfield__label {
   display: inline-block;
   padding: 0 8px;
 }
+
+/* overlay */
+.frube-overlay:before {
+  font-family: 'Material Icons';
+  font-size: 98px;
+  position: absolute;
+  z-index: 10;
+  text-align: center;
+  width: inherit;
+  vertical-align: middle;
+  margin-top: 17%;
+  color: rgba(107, 107, 107, .5);
+  opacity: 0.65;
+}
+.frube-overlay .mdl-card:after {
+  content: "";
+  position: absolute;
+  background-color: rgba(255, 255, 255, .75);
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 1;
+}
+.frube-overlay .mdl-card {
+  /* filter: blur(1px); */
+  pointer-events: none;
+}
+.frube-overlay.frube-video-playing:before {
+  content: "play_circle_outline";
+}
+.frube-overlay.frube-video-deleted:before {
+  content: "delete_sweep";
+}
+.frube-overlay.frube-video-listed:before {
+  content: "playlist_add_check";
+}
+.frube-overlay.frube-video-editing:before {
+  content: "edit";
+}
+
+
