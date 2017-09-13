@@ -103,8 +103,8 @@
         
         <!-- control grid -->
         <div class="mdl-grid">
-          <div class="mdl-cell mdl-cell--12-col">
-            <div class="mdl-card mdl-shadow--2dp frube-info-container">
+          <div class="frube-video-controls mdl-cell mdl-cell--12-col">
+            <div class="mdl-card mdl-shadow--2dp">
               <div class="frube-player-controller hidden">
                 <ul class=" mdl-list">
                   <li class="mdl-list__item">
@@ -123,11 +123,6 @@
                       </form>
                       <form name="frube-set-volume">
                         <button class="mdl-button mdl-js-button" type="submit"><i class="frube-icon material-icons">volume_up</i></button>
-                      </form>
-                    </div>
-                    <div class="frube-controller-search">
-                      <form name="frube-exit-search">
-                        <button class="mdl-button mdl-js-button videoControl" type="submit" title="Exit the search"><i class="frube-icon material-icons">close</i></button>
                       </form>
                     </div>
                   </li>
@@ -153,7 +148,7 @@
                 <form name="frube-shuffle">
                   <div class="frube-playlist-switch-icon"><i class="frube-icon material-icons">shuffle</i></div>
                   <label class="mdl-switch mdl-js-switch">
-                      <input type="checkbox" class="frube-btn-shuffle mdl-switch__input" disabled />
+                      <input type="checkbox" class="frube-btn-shuffle mdl-switch__input" />
                       <span class="mdl-switch__label"></span>
                   </label>
                 </form>
@@ -176,13 +171,22 @@
         </div>
         
         <!-- search grid -->
-        <div class="mdl-grid hidden frube-search-results"></div>
+        <div class="mdl-grid hidden frube-search-results">
+          <div class="frube-overlay frube-video-searching"></div>
+        </div>
         
         <!-- queue grid -->
         <div class="mdl-grid frube-playlist-results"></div>
       </main>
     </div>
 
+    <div class="frube-action">
+      <form>
+        <button name="frube-view-switch" class="mdl-button mdl-button--fab mdl-button--colored">
+          <i class="material-icons">search</i>
+        </button>
+      </form>
+    </div>
     <div data-gadget-url="gadget_dropbox_connect.html"
       data-gadget-scope="dropbox"
       data-gadget-sandbox="public">

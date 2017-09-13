@@ -44,12 +44,11 @@
 .frube-playlist-results .mdl-card__media > img,
 .frube-search-results .mdl-card__media > img {
   max-width: 100%;
-  pointer-events: none;
-  cursor: pointer; 
+  cursor: pointer;
 }
 .frube-search-results figure,
 .frube-playlist-results figure {
-  margin: 0;
+  margin: 0 auto;
 }
 .frube-playlist-results .mdl-card__actions,
 .frube-search-results .mdl-card__actions {
@@ -104,11 +103,7 @@
   .frube-controller-video {
     width: 84%;
   }
-  .frube-controller-search {
-    width: 14%;
-  }
-  .frube-controller-video .mdl-button,
-  .frube-controller-search .mdl-button {
+  .frube-controller-video .mdl-button {
     min-width: 48px;
   }
   .frube-controller-video .mdl-button {
@@ -161,9 +156,6 @@
 .frube-player-controller ul li:first-child {
   padding-left: 0;
   padding-right: 0;
-}
-.frube-video-card {
-  max-height: 200px;
 }
 .frube-playlist {
   flex-direction: row;
@@ -268,9 +260,8 @@
 }
 
 /* statistics */
-.frube-info-container {
-  display: block;
-  min-height: 100px;
+.frube-video-controls .mdl-card {
+  min-height: inherit;
 }
 .frube-title-container {
   padding-bottom: 0;
@@ -319,7 +310,7 @@
   .frube-statistics-container {
     font-size: 16px; 
     vertical-align: middle;
-    width: 45%;
+    width: 35%;
   }
 }
 
@@ -337,16 +328,30 @@
 
 /* overlay */
 .frube-overlay:before {
-  font-family: 'Material Icons';
+font-family: 'Material Icons';
   font-size: 98px;
   position: absolute;
   z-index: 10;
   text-align: center;
-  width: inherit;
   vertical-align: middle;
-  margin-top: 17%;
   color: rgba(107, 107, 107, .5);
   opacity: 0.65;
+  left: 0;
+  right: 0;
+  height: 100%;
+  padding-top: 50%;
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+}
+.frube-search-results .frube-overlay:before {
+  padding: 0;
+  top: 50%;
+}
+@media (max-width: 1023px) {
+  .frube-overlay:before {
+    padding-top: 30%;
+  }
 }
 .frube-overlay .mdl-card:after {
   content: "";
@@ -357,6 +362,10 @@
   left: 0;
   right: 0;
   z-index: 1;
+}
+.frube-video-card,
+.frube-search-card {
+  position: relative;
 }
 .frube-overlay .mdl-card {
   /* filter: blur(1px); */
@@ -374,5 +383,92 @@
 .frube-overlay.frube-video-editing:before {
   content: "edit";
 }
+.frube-overlay.frube-video-searching:before {
+  content: "youtube_searched_for";
+}
+.frube-overlay.frube-video-searching:after {
+  content: "Search Youtube to add videos";
+  font-family: "Roboto","Helvetica","Arial", sans-serif;
+  font-size: 14px;
+  color: rgba(107, 107, 107, .5);
+  margin-left: 0;
+  position: absolute;
+  margin-right: 0;
+  text-align: center;
+  left: 0;
+  right: 0;
+  top: 60%;
+}
+@media (max-width: 1023px) {
+  .frube-overlay.frube-video-searching:after {
+    top: 65%;
+  }
+}
 
 
+
+/* take this, mdl action button! */
+.frube-action form .mdl-button.mdl-button--colored,
+.frube-action form .mdl-button.mdl-button--colored:visited,
+.frube-action form .mdl-button.mdl-button--colored:focus {
+  background: 0 0;
+  position: absolute;
+  right: 100px;
+  bottom: 28px;
+  width: 56px;
+  height: 56px;
+  overflow: visible;
+  text-align: center;
+  line-height: 56px;
+  font-size: 28px;
+  cursor: pointer;
+  z-index: 10;
+  background-color: rgb(244,67,54);
+  color: #fff;
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.14), 0 4px 8px rgba(0, 0, 0, 0.28);
+  transition: none;
+}
+.frube-action form .mdl-button .material-icons {
+  pointer-events: none;
+}
+/* and this! */
+.frube-action form .mdl-button.mdl-button--colored:active {
+  background-color: rgb(244,67,54);
+  background: radial-gradient(ellipse at center, rgba(158, 158, 158, .4) 0%, rgba(158, 158, 158, .4) 100%), radial-gradient(ellipse at center, rgb(244, 67, 54) 0%, rgb(244, 67, 54) 100%);}
+.frube-action form  .mdl-button.mdl-button--colored:hover {
+  background-color: rgb(244,67,54);
+  background: radial-gradient(ellipse at center, rgba(158, 158, 158, .2) 0%, rgba(158, 158, 158, .2) 100%), radial-gradient(ellipse at center, rgb(244, 67, 54) 0%, rgb(244, 67, 54) 100%);
+}
+@media (max-width: 1023px) {
+  .frube-action form .mdl-button.mdl-button--colored,
+  .frube-action form .mdl-button.mdl-button--colored:visited,
+  .frube-action form .mdl-button.mdl-button--colored:focus {
+    right: 36px;
+  }
+}
+.frube-track-score {
+  padding: 0;
+  min-width: 16px;
+}
+
+/* loading video blanks */
+.frube-search-results .mdl-card__media,
+.frube-queue-results .mdl-card__media {
+  background: #fff;
+}
+.frube-search-results .mdl-card__media:after,
+.frube-queue-results .mdl-card__media:after {
+content: "more_horiz";
+  color: rgba(107, 107, 107, .5);
+  font-size: 64px;
+  margin: 0 auto;
+  position: absolute;
+  right: 0;
+  left: 0;
+  text-align: center;
+  padding-top: 14%;
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+  z-index: -1;
+}

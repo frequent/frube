@@ -3,14 +3,12 @@
 (function (window, rJS, RSVP) {
   "use strict";
 
-
   /////////////////////////////
-  // some parameters
+  // parameters
   /////////////////////////////
   var OPTION_DICT = {
     "youtube_id": "AIzaSyD_ZX5na0fPbcLbO5sZ2hWD-FxR-Xd2_TM",
-    "dropbox_id": "rz2ua0dyty5lxx7",
-    "default_video": "WFxPkhLNrcc"
+    "dropbox_id": "rz2ua0dyty5lxx7"
   };
 
   rJS(window)
