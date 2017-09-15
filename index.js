@@ -14,21 +14,6 @@
   rJS(window)
 
     /////////////////////////////
-    // ready
-    /////////////////////////////
-    .ready(function () {
-      var gadget = this;
-      return gadget.getDeclaredGadget("frube")
-        .push(function (my_frube_gadget) {
-          return my_frube_gadget.render(OPTION_DICT);
-        })
-        .push(null, function (my_error) {
-          console.log(my_error);
-          throw my_error;
-        });
-    })
-
-    /////////////////////////////
     // published methods
     /////////////////////////////
 
@@ -117,6 +102,21 @@
       return this.getDeclaredGadget("tube_jio")
         .push(function (my_gadget) {
           return my_gadget.get.apply(my_gadget, my_id);
+        });
+    })
+
+    /////////////////////////////
+    // declared service
+    /////////////////////////////
+    .declareService(function () {
+      var gadget = this;
+      return gadget.getDeclaredGadget("frube")
+        .push(function (my_frube_gadget) {
+          return my_frube_gadget.render(OPTION_DICT);
+        })
+        .push(null, function (my_error) {
+          console.log(my_error);
+          throw my_error;
         });
     });
 
