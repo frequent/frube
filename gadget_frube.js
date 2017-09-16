@@ -8,16 +8,10 @@
   // https://developers.google.com/youtube/player_parameters?playerVersion=HTML5
   // https://getmdl.io/components/index.html
 
-  // XXX fix "add/remove" on player controls
-  // XXX click image/title missing overlay
-  // XXX end of playlist plays #undefined, go to first
-  // XXX remove default api-keys
+  // XXX remove default api-keys, catch out of api errors
   // XXX upvote/downvote, decreasing weight by time?
-  // XXX repair
-  // XXX Soundcloud-esque slider overlay + play/stop instead of player-controller?
-  // XXX counts full plays into score of song?
-  // XXX allow to store snippets?
   // XXX allow to edit stored videos
+  // XXX repair
 
   /////////////////////////////
   // parameters
@@ -37,6 +31,8 @@
   var DELETED = 'frube-video-deleted';
   var DISABLED = 'disabled';
   var MINUS = '-';
+  var LO = 'tiny';
+  var HI = 'hd720'; 
   var FILTER = 'filter';
   var REMOVE = 'delete_sweep';
   var NAME = 'name';
@@ -44,11 +40,13 @@
   var SEARCH = 'search';
   var ADD = 'playlist_add';
   var UNDO = 'undo_edit';
+  var NONDO = 'frube-can-undo';
   var SEARCHING = 'searching';
   var WATCHING = 'watching';
   var SLIDER = 'frube-slider';
   var HIDDEN = 'hidden';
   var REPEAT = '.frube-btn-repeat';
+  var QUALITY = '.frube-btn-quality';
   var SHUFFLE = '.frube-btn-shuffle';
   var SEARCH_INPUT = '.frube-search-input';
   var FILTER_INPUT = '.frube-filter-input';
@@ -323,6 +321,7 @@
       slider_in_use: false,
       is_searching: false,
       play: null,
+      quality: LO
     })
 
     /////////////////////////////
@@ -407,36 +406,56 @@
       var gadget = this,
         dict = gadget.property_dict,
         temp = gadget.template_dict,
+        state = gadget.state,
         element = gadget.element,
         player = dict.player,
         info = dict.video_info,
         page_content = dict.page_content;
 
-      if (!player) {
-        gadget.property_dict.player = new YT.Player('player', {
-          videoId: my_video_id,
-          width: page_content.clientWidth,
-          height: Math.max(page_content.clientWidth * 0.66 * 9 / 16, 250),
-          events: {
-            "onReady": function (event) {
-              event.target.playVideo();
-            },
-            "onStateChange": function (event) {
-              return gadget.videoOnStateChange();
-            }
-          },
-          playerVars: {
-            "showinfo": 0,
-            "disablekb": 1,
-            "iv_load_policy": 3,
-            "rel": 0
-          }
-        });
-      } else {
-        player.loadVideoById(my_video_id);
-      }
-
       return new RSVP.Queue()
+        .push(function () {
+          var hd_check = element.querySelector(QUALITY).checked;
+
+          // switch video quality.
+          if (state.quality === LO && hd_check) {
+            dict.player.destroy();
+            return gadget.changeState({"quality": HI});
+          }
+          if (state.quality === HI && !hd_check) {
+            dict.player.destroy();
+            return gadget.changeState({"quality": LO});
+          }
+          return;
+        })
+        .push(function () {
+
+          // h is not my API :)
+          if (!player || (player && !player.h)) {
+            dict.player = new YT.Player('player', {
+              videoId: my_video_id,
+              width: page_content.clientWidth,
+              height: Math.max(page_content.clientWidth * 0.66 * 9 / 16, 250),
+              events: {
+                "onReady": function (event) {
+                  event.target.playVideo();
+                },
+                "onStateChange": function (event) {
+                  return gadget.videoOnStateChange();
+                }
+              },
+              playerVars: {
+                "showinfo": 0,
+                "disablekb": 1,
+                "iv_load_policy": 3,
+                "rel": 0,
+                "vq": gadget.state.quality
+              }
+            });
+          } else {
+            player.loadVideoById(my_video_id);
+          }
+          return;
+        })
         .push(function () {
           return gadget.tube_get(my_video_id);
         })
@@ -452,6 +471,7 @@
 
           setViewsSlider(info.querySelector(".frube-like"), item.statistics);
           setVideoSlider(dict.video_slider, item.contentDetails);
+
         });
     })
 
@@ -500,9 +520,20 @@
         unsetVideo(getVideo(dict.playlist, my_video_id), DELETED);
         delete dict.buffer_dict[my_video_id];
       } else {
+        dict.buffer_dict[my_video_id] = gadget.frube_remove(my_video_id);
+        
+        // no undo from player directly
+        if (!my_element.querySelector(BUTTON).classList.contains(NONDO)) {
+          return new RSVP.Queue()
+            .push(function() {
+              return gadget.refreshPlaylist();
+            })
+            .push(function () {
+              return gadget.jumpVideo(1);
+            });
+        }
         setButtonIcon(my_element, UNDO);
         setVideo(getVideo(dict.playlist, my_video_id), DELETED);
-        dict.buffer_dict[my_video_id] = gadget.frube_remove(my_video_id);
       }
       return;
     })
@@ -766,11 +797,9 @@
         target = event.target,
         is_search = my_trigger === SEARCH;
 
-      if (target.value.length === 0) {
-        if (is_search) {
-          return gadget.exitSearch();
-        }
-        return;
+      // empty filter clears all filters, let it pass
+      if (target.value.length === 0 && is_search) {
+        return gadget.exitSearch();
       }
 
       return new RSVP.Queue()
@@ -1037,6 +1066,8 @@
           return gadget.changeVideoPosition(getId(event), getPos(event), -1);
         case "frube-playlist-edit":
           return;
+        case "frube-playlist-play":
+          return gadget.changeState({"play": getId(event)});
         case "frube-playlist-next":
           return gadget.jumpVideo(1);
         case "frube-playlist-previous":
@@ -1072,3 +1103,4 @@
     }, false, true);
 
 }(window, rJS, jIO, RSVP, YT, JSON, loopEventListener, Math));
+

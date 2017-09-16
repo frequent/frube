@@ -45,9 +45,9 @@
         </div>
         <div class="frube-action-controls">
           <div class="frube-action-container">
-            <form name="frube-playlist-add">
-              <button type="submit" data-video="{video_id}" class="frube-action-add frube-icon mdl-button mdl-button--icon mdl-js-button" title="Add to queue.">
-                <i class="material-icons">playlist_add</i>
+            <form name="frube-playlist-remove">
+              <button type="submit" data-video="{video_id}" class="frube-icon mdl-button mdl-button--icon mdl-js-button" title="Remove from playlist.">
+                <i class="material-icons">delete_sweep</i>
               </button>
             </form>
           </div>
@@ -80,7 +80,7 @@
       <div class="frube-video-card mdl-cell {overlay} mdl-cell--3-col mdl-cell--6-col-phone mdl-shadow--2dp" data-video="{video_id}">
         <div class="mdl-card">
           <figure class="mdl-card__media material-icons">
-            <img src="{thumbnail_url}" data-video="{video_id} alt="" />
+            <img src="{thumbnail_url}" data-video="{video_id}" alt="" />
           </figure>
           <div class="mdl-card__title">
             <h3 class="mdl-card__title-text" data-video="{video_id}">{title}</h3>
@@ -94,6 +94,11 @@
             <form name="frube-playlist-remove">
               <button type="submit" class="mdl-button mdl-button--icon mdl-js-button mdl-js-ripple-effect frube-can-undo" data-video="{video_id}">
                 <i class="material-icons frube-icon">delete_sweep</i>
+              </button>
+            </form>
+            <form name="frube-playlist-play">
+              <button type="submit" class="mdl-button mdl-button--icon mdl-js-button mdl-js-ripple-effect frube-can-undo" data-video="{video_id}">
+                <i class="material-icons frube-icon">play_arrow</i>
               </button>
             </form>
             <div class="mdl-layout-spacer"></div>
@@ -126,6 +131,11 @@
             <p>{description}</p>
           </div>
           <div class="mdl-card__actions mdl-card--border">
+            <form name="frube-playlist-play">
+              <button type="submit" class="mdl-button mdl-button--icon mdl-js-button mdl-js-ripple-effect frube-can-undo" data-video="{video_id}">
+                <i class="material-icons frube-icon">play_arrow</i>
+              </button>
+            </form>
             <div class="mdl-layout-spacer"></div>
             <form name="frube-playlist-add">
               <button type="submit" class="mdl-button mdl-button--icon mdl-js-button mdl-js-ripple-effect frube-can-undo" data-video="{video_id}">
@@ -153,3 +163,4 @@
     </div>
   </body>
 </html>
+

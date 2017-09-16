@@ -216,14 +216,18 @@
     padding: 16px 0 0 16px;
   }
   .frube-playlist-controller-shuffle {
-    padding: 16px 8px 0 0;
+    padding: 16px 0 0 0;
+  }
+  .frube-playlist-controller-quality {
+    display: none;
   }
   .frube-playlist {
     padding: 0;
   }
 }
 .frube-playlist-controller-repeat,
-.frube-playlist-controller-shuffle {
+.frube-playlist-controller-shuffle,
+.frube-playlist-controller-quality {
   min-width: 100px;
   width: auto;
 }
@@ -476,3 +480,4 @@ content: "more_horiz";
   z-index: 11;
   pointer-events: all;
 }
+
