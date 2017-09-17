@@ -15,36 +15,47 @@
 
   </head>
   <body>
-    <dialog class="mdl-dialog frube-configure">
-      <h5 class="mdl-dialog__title">Configure</h5>
-      <form name="frube-dialog-configure-set">
+
+    <dialog class="mdl-dialog frube-dialog-configure">
+      <h2 class="mdl-dialog__title">Configure</h2>
+      <form name="frube-dialog" data-action="configure">
         <div class="mdl-dialog__content">
-          <p>Provide your API keys to use and store data with Frube.</p>
+          <p><span class="frube-error"></span>Provide your API key to use and store data with Frube.</p>
           <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
-            <input class="mdl-textfield__input" type="text" id="sample3">
-            <label class="mdl-textfield__label frube-configure-label" for="sample3">Youtube Api-Key (Search)</label>
+            <input class="mdl-textfield__input" type="text" id="frube-configure-youtube-api">
+            <label class="mdl-textfield__label" for="frube-configure-youtube-api">Youtube Data API Key (Search)</label>
           </div>
           <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
-            <input class="mdl-textfield__input" type="text" id="sample1">
-            <label class="mdl-textfield__label frube-configure-label" for="sample1">Dropbox Api-Key (Storage)</label>
+            <input class="mdl-textfield__input" type="text" id="frube-configure-dropbox-api">
+            <label class="mdl-textfield__label" for="frube-configure-dropbox-api">Dropbox API Key (Storage)</label>
           </div>
         </div>
-      </form>
-      <div class="mdl-dialog__actions">
-        <button class="mdl-button" name="frube-dialog-configure-close">Cancel</button>
-        <button type="submit" class="mdl-button mdl-js-button mdl-js-ripple-effect" disabled>Configure</button>
-      </div>
+        <div class="mdl-dialog__actions">
+          <button type="submit" class="mdl-button mdl-js-button mdl-js-ripple-effect frube-dialog-submit">Configure</button>
+          <button type="submit" class="mdl-button frube-dialog-close">Cancel</button>
+        </div>
+        </form>
+    </dialog>
+
+    <dialog class="mdl-dialog frube-dialog-edit">
+      <h2 class="mdl-dialog__title">Edit Video Info</h2>
+      <form name="frube-dialog" data-action="edit">
+        <div class="mdl-dialog__content frube-dialog-content"></div>
+        <div class="mdl-dialog__actions">
+          <button type="submit" class="mdl-button mdl-js-button mdl-js-ripple-effect frube-dialog-submit">Save</button>
+          <button type="submit" class="mdl-button frube-dialog-close">Cancel</button>
+        </div>
       </form>
     </dialog>
 
-    <dialog class="mdl-dialog frube-about">
-      <h5 class="mdl-dialog__title">Frube?</h5>
+    <dialog class="mdl-dialog frube-dialog-about">
+      <h2 class="mdl-dialog__title">Frube?</h2>
       <div class="mdl-dialog__content">
         <p>They may take away the content, your taste, you can keep!</p>
       </div>
       <div class="mdl-dialog__actions">
-        <form name="frube-dialog-about-close">
-          <button type="submit" class="mdl-button">Close</button>
+        <form name="frube-dialog" data-action="about">
+          <button type="submit" class="mdl-button frube-dialog-close">Close</button>
         </form>
       </div>
     </dialog>
@@ -68,13 +79,13 @@
               <span class="mdl-list__item-primary-content" name="frube-connector-dropbox"><i class="material-icons mdl-list__item-icon">check_box_outline_blank</i>Dropbox</span>
             </li>
             <li class="mdl-menu__item frube-custom-menu-action">
-              <form name="frube-dialog-configure-open">
-                <button type="submit" class="mdl-button mdl-js-button-mdl-js-ripple-effect">Configure</button>
+              <form name="frube-dialog" data-action="configure">
+                <button type="submit" class="mdl-button mdl-js-button-mdl-js-ripple-effect frube-dialog-open">Configure</button>
               </form>
             </li>
             <li class="mdl-menu__item frube-custom-menu-action">
-              <form name="frube-dialog-about-open">
-                <button type="submit" class="mdl-button mdl-js-button mdl-js-ripple-effect">About</button>
+              <form name="frube-dialog" data-action="about">
+                <button type="submit" class="mdl-button mdl-js-button mdl-js-ripple-effect frube-dialog-open">About</button>
               </form>
             </li>
           </ul>
@@ -105,7 +116,7 @@
         <div class="mdl-grid">
           <div class="frube-video-controls mdl-cell mdl-cell--12-col">
             <div class="mdl-card mdl-shadow--2dp">
-              <div class="frube-player-controller hidden">
+              <div class="frube-player-controller frube-hidden">
                 <ul class=" mdl-list">
                   <li class="mdl-list__item">
                     <input class="mdl-slider mdl-js-slider frube-slider" type="range" min="0" max="100" value="0" tabindex="0" />
@@ -136,30 +147,25 @@
           <div class="frube-playlist-menu mdl-cell mdl-cell--12-col">
             <div class="mdl-card mdl-shadow--2dp frube-playlist">
               <div class="frube-playlist-controller-repeat mdl-card__supporting-text mdl-card--border">
-                
                 <div class="frube-playlist-switch-icon"><i class="frube-icon material-icons">repeat_one</i></div>
-                  <label class="mdl-switch mdl-js-switch">
-                      <input type="checkbox" class="frube-btn-repeat mdl-switch__input" />
-                      <span class="mdl-switch__label"></span>
-                  </label>
-                
+                <label class="mdl-switch mdl-js-switch">
+                    <input type="checkbox" class="frube-btn-repeat mdl-switch__input" />
+                    <span class="mdl-switch__label"></span>
+                </label>
               </div>
               <div class="frube-playlist-controller-shuffle mdl-card__supporting-text mdl-card--border">
-                                  <div class="frube-playlist-switch-icon"><i class="frube-icon material-icons">shuffle</i></div>
-                  <label class="mdl-switch mdl-js-switch">
-                      <input type="checkbox" class="frube-btn-shuffle mdl-switch__input" />
-                      <span class="mdl-switch__label"></span>
-                  </label>
-                
+                <div class="frube-playlist-switch-icon"><i class="frube-icon material-icons">shuffle</i></div>
+                <label class="mdl-switch mdl-js-switch">
+                    <input type="checkbox" class="frube-btn-shuffle mdl-switch__input" />
+                    <span class="mdl-switch__label"></span>
+                </label>
               </div>
               <div class="frube-playlist-controller-quality mdl-card__supporting-text mdl-card--border">
-                
-                  <div class="frube-playlist-switch-icon"><i class="frube-icon material-icons">hd</i></div>
-                  <label class="mdl-switch mdl-js-switch">
-                      <input type="checkbox" class="frube-btn-quality mdl-switch__input" />
-                      <span class="mdl-switch__label"></span>
-                  </label>
-                
+                <div class="frube-playlist-switch-icon"><i class="frube-icon material-icons">hd</i></div>
+                <label class="mdl-switch mdl-js-switch">
+                    <input type="checkbox" class="frube-btn-quality mdl-switch__input" />
+                    <span class="mdl-switch__label"></span>
+                </label>
               </div>
               <div class="frube-playlist-controller-filter mdl-card__supporting-text mdl-card--border">
                 <form name="frube-filter-source">
@@ -179,7 +185,7 @@
         </div>
         
         <!-- search grid -->
-        <div class="mdl-grid hidden frube-search-results">
+        <div class="mdl-grid frube-hidden frube-search-results">
           <div class="frube-overlay frube-video-searching"></div>
         </div>
         

@@ -4,17 +4,17 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="application-name" content="Frube">
-    <meta name="description" content="Frube Youtube Player.">
-    <meta name="url" content="">
+    <meta name="description" content="Frube YouTube Player. Keep your playlist private.">
+    <meta name="url" content="https://www.frube.eu/">
 
     <meta property="og:site_name" content="Frube">
-    <meta property="og:description" content="">
-    <meta property="og:url" content="">
+    <meta property="og:description" content="Frube YouTube Player. Keep your playlist private.">
+    <meta property="og:url" content="https://www.frube.eu/">
     <meta property="og:locale" content="fr_fr">
 
     <meta name="twitter:title" content="Frube">
-    <meta name="twitter:description" content="Frube YouTube Player.">
-    <meta name="twitter:url" content="">
+    <meta name="twitter:description" content="Frube YouTube Player. Keep your playlist private.">
+    <meta name="twitter:url" content="https://www.frube.eu/">
     <meta name="twitter:creator" content="@svenfranck">
 
     <title>Frube</title>
@@ -86,7 +86,7 @@
             <h3 class="mdl-card__title-text" data-video="{video_id}">{title}</h3>
           </div>
           <div class="mdl-card__actions mdl-card--border">
-            <form name="frube-playlist-edit">
+            <form name="frube-playlist-edit" data-action="edit">
               <button type="submit" class="mdl-button mdl-button--icon mdl-js-button mdl-js-ripple-effect" data-video="{video_id}">
                 <i class="material-icons frube-icon">edit</i>
               </button>
@@ -127,7 +127,7 @@
           <div class="mdl-card__title">
             <h3 class="mdl-card__title-text" data-video="{video_id}">{title}</h3>
           </div>
-          <div class="mdl-card__supporting-text hidden">
+          <div class="mdl-card__supporting-text frube-hidden">
             <p>{description}</p>
           </div>
           <div class="mdl-card__actions mdl-card--border">
@@ -142,6 +142,30 @@
                 <i class="material-icons frube-icon">playlist_add</i>
               </button>
             </form>
+          </div>
+        </div>
+      </div>
+    </script>
+
+    <script id="edit_entry_template" type="text/x-supplant-template">
+      <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+        <input class="mdl-textfield__input" type="text" name="frube-edit-custom-artist" value="{video_artist}">
+        <label class="mdl-textfield__label" for="frube-edit-custom-artist">Custom Artist</label>
+      </div>
+      <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+        <input class="mdl-textfield__input" type="text" name="frube-edit-custom-title" value="{video_title}">
+        <label class="mdl-textfield__label" for="frube-edit-custom-title">Custom Title</label>
+      </div>
+      <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+        <input class="mdl-textfield__input" type="text" name="frube-edit-custom-album" value="{video_album}">
+        <label class="mdl-textfield__label" for="frube-edit-custom-album">Custom Album</label>
+      </div>
+      <div class="frube-edit-custom-cover-container">
+        <div class="mdl-textfield mdl-js-textfield mdl-textfield--file">
+          <img src="{video_cover}" alt="{video_artist} - {video_title} | {video_cover}" class="frube-edit-custom-cover-image" />
+          <input class="mdl-textfield__input frube-edit-custom-cover-input" name="frube-edit-custom-cover" placeholder="Custom thumbnail" type="text" readonly/>
+          <div class="mdl-button mdl-button--icon mdl-button--file">
+            <i class="frube-icons material-icons">attach_file</i><input type="file" class="frube-upload" name="frube-upload">
           </div>
         </div>
       </div>
@@ -163,4 +187,3 @@
     </div>
   </body>
 </html>
-

@@ -1,6 +1,6 @@
 /*jslint nomen: true, indent: 2, maxerr: 3 */
-/*global window, rJS, jIO, RSVP, YT, JSON, loopEventListener, Math */
-(function (window, rJS, jIO, RSVP, YT, JSON, loopEventListener, Math) {
+/*global window, rJS, jIO, RSVP, YT, JSON, FormData, URL, loopEventListener, Math */
+(function (window, rJS, jIO, RSVP, YT, JSON, FormData, URL, loopEventListener, Math) {
   "use strict";
 
   // KUDOS: https://github.com/boramalper/Essential-YouTube
@@ -8,24 +8,39 @@
   // https://developers.google.com/youtube/player_parameters?playerVersion=HTML5
   // https://getmdl.io/components/index.html
 
-  // XXX remove default api-keys, catch out of api errors
+  // XXX remove default api-keys
   // XXX upvote/downvote, decreasing weight by time?
-  // XXX allow to edit stored videos
   // XXX repair
+  // XXX dropbox connect submit not working
+  // XXX sync indicator
+  // XXX fix delete all, should not allow next/dump on player, player should stop
+  // XXX fix save of thumbnail in base64, display of image on change
+
 
   /////////////////////////////
   // parameters
   /////////////////////////////
-  var TEMPLATE_SELECTOR = "script[type='text/x-supplant-template']";
   var ARR = [];
   var STR = '';
-  var SPACE = ' ';
-  var POSITION = 'data-position';
-  var SECTION = 'section';
+  var SPC = ' ';
+  var POS = 'data-position';
+  var ID = 'data-video';
+  var ACTION = 'data-action';
+  var DELETE = 'delete';
+  var ATTACH = 'attach_file';
   var BUTTON = 'button';
-  var BUTTON_I = 'button i';
-  var VIDEO = 'data-video';
+  var CLOSE = 'frube-dialog-close';
+  var OPEN = 'frube-dialog-open';
+  var DIALOG = '.frube-dialog-';
+  var IS_SLIDER = 'slider';
+  var UPLOAD = 'frube-upload';
   var OVERLAY = 'frube-overlay';
+  var CONFIGURE = 'configure';
+  var FORBIDDEN = 403;
+  var QUOTA = 'quotaExceeded';
+  var ERR_QUOTA = '(Quota exceeded)&nbsp;';
+  var SECTION = 'section';
+  var BUTTON_I = 'button i';
   var PLAYING = 'frube-video-playing';
   var LISTED = 'frube-video-listed';
   var DELETED = 'frube-video-deleted';
@@ -44,29 +59,71 @@
   var SEARCHING = 'searching';
   var WATCHING = 'watching';
   var SLIDER = 'frube-slider';
-  var HIDDEN = 'hidden';
+  var HIDDEN = 'frube-hidden';
   var REPEAT = '.frube-btn-repeat';
   var QUALITY = '.frube-btn-quality';
   var SHUFFLE = '.frube-btn-shuffle';
   var SEARCH_INPUT = '.frube-search-input';
   var FILTER_INPUT = '.frube-filter-input';
+  var SUBMIT = '.frube-dialog-submit';
+  var PLACEHOLDER = 'placeholder.png';
 
   /////////////////////////////
   // methods
   /////////////////////////////
-  function makeList(nodeList) {
-    return ARR.slice.call(nodeList);
+  function makeList(my_nodeList) {
+    return ARR.slice.call(my_nodeList);
+  }
+
+  function setVideoHash(my_video_id) {
+    window.location.hash = my_video_id;
+  }
+
+  function getTimeStamp() {
+    return new window.Date().getTime();
+  }
+
+  function getActiveElem() {
+    return window.document.activeElement;
+  }
+
+  function getAllElems(my_element, my_selector) {
+    return (my_element || window.document).querySelectorAll(my_selector);
+  }
+
+  function getElem(my_element, my_selector) {
+    return (my_element || window.document).querySelector(my_selector);
+  }
+
+  function getAttr(my_event, my_attribute) {
+    return my_event.target.querySelector(BUTTON).getAttribute(my_attribute);
+  }
+
+  function setOverlay(my_element, my_class_flag) {
+    my_element.classList.add(OVERLAY, my_class_flag);
+  }
+
+  function unsetOverlay(my_element, my_class_flag) {
+    my_element.classList.remove(OVERLAY, my_class_flag);
+  }
+
+  function getVideo(my_element, my_video_id) {
+    return my_element.querySelector('div[data-video="' + my_video_id + '"]');
+  }
+
+  function setTitle(my_title) {
+    window.document.title = my_title;
+  }
+
+  function setButtonIcon(my_element, my_icon) {
+    my_element.querySelector(BUTTON_I).textContent = my_icon;
   }
 
   function buildTemplateDict(my_template_dict) {
-    var template_list = window.document.querySelectorAll(TEMPLATE_SELECTOR),
-      len = template_list.length,
-      template,
-      i;
-    for (i = 0; i < len; i += 1) {
-      template = template_list[i];
-      my_template_dict[template.id] = template.textContent;
-    }
+    makeList(getAllElems(null, 'script[type="text/x-supplant-template"]'))
+      .forEach(function (item) {
+        my_template_dict[item.id] = item.textContent;
+      });
     return my_template_dict;
   }
 
@@ -78,14 +135,6 @@
       }
     }
     return my_return_dict;
-  }
-
-  function getTimeStamp() {
-    return new window.Date().getTime();
-  }
-
-  function setVideoHash(my_video_id) {
-    window.location.hash = my_video_id;
   }
 
   function getVideoHash() {
@@ -115,39 +164,23 @@
     }
     return my_arr[0];
   }
-  
-  function getId(my_event) {
-    return my_event.target.querySelector(BUTTON).getAttribute(VIDEO);
-  }
 
-  function getPos(my_event) {
-    return my_event.target.querySelector(BUTTON).getAttribute(POSITION);
-  }
+  function resizeFileToBase64(my_file) {
+    return new RSVP.Promise(function (resolve, reject) {
+      var img = new Image(),
+        canvas = window.document.createElement("canvas");
 
-  function showDialog(my_element, my_selector) {
-    var dialog = my_element.querySelector(my_selector);
-    //// XXX crossbrowser support!
-    //if (!dialog.showModal) {
-    //  dialogPolyfill.registerDialog(dialog);
-    //}
-    dialog.showModal();
-  }
-
-  function hideDialog(my_element, my_selector) {
-    var dialog = my_element.querySelector(my_selector);
-    dialog.close();
-  }
-
-  function setVideo(my_element, my_class_flag) {
-    my_element.classList.add(OVERLAY, my_class_flag);
-  }
-
-  function unsetVideo(my_element, my_class_flag) {
-    my_element.classList.remove(OVERLAY, my_class_flag);
-  }
-
-  function getVideo(my_element, my_video_id) {
-    return my_element.querySelector('div[data-video="' + my_video_id + '"]');
+      img.onload = function () {
+        canvas.width = 320;
+        canvas.height = 320;
+        canvas.getContext("2d").drawImage(img, 0, 0, 320, 320);
+        resolve(canvas.toDataURL(my_file.type));
+      };
+      img.onerror = function (event) {
+        reject(event);
+      };
+      img.src = URL.createObjectURL(my_file);
+    });
   }
 
   function setBufferList(my_dict) {
@@ -161,12 +194,8 @@
     return promise_list;
   }
 
-  function setTitle(my_title) {
-    window.document.title = my_title;
-  }
-
   function setDom(my_node, my_string, my_purge) {
-    var faux_element = document.createElement(SECTION);
+    var faux_element = window.document.createElement(SECTION);
 
     if (my_purge) {
       while (my_node.firstChild) {
@@ -244,25 +273,21 @@
       return seconds;
   }
 
-  function setButtonIcon(my_element, my_icon) {
-    my_element.querySelector(BUTTON_I).textContent = my_icon;
-  }
-
   function setArtistAndTitle(my_item) {
     return [
-      my_item.custom_artist || my_item.original_artist,
-      my_item.custom_title || my_item.original_title
+      my_item.custom_artist,
+      my_item.custom_title || my_item.original_title,
+      my_item.custom_album
     ].filter(Boolean).join(" - ");
   }
 
   function setVolume(my_player, my_event) {
-    var button_icon = my_event.target.querySelector("button i");
     if (my_player.isMuted()) {
-      button_icon.textContent = "volume_up";
+      setButtonIcon(my_event.target, "volume_up");
       my_player.unMute();
     } else {
+      setButtonIcon(my_event.target, "volume_off");
       my_player.mute();
-      button_icon.textContent = "volume_off";
     }
   }
 
@@ -272,34 +297,6 @@
     } else {
       my_player.playVideo();
     }   
-  }
-
-  function getDataUri(url) {
-    return new RSVP.Promise(function (resolve, reject) {
-      var image = new Image();
-      image.onload = function () {
-        var canvas = window.document.createElement("canvas");
-        canvas.width = this.naturalWidth;
-        canvas.height = this.naturalHeight;
-        canvas.getContext('2d').drawImage(this, 0, 0);
-        resolve(canvas.toDataURL('image/png'));
-      };
-      image.onerror = function () {
-        return "nope"; 
-      };
-      image.src = url;
-    });
-  }
-
-  function fetchAndConvertImage(my_item) {
-    return new RSVP.Queue()
-      .push(function () {
-        return getDataUri(my_item.snippet.thumbnails.medium.url);
-      })
-      .push(function (my_event) {
-        my_item.snippet.thumbnails.medium.base64 = my_event.target.result;
-        return my_item;
-      });
   }
 
   rJS(window)
@@ -336,8 +333,9 @@
         buffer_dict: {},
         queue_list: [],
         player: null,
+        error_status: element.querySelector('.frube-error'),
         action_container: element.querySelector(".frube-action"),
-        page_content: element.querySelector(".frube-page-content"),
+        main: element.querySelector(".frube-page-content"),
         video_info: element.querySelector(".frube-video-info"),
         video_controller: element.querySelector(".frube-video-controls"),
         video_slider: element.querySelector(".frube-slider"),
@@ -410,7 +408,7 @@
         element = gadget.element,
         player = dict.player,
         info = dict.video_info,
-        page_content = dict.page_content;
+        main = dict.main;
 
       return new RSVP.Queue()
         .push(function () {
@@ -433,8 +431,8 @@
           if (!player || (player && !player.h)) {
             dict.player = new YT.Player('player', {
               videoId: my_video_id,
-              width: page_content.clientWidth,
-              height: Math.max(page_content.clientWidth * 0.66 * 9 / 16, 250),
+              width: main.clientWidth,
+              height: Math.max(main.clientWidth * 0.66 * 9 / 16, 250),
               events: {
                 "onReady": function (event) {
                   event.target.playVideo();
@@ -472,10 +470,18 @@
           setViewsSlider(info.querySelector(".frube-like"), item.statistics);
           setVideoSlider(dict.video_slider, item.contentDetails);
 
+        })
+        .push(undefined, function (error) {
+          if (error.type === FORBIDDEN && error.detail === QUOTA) {
+            dict.error_status.textContent = ERR_QUOTA;
+            dict.error_status.classList.remove(HIDDEN);
+            getElem(gadget.element, '.frube-dialog-configure').showModal();
+          }
+          throw error;
         });
     })
 
-    .declareMethod("changeVideoPosition", function (my_id, my_pos, my_shift) {
+    .declareMethod("changeRank", function (my_id, my_pos, my_shift) {
       var gadget = this;
       return new RSVP.Queue()
         .push(function () {
@@ -517,7 +523,7 @@
       // undo = unflag for deletion
       if (dict.buffer_dict[my_video_id]) {
         setButtonIcon(my_element, REMOVE);
-        unsetVideo(getVideo(dict.playlist, my_video_id), DELETED);
+        unsetOverlay(getVideo(dict.playlist, my_video_id), DELETED);
         delete dict.buffer_dict[my_video_id];
       } else {
         dict.buffer_dict[my_video_id] = gadget.frube_remove(my_video_id);
@@ -533,9 +539,80 @@
             });
         }
         setButtonIcon(my_element, UNDO);
-        setVideo(getVideo(dict.playlist, my_video_id), DELETED);
+        setOverlay(getVideo(dict.playlist, my_video_id), DELETED);
       }
       return;
+    })
+
+    .declareMethod("handleDialog", function (my_event) {
+      var gadget = this,
+        action = my_event.target.getAttribute(ACTION),
+        dialog = getElem(gadget.element, (DIALOG + action)),
+        active_element = getActiveElem(),
+        video_id,
+        form_data;
+
+      if (active_element && active_element.classList.contains(CLOSE)) {
+        dialog.close();
+        return;
+      }
+      if (!dialog.open) {
+        dialog.showModal();
+        return;
+      }
+      if (action === 'edit') {
+        video_id = getAttr(event, ID);
+        form_data = new FormData(my_event.target);
+
+        return new RSVP.Queue()
+          .push(function () {
+            return gadget.frube_get(video_id);
+          })
+          .push(function (video) {
+            video.custom_title = form_data.get("frube-edit-custom-title");
+            video.custom_album = form_data.get("frube-edit-custom-album");
+            video.custom_artist = form_data.get("frube-edit-custom-artist");
+            video.custom_cover = form_data.get("frube-edit-custom-cover");
+            dialog.close();
+            return gadget.frube_put(video_id, video);
+          })
+          .push(function () {
+            return gadget.refreshPlaylist();
+          });
+      }
+      if (action === CONFIGURE) {
+
+      }
+    })
+
+    .declareMethod("editVideo", function (my_event, my_video_id) {
+      var gadget = this,
+        action = my_event.target.getAttribute(ACTION),
+        dialog = getElem(gadget.element, (DIALOG + action)),
+        temp = gadget.template_dict,
+        button = dialog.querySelector(SPC + SUBMIT);
+
+      if (button) {
+        button.setAttribute("data-video", my_video_id);
+        return new RSVP.Queue()
+          .push(function () {
+            return gadget.frube_get(my_video_id);
+          })
+          .push(function (video_data) {
+            setDom(dialog.querySelector('.frube-dialog-content'),
+              temp.edit_entry_template.supplant({
+                "video_title": video_data.custom_title,
+                "video_artist": video_data.custom_artist,
+                "video_album": video_data.custom_album,
+                "video_cover": video_data.custom_cover || PLACEHOLDER
+              }), true);
+            window.componentHandler.upgradeDom();
+            return;
+          })
+          .push(function () {
+            getElem(gadget.element, (DIALOG + action)).showModal();
+          });
+      }
     })
 
     .declareMethod("addVideo", function (my_video_id, my_element) {
@@ -546,11 +623,11 @@
       // undo = unflag for adding
       if (dict.buffer_dict[my_video_id]) {      
         setButtonIcon(my_element, ADD);
-        unsetVideo(getVideo(dict.search_results, my_video_id), LISTED);
+        unsetOverlay(getVideo(dict.search_results, my_video_id), LISTED);
         delete dict.buffer_dict[my_video_id];
       } else {
         setButtonIcon(my_element, UNDO);
-        setVideo(getVideo(dict.search_results, my_video_id), LISTED);
+        setOverlay(getVideo(dict.search_results, my_video_id), LISTED);
 
         // put up for storing
         dict.buffer_dict[video_dict.id.videoId] =
@@ -559,11 +636,11 @@
             "type": video_dict.id.kind,
             "original_title": video_dict.snippet.title,
             "original_artist": '',
-            "original_thumbnail": video_dict.snippet.thumbnails.medium.url,
+            "original_cover": video_dict.snippet.thumbnails.medium.url,
             "custom_title": '',
             "custom_artist": '',
             "custom_album": '',
-            "custom_thumbnail": '',
+            "custom_cover": '',
             "timestamp": new Date().getTime(),
             "pos": 0
           });
@@ -593,9 +670,10 @@
         })
         .push(function (my_response) {
           var response = my_response.data.rows.map(function (item) {
+            var find = item.doc.original_title.toLowerCase();
 
             // filter playlist
-            if (query !== STR && item.doc.original_title.indexOf(query) === -1) {
+            if (query !== STR && find.indexOf(query.toLowerCase()) === -1) {
               return;
             }
             item.doc.id = item.doc.id || item.id;
@@ -609,11 +687,11 @@
             html_content += temp.queue_entry_template.supplant({
               "video_id": doc.id,
               "title": setArtistAndTitle(doc),
-              "thumbnail_url": doc.custom_thumbnail || doc.original_thumbnail,
+              "thumbnail_url": doc.custom_cover || doc.original_cover,
               "pos": doc.pos,
               "disable_first": pos === 0 ? DISABLED : STR,
               "disable_last": pos === len - 1 ? DISABLED : STR,
-              "overlay": play === doc.id ? (OVERLAY + SPACE + PLAYING) : STR
+              "overlay": play === doc.id ? (OVERLAY + SPC + PLAYING) : STR
             });
           });
 
@@ -639,7 +717,7 @@
             "video_id": video_id,
             "title": item.snippet.title,
             "thumbnail_url": item.snippet.thumbnails.medium.url,
-            "overlay": list.indexOf(video_id) > -1 ? (OVERLAY + SPACE + LISTED) : STR
+            "overlay": list.indexOf(video_id) > -1 ? (OVERLAY + SPC + LISTED) : STR
           });
         }
       }
@@ -728,22 +806,6 @@
         });
     })
 
-    .declareMethod("refreshSearch", function (my_event) {
-      var gadget = this,
-        promise_list = [];
-
-      if (my_event.target.value.length) {
-        promise_list.push(gadget.enterSearch());
-          
-        if (Object.keys(gadget.property_dict.search_result_dict).length) {
-          promise_list.push(gadget.refreshSearchResults());
-        } else {
-          promise_list.push(gadget.runSearch(true));
-        }
-      }
-      return RSVP.all(promise_list);
-    })
-
     .declareMethod("enterSearch", function () {
       var gadget = this;
       if (gadget.state.mode === SEARCHING) {
@@ -790,6 +852,19 @@
             });
         }      
       }
+    })
+
+    .declareMethod("updateFileInput", function (my_event) {
+      var element = this.element;
+      return new RSVP.Queue()
+        .push(function () {
+          return resizeFileToBase64(my_event.target.files[0]);
+        })
+        .push(function (blob) {
+          getElem(element, '.frube-edit-custom-cover-image').src =
+            getElem(element, '.frube-edit-custom-cover-input').value = blob;
+          my_event.target.previousElementSibling.textContent = DELETE;
+        });
     })
 
     .declareMethod("bufferInput", function (my_event, my_trigger) {
@@ -879,11 +954,17 @@
           ]);
         })
         .push(undefined, function (error) {
+          if (error.type === FORBIDDEN && error.detail === QUOTA) {
+            dict.error_status.textContent = ERR_QUOTA;
+            dict.error_status.classList.remove(HIDDEN);
+            getElem(gadget.element, '.frube-dialog-configure').showModal();
+            return;
+          }
           return new RSVP.Queue()
             .push(function () {
               return gadget.changeState({"is_searching": false});
             });
-            // XXX can't throw from here and requests fail often with 403
+            // XXX can't throw from here, requests fail often with 403
             //.push(function () {
             //  throw error;
             //});
@@ -913,23 +994,22 @@
     // declared service
     /////////////////////////////
     .declareService(function () {
-      var gadget = this,
-        main = gadget.element.querySelector("main");
+      var gadget = this;
 
-      function handleHash() {
+      function isHash() {
         var video_id = getVideoHash();
         if (video_id) {
           return gadget.loadVideo(video_id);
         }
       }
 
-      function handleScroll(event) {
+      function isScroll(event) {
         return gadget.triggerSearchFromScroll(event);
       }
 
       return RSVP.all([
-        loopEventListener(window, "hashchange", false, handleHash),
-        loopEventListener(main, "scroll", false, handleScroll)
+        loopEventListener(window, "hashchange", false, isHash),
+        loopEventListener(gadget.property_dict.main, "scroll", false, isScroll)
       ]);
     })
 
@@ -984,7 +1064,6 @@
           return gadget.refreshPlaylist();
         }
       }
-
       return;
     })
 
@@ -993,24 +1072,26 @@
     /////////////////////////////
     .onEvent("change", function (event) {
       var target = event.target;
+
       if (target.classList.contains(SLIDER)) {
         this.property_dict.player.seekTo(target.value, true);
+        return;
+      }
+
+      if (target.classList.contains(UPLOAD)) {
+        return this.updateFileInput(event);
       }
     }, false, false)
     
     .onEvent("mouseDown", function (event) {
-      var gadget = this,
-        is_slider = event.target.id === "slider";
-      if (is_slider) {
-        return gadget.changeState({"slider_in_use": true});
+      if (event.target.id === IS_SLIDER) {
+        return this.changeState({"slider_in_use": true});
       }
     }, false, false)
     
     .onEvent("mouseUp", function (event) {
-      var gadget = this,
-        is_slider = event.target.id === "slider";
-      if (is_slider) {
-        return gadget.changeState({"slider_in_use": false});
+      if (event.target.id === IS_SLIDER) {
+        return this.changeState({"slider_in_use": false});
       }
     }, false, false)
 
@@ -1029,7 +1110,9 @@
     .onEvent("click", function (event) {
       var gadget = this,
         target = event.target,
-        video_id = target.getAttribute(VIDEO);
+        video_id = target.getAttribute(ID),
+        bad_indicator,
+        element;
 
       if (video_id) {
         return gadget.changeState({"play": video_id});
@@ -1037,18 +1120,20 @@
       switch (target.getAttribute(NAME)) {
         case "frube-connector-dropbox":
           return gadget.connectAndSyncWithDropbox(event);
-        case "frube-dialog-configure-close":
-          hideDialog(gadget.element, ".frube-configure");
-          break;
-        case "frube-search-input":
-          return gadget.refreshSearch(event);
-        case "frube-playlist-input":
-          return;
         case "frube-view-switch":
           return gadget.changeState({
             "mode": gadget.state.mode === SEARCHING ? WATCHING : SEARCHING
           });
-          
+        case "frube-upload":
+          bad_indicator = target.previousElementSibling;
+          element = gadget.element;
+          if (bad_indicator.textContent === DELETE) {
+            bad_indicator.textContent = ATTACH;
+            getElem(element, '.frube-edit-custom-cover-image').src = PLACEHOLDER;
+            getElem(element, '.frube-edit-custom-cover-input').value = '';
+            event.preventDefault();
+            return false;
+          }
       }
     }, false, false)
 
@@ -1057,50 +1142,41 @@
 
       switch (event.target.getAttribute(NAME)) {
         case "frube-playlist-remove":
-          return gadget.removeVideo(getId(event), event.target);
+          return gadget.removeVideo(getAttr(event, ID), event.target);
         case "frube-playlist-add":
-          return gadget.addVideo(getId(event), event.target);
+          return gadget.addVideo(getAttr(event, ID), event.target);
         case "frube-playlist-front":
-          return gadget.changeVideoPosition(getId(event), getPos(event), 1);
+          return gadget.changeRank(getAttr(event, ID), getAttr(event, POS), 1);
         case "frube-playlist-back":
-          return gadget.changeVideoPosition(getId(event), getPos(event), -1);
+          return gadget.changeRank(getAttr(event, ID), getAttr(event, POS), -1);
         case "frube-playlist-edit":
-          return;
+          return gadget.editVideo(event, getAttr(event, ID));
         case "frube-playlist-play":
-          return gadget.changeState({"play": getId(event)});
+          return gadget.changeState({"play": getAttr(event, ID)});
         case "frube-playlist-next":
           return gadget.jumpVideo(1);
         case "frube-playlist-previous":
           return gadget.jumpVideo(-1);
-        case "frube-dialog-configure-set":
-          return; // for now
-        case "frube-playlist-undo":
-          delete gadget.property_dict.buffer_dict[getId(event)];
-          break;
-        case "frube-home":
-          gadget.element.getElementsByTagName("main")[0].scrollTop = 0;
-          break;
-        case "frube-dialog-configure-open":
-          showDialog(gadget.element, ".frube-configure");
-          break;
-        case "frube-dialog-about-close":
-          hideDialog(gadget.element, ".frube-about");
-          break;
-        case "frube-dialog-about-open":
-          showDialog(gadget.element, ".frube-about");
-          break;
         case "frube-filter-source":
           return gadget.refreshPlaylist();
         case "frube-search-source":
           return gadget.runSearch(true);
+        case "frube-dialog":
+          return gadget.handleDialog(event);
+        case "frube-playlist-undo":
+          delete gadget.property_dict.buffer_dict[getAttr(event, ID)];
+          break;
         case "frube-play-pause":
           playOrPause(gadget.property_dict.player);
           break;
         case "frube-set-volume":
           setVolume(gadget.property_dict.player, event);
           break;
+        case "frube-home":
+          gadget.property_dict.main.scrollTop = 0;
+          break;
       }
     }, false, true);
 
-}(window, rJS, jIO, RSVP, YT, JSON, loopEventListener, Math));
+}(window, rJS, jIO, RSVP, YT, JSON, FormData, URL, loopEventListener, Math));
 
