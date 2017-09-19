@@ -37,9 +37,13 @@
       </div>
       <div class="frube-subtitle-container">
         <div class="frube-statistics-container mdl-card--border">
-          <div>
+          <div class="frube-views-container">
             <i class="frube-icon material-icons">remove_red_eye</i>
-            <span class="frube-video-count">{views}</span>
+            <span class="frube-view-count">{views}</span>
+          </div>
+          <div class="frube-likes-container">
+            <i class="frube-icon material-icons">star_rate</i>
+            <span class="frube-like-count">{score}</span>
           </div>
           <div class="frube-like mdl-progress mdl-js-progress"></div>
         </div>
@@ -138,7 +142,7 @@
             </form>
             <div class="mdl-layout-spacer"></div>
             <form name="frube-playlist-add">
-              <button type="submit" class="mdl-button mdl-button--icon mdl-js-button mdl-js-ripple-effect frube-can-undo" data-video="{video_id}">
+              <button type="submit" class="mdl-button mdl-button--icon mdl-js-button mdl-js-ripple-effect frube-can-undo {class}" data-video="{video_id}" {disabled}>
                 <i class="material-icons frube-icon">playlist_add</i>
               </button>
             </form>
@@ -170,7 +174,10 @@
         </div>
       </div>
     </script>
-
+    
+    <script id="search_template" type="text/x-supplant-template">
+      <div class="frube-overlay frube-video-searching"></div>
+    </script>
   </head>
   <body>
     <div data-gadget-url="gadget_jio.html"
