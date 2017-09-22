@@ -57,6 +57,8 @@
         <form name="frube-dialog" data-action="about">
           <button type="submit" class="mdl-button frube-dialog-close">Close</button>
         </form>
+        <div class="mdl-layout-spacer"></div>
+        <div class="frube-credit">Made with <a href="https://renderjs.nexedi.com" target="_blank">RenderJS</a> &amp; <a href="https://jio.nexedi.com" target="_blank">jIO</a></div>
       </div>
     </dialog>
 
@@ -76,7 +78,7 @@
           </form>
           <ul class="mdl-menu mdl-menu--bottom-left mdl-js-menu mdl-js-ripple-effect" for="frube-open-menu">
             <li class="mdl-menu__item mdl-menu__item--full-bleed-divider">
-              <span class="mdl-list__item-primary-content" name="frube-connector-dropbox"><i class="material-icons mdl-list__item-icon">check_box_outline_blank</i>Dropbox</span>
+              <span class="mdl-list__item-primary-content frube-connector-dropbox" name="frube-connector-dropbox"><i class="material-icons mdl-list__item-icon">check_box_outline_blank</i>Dropbox</span>
             </li>
             <li class="mdl-menu__item frube-custom-menu-action">
               <form name="frube-dialog" data-action="configure">
@@ -174,7 +176,7 @@
                       <i class="material-icons">filter_list</i>
                     </label>
                     <div class="mdl-textfield__expandable-holder">
-                      <input class="mdl-textfield__input frube-filter-input" type="text" id="frube-player-drawer-exp" name="frube-filter-input">
+                      <input class="mdl-textfield__input frube-filter-input" type="text" id="frube-player-drawer-exp" name="frube-input">
                       <label class="mdl-textfield__label" for="frube-player-drawer-exp">Filter Playlist</label>
                     </div>
                   </div>

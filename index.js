@@ -105,6 +105,32 @@
         });
     })
 
+    // briget to token JIO
+    .allowPublicAcquisition('token_create', function (my_option_dict) {
+      return this.getDeclaredGadget("token_jio")
+        .push(function (my_gadget) {
+          return my_gadget.createJIO.apply(my_gadget, my_option_dict);
+        });
+    })
+    .allowPublicAcquisition('token_putAttachment', function (my_option_dict) {
+      return this.getDeclaredGadget("token_jio")
+        .push(function (my_gadget) {
+          return my_gadget.putAttachment.apply(my_gadget, my_option_dict);
+        });
+    })
+    .allowPublicAcquisition('token_getAttachment', function (my_id) {
+      return this.getDeclaredGadget("token_jio")
+        .push(function (my_gadget) {
+          return my_gadget.getAttachment.apply(my_gadget, my_id);
+        });
+    })
+    .allowPublicAcquisition('token_removeAttachment', function (my_id) {
+      return this.getDeclaredGadget("token_jio")
+        .push(function (my_gadget) {
+          return my_gadget.removeAttachment.apply(my_gadget, my_id);
+        });
+    })
+    
     /////////////////////////////
     // declared service
     /////////////////////////////

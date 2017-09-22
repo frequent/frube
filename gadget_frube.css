@@ -519,10 +519,14 @@ font-family: 'Material Icons';
 .frube-playlist-results:not(.frube-hidden) {
 
 }
+/* kudos: jQuery Mobile */
 .frube-hidden {
-  height: 0;
+  position: absolute !important;
+	height: 1px;
+	width: 1px;
+	overflow: hidden;
+	clip: rect(1px,1px,1px,1px);
   visibility: hidden;
-  /* display: none; breakes infinite scroll */
 }
 .frube-error {
   color: rgb(244,67,54);
@@ -530,4 +534,52 @@ font-family: 'Material Icons';
 .frube-disabled {
   opacity: .3;
 }
+.frube-btn-sync:disabled {
+  color: rgba(0,0,0,.26);
+}
+.frube-btn-sync,
+.frube-btn-sync .frube-icon {
+  color: #fff;
+}
+
+/* credit */
+.frube-credit {
+  display: inline-block;
+  color: rgba(0,0,0,.54);
+  padding: 9px 0;
+  -moz-box-sizing: border-box;
+  -webkit-box-sizing: border-box;
+  box-sizing: border-box;
+  font-size: 12px;
+}
+.frube-credit a {
+  color: rgb(244,67,54);
+}
+
+/* spin until this is JS-promisable */
+.frube-spin {
+  -webkit-animation: frube-spin 1s infinite linear;
+  animation: frube-spin 1s infinite linear;
+}
+@-webkit-keyframes frube-spin {
+  0% {
+    -webkit-transform: rotate(0deg);
+    transform: rotate(0deg);
+  }
+  100% {
+    -webkit-transform: rotate(359deg);
+    transform: rotate(359deg);
+  }
+}
+@keyframes frube-spin {
+  0% {
+    -webkit-transform: rotate(0deg);
+    transform: rotate(0deg);
+  }
+  100% {
+    -webkit-transform: rotate(359deg);
+    transform: rotate(359deg);
+  }
+}
+
 
