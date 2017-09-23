@@ -59,6 +59,17 @@
 .frube-playlist-results figure {
   margin: 0 auto;
 }
+.frube-search-results figure img[alt]:after,
+.frube-playlist-results figure img[alt]:after {
+  position: absolute;
+  top: 0;
+  width: 100%;
+  height: 30px;
+  background-color: #fff;
+  content: attr(alt);
+  left: 0;
+  right: 0;
+}
 .frube-playlist-results .mdl-card__actions,
 .frube-search-results .mdl-card__actions {
   display: flex;
@@ -465,7 +476,7 @@ font-family: 'Material Icons';
 /* loading video blanks */
 .frube-search-results .mdl-card__media,
 .frube-playlist-results .mdl-card__media {
-  background: #fff;
+  background: transparent;
 }
 .frube-search-results .mdl-card__media:after,
 .frube-playlist-results .mdl-card__media:after {
@@ -534,10 +545,9 @@ font-family: 'Material Icons';
 .frube-disabled {
   opacity: .3;
 }
-.frube-btn-sync:disabled {
+.frube-btn-sync:disabled .frube-icon {
   color: rgba(0,0,0,.26);
 }
-.frube-btn-sync,
 .frube-btn-sync .frube-icon {
   color: #fff;
 }
@@ -557,7 +567,7 @@ font-family: 'Material Icons';
 }
 
 /* spin until this is JS-promisable */
-.frube-spin {
+.frube-spin .frube-icon {
   -webkit-animation: frube-spin 1s infinite linear;
   animation: frube-spin 1s infinite linear;
 }
@@ -581,5 +591,4 @@ font-family: 'Material Icons';
     transform: rotate(359deg);
   }
 }
-
 
