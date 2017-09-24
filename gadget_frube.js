@@ -359,19 +359,6 @@
     /////////////////////////////
     // acquired methods
     /////////////////////////////
-    .declareAcquiredMethod("frube_create", "frube_create")
-    .declareAcquiredMethod("frube_repair", "frube_repair")
-    .declareAcquiredMethod("frube_allDocs", "frube_allDocs")
-    .declareAcquiredMethod("frube_put", "frube_put")
-    .declareAcquiredMethod("frube_get", "frube_get")
-    .declareAcquiredMethod("frube_remove", "frube_remove")
-    .declareAcquiredMethod("tube_create", "tube_create")
-    .declareAcquiredMethod("tube_allDocs", "tube_allDocs")
-    .declareAcquiredMethod("tube_get", "tube_get")
-    .declareAcquiredMethod("token_create", "token_create")
-    .declareAcquiredMethod("token_getAttachment", "token_getAttachment")
-    .declareAcquiredMethod("token_putAttachment", "token_putAttachment")
-    .declareAcquiredMethod("token_removeAttachment", "token_removeAttachment")
 
     /////////////////////////////
     // published methods
@@ -380,6 +367,90 @@
     /////////////////////////////
     // declared methods
     /////////////////////////////
+    // frube bridge
+    .declareMethod("frube_create", function (my_option_dict) {
+      return this.getDeclaredGadget("frube_jio")
+        .push(function (my_gadget) {
+          return my_gadget.createJIO(my_option_dict);
+        });
+    })
+    .declareMethod("frube_repair", function () {
+      return this.getDeclaredGadget("frube_jio")
+        .push(function (my_gadget) {
+          return my_gadget.repair();
+        });
+    })
+    .declareMethod("frube_allDocs", function (my_option_dict) {
+      return this.getDeclaredGadget("frube_jio")
+        .push(function (my_gadget) {
+          return my_gadget.allDocs(my_option_dict);
+        });
+    })
+    .declareMethod("frube_put", function (my_id, my_dict) {
+      return this.getDeclaredGadget("frube_jio")
+        .push(function (my_gadget) {
+          return my_gadget.put(my_id, my_dict);
+        });
+    })
+    .declareMethod("frube_get", function (my_id) {
+      return this.getDeclaredGadget("frube_jio")
+        .push(function (my_gadget) {
+          return my_gadget.get(my_id);
+        });
+    })
+    .declareMethod("frube_remove", function (my_id) {
+      return this.getDeclaredGadget("frube_jio")
+        .push(function (my_gadget) {
+          return my_gadget.remove(my_id);
+        });
+    })
+
+    // tube bridge
+    .declareMethod("tube_create", function (my_option_dict) {
+      return this.getDeclaredGadget("tube_jio")
+        .push(function (my_gadget) {
+          return my_gadget.createJIO(my_option_dict);
+        });
+    })
+    .declareMethod("tube_allDocs", function (my_option_dict) {
+      return this.getDeclaredGadget("tube_jio")
+        .push(function (my_gadget) {
+          return my_gadget.allDocs(my_option_dict);
+        });
+    })
+    .declareMethod("tube_get", function (my_id) {
+      return this.getDeclaredGadget("tube_jio")
+        .push(function (my_gadget) {
+          return my_gadget.get(my_id);
+        });
+    })
+
+    // token bridge
+    .declareMethod("token_create", function (my_option_dict) {
+      return this.getDeclaredGadget("token_jio")
+        .push(function (my_gadget) {
+          return my_gadget.createJIO(my_option_dict);
+        });
+    })
+    .declareMethod("token_getAttachment", function (my_id, my_tag) {
+      return this.getDeclaredGadget("token_jio")
+        .push(function (my_gadget) {
+          return my_gadget.getAttachment(my_id, my_tag);
+        });
+    })
+    .declareMethod("token_putAttachment", function (my_id, my_tag, my_dict) {
+      return this.getDeclaredGadget("token_jio")
+        .push(function (my_gadget) {
+          return my_gadget.putAttachment(my_id, my_tag, my_dict);
+        });
+    })
+    .declareMethod("token_removeAttachment", function (my_id, my_tag) {
+      return this.getDeclaredGadget("token_jio")
+        .push(function (my_gadget) {
+          return my_gadget.removeAttachment(my_id, my_tag);
+        });
+    })
+
     .declareMethod("render", function (my_option_dict) {
       var gadget = this;
       var dict = gadget.property_dict;
