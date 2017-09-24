@@ -12,56 +12,57 @@
   // parameters
   /////////////////////////////
   var ARR = [];
-  var STR = '';
-  var SPC = ' ';
-  var POS = 'data-position';
-  var ID = 'data-video';
-  var ACTION = 'data-action';
-  var DELETE = 'delete';
-  var ATTACH = 'attach_file';
-  var BUTTON = 'button';
-  var CLOSE = 'frube-dialog-close';
-  var OPEN = 'frube-dialog-open';
-  var DIALOG = '.frube-dialog-';
-  var IS_SLIDER = 'slider';
-  var UPLOAD = 'frube-upload';
-  var OVERLAY = 'frube-overlay';
-  var CONFIGURE = 'configure';
+  var STR = "";
+  var SPC = " ";
+  var AND = " - ";
+  var POS = "data-position";
+  var ID = "data-video";
+  var ACTION = "data-action";
+  var DELETE = "delete";
+  var ATTACH = "attach_file";
+  var BUTTON = "button";
+  var CLOSE = "frube-dialog-close";
+  var OPEN = "frube-dialog-open";
+  var DIALOG = ".frube-dialog-";
+  var IS_SLIDER = "slider";
+  var UPLOAD = "frube-upload";
+  var OVERLAY = "frube-overlay";
+  var CONFIGURE = "configure";
   var FORBIDDEN = 403;
-  var QUOTA = 'quotaExceeded';
-  var ERR_QUOTA = '(Quota exceeded)&nbsp;';
-  var SECTION = 'section';
-  var I = 'i';
-  var PLAYING = 'frube-video-playing';
-  var LISTED = 'frube-video-listed';
-  var DELETED = 'frube-video-deleted';
-  var DISABLED = 'disabled';
-  var MINUS = '-';
-  var LO = 'tiny';
-  var HI = 'hd720'; 
-  var FILTER = 'filter';
-  var REMOVE = 'delete_sweep';
-  var NAME = 'name';
-  var PLAY = 'library_music';
-  var SEARCH = 'search';
-  var ADD = 'playlist_add';
-  var UNDO = 'undo_edit';
-  var NONDO = 'frube-can-undo';
-  var SEARCHING = 'searching';
-  var WATCHING = 'watching';
-  var OFFLINE = 'offline';
-  var SLIDER = 'frube-slider';
-  var HIDDEN = 'frube-hidden';
-  var REPEAT = '.frube-btn-repeat';
-  var QUALITY = '.frube-btn-quality';
-  var SHUFFLE = '.frube-btn-shuffle';
-  var SEARCH_INPUT = '.frube-search-input';
-  var FILTER_INPUT = '.frube-filter-input';
-  var SUBMIT = '.frube-dialog-submit';
-  var PLACEHOLDER = 'placeholder.png';
-  var LIKE = '.frube-like';
-  var OPAQUE = 'frube-disabled';
-  var SPIN = 'frube-spin';
+  var QUOTA = "quotaExceeded";
+  var ERR_QUOTA = "(Quota exceeded)&nbsp;";
+  var SECTION = "section";
+  var ICON = "i";
+  var PLAYING = "frube-video-playing";
+  var LISTED = "frube-video-listed";
+  var DELETED = "frube-video-deleted";
+  var DISABLED = "disabled";
+  var MINUS = "-";
+  var LO = "tiny";
+  var HI = "hd720";
+  var FILTER = "filter";
+  var REMOVE = "delete_sweep";
+  var NAME = "name";
+  var PLAY = "library_music";
+  var SEARCH = "search";
+  var ADD = "playlist_add";
+  var UNDO = "undo_edit";
+  var NONDO = "frube-can-undo";
+  var SEARCHING = "searching";
+  var WATCHING = "watching";
+  var OFFLINE = "offline";
+  var SLIDER = "frube-slider";
+  var HIDDEN = "frube-hidden";
+  var REPEAT = ".frube-btn-repeat";
+  var QUALITY = ".frube-btn-quality";
+  var SHUFFLE = ".frube-btn-shuffle";
+  var SEARCH_INPUT = ".frube-search-input";
+  var FILTER_INPUT = ".frube-filter-input";
+  var SUBMIT = ".frube-dialog-submit";
+  var PLACEHOLDER = "placeholder.png";
+  var LIKE = ".frube-like";
+  var OPAQUE = "frube-disabled";
+  var SPIN = "frube-spin";
   var TEN_MINUTES = 600000;
 
   /////////////////////////////
@@ -71,24 +72,12 @@
     return ARR.slice.call(my_nodeList);
   }
 
-  function setVideoHash(my_video_id) {
-    window.location.hash = my_video_id;
-  }
-
   function getTimeStamp() {
     return new window.Date().getTime();
   }
 
-  function getActiveElem() {
-    return window.document.activeElement;
-  }
-
-  function getAllElems(my_element, my_selector) {
-    return (my_element || window.document).querySelectorAll(my_selector);
-  }
-
   function getElem(my_element, my_selector) {
-    return (my_element || window.document).querySelector(my_selector);
+    return my_element.querySelector(my_selector);
   }
 
   function getAttr(my_event, my_attribute) {
@@ -104,19 +93,15 @@
   }
 
   function getVideo(my_element, my_video_id) {
-    return getElem(my_element, 'div[data-video="' + my_video_id + '"]');
-  }
-
-  function setTitle(my_title) {
-    window.document.title = my_title;
+    return getElem(my_element, "div[data-video='" + my_video_id + "']");
   }
 
   function setButtonIcon(my_button, my_icon) {
-    getElem(my_button, I).textContent = my_icon;
+    getElem(my_button, ICON).textContent = my_icon;
   }
 
   function buildTemplateDict(my_template_dict) {
-    makeList(getAllElems(null, 'script[type="text/x-supplant-template"]'))
+    makeList(window.document.querySelectorAll("script[type='text/x-supplant']"))
       .forEach(function (item) {
         my_template_dict[item.id] = item.textContent;
       });
@@ -124,38 +109,38 @@
   }
 
   function mergeDict(my_return_dict, my_new_dict) {
-    var param;
-    for (param in my_new_dict) {
-      if (my_new_dict.hasOwnProperty(param)) {
-        my_return_dict[param] = my_new_dict[param];
-      }
-    }
-    return my_return_dict;
+    return Object.keys(my_new_dict).reduce(function (pass_dict, key) {
+      pass_dict[key] = my_new_dict[key];
+      return pass_dict;
+    }, my_return_dict);
   }
 
-  function getStorageConfig(my_token) {
-    return {
-      "type": "replicate",
-      "check_local_modification": true,
-      "check_local_creation": true,
-      "check_local_deletion": true,
-      "conflict_handling": 1,
-      "local_sub_storage": {
-        "type": "indexeddb",
-        "database": "frube"
-      },
-      "remote_sub_storage": {
-        "type": "query",
-        "sub_storage": {
-          "type": "drivetojiomapping",
+  function getFrubeConfig(my_token) {
+    if (my_token) {
+      return {
+        "type": "replicate",
+        "check_local_modification": true,
+        "check_local_creation": true,
+        "check_local_deletion": true,
+        "conflict_handling": 1,
+        "local_sub_storage": {
+          "type": "indexeddb",
+          "database": "frube"
+        },
+        "remote_sub_storage": {
+          "type": "query",
           "sub_storage": {
-            "type": "dropbox",
-            "access_token": my_token,
-            "root": "sandbox"
+            "type": "drivetojiomapping",
+            "sub_storage": {
+              "type": "dropbox",
+              "access_token": my_token,
+              "root": "sandbox"
+            }
           }
         }
-      }
-    };
+      };
+    }
+    return {"type": "indexeddb", "database": "frube"};
   }
 
   function getVideoHash() {
@@ -167,8 +152,8 @@
 
   function resizeFileToBase64(my_file) {
     return new RSVP.Promise(function (resolve, reject) {
-      var img = new Image(),
-        canvas = window.document.createElement("canvas");
+      var img = new Image();
+      var canvas = window.document.createElement("canvas");
 
       img.onload = function () {
         canvas.width = 320;
@@ -191,11 +176,9 @@
 
   function setDom(my_node, my_string, my_purge) {
     var faux_element = window.document.createElement(SECTION);
-
     if (my_purge) {
-      purgeDom(my_node);    
+      purgeDom(my_node);
     }
-
     faux_element.innerHTML = my_string;
     makeList(faux_element.children).forEach(function (element) {
       my_node.appendChild(element);
@@ -203,8 +186,8 @@
   }
 
   function getScore(my_list, my_zero_stamp) {
-    var now = getTimeStamp(),
-      age =  now - my_zero_stamp;
+    var now = getTimeStamp();
+    var age =  now - my_zero_stamp;
   
     return (my_list || ARR).reduce(function (points, up_timestamp) {
       return points + (1 - (now - up_timestamp)/age);
@@ -228,17 +211,18 @@
   // http://javascript.crockford.com/remedial.html
   if (!String.prototype.supplant) {
     String.prototype.supplant = function (o) {
-      return this.replace(
+      var str = this;
+      return str.replace(
         /\{([^{}]*)\}/g,
         function (a, b) {
           var r = o[b];
-          return typeof r === 'string' || typeof r === 'number' ? r : a;
+          return typeof r === "string" || typeof r === "number" ? r : a;
         }
       );
     };
   }
 
-  //https://stackoverflow.com/a/4760279  
+  //https://stackoverflow.com/a/4760279
   function dynamicSort(prop) {
     var sortOrder = 1;
     if (prop[0] === MINUS) {
@@ -253,35 +237,26 @@
 
   // http://stackoverflow.com/a/25209563
   function parseDuration(duration) {
-    var matches = duration.match(/[0-9]+[HMS]/g),
-      seconds = 0;
+    var matches = duration.match(/[0-9]+[HMS]/g);
+    var seconds = 0;
 
     matches.forEach(function (part) {
-      var unit = part.charAt(part.length-1),
-        amount = parseInt(part.slice(0,-1), 10);
-  
-        switch (unit) {
-          case 'H':
-            seconds += amount * 60 * 60;
-            break;
-          case 'M':
-            seconds += amount * 60;
-            break;
-          case 'S':
-            seconds += amount;
-            break;
-          default:
-        }
-      });
-      return seconds;
-  }
+      var unit = part.charAt(part.length-1);
+      var amount = parseInt(part.slice(0,-1), 10);
 
-  function setArtistAndTitle(my_item) {
-    return [
-      my_item.custom_artist,
-      my_item.custom_title || my_item.original_title,
-      my_item.custom_album
-    ].filter(Boolean).join(" - ");
+      switch (unit) {
+        case "H":
+          seconds += amount * 60 * 60;
+          break;
+        case "M":
+          seconds += amount * 60;
+          break;
+        case "S":
+          seconds += amount;
+          break;
+      }
+    });
+    return seconds;
   }
 
   function setVolume(my_player, my_event) {
@@ -315,14 +290,13 @@
   
   function swapVideo(my_element, my_id) {
     var current_video = getVideo(my_element, my_id),
-      next_hash = getVideoHash(),
-      next_video = getVideo(my_element, next_hash);
-      if (current_video) {
-        unsetOverlay(current_video, PLAYING);
-      }
-      if (next_video) {
-        setOverlay(next_video, PLAYING);
-      }
+      next_video = getVideo(my_element, getVideoHash());
+    if (current_video) {
+      unsetOverlay(current_video, PLAYING);
+    }
+    if (next_video) {
+      setOverlay(next_video, PLAYING);
+    }
   }
 
   rJS(window)
@@ -362,8 +336,8 @@
         buffer_dict: {},
         queue_list: [],
         player: null,
-        error_status: getElem(element, '.frube-error'),
-        dropbox_button: getElem(element,  '.frube-connector-dropbox'),
+        error_status: getElem(element, ".frube-error"),
+        dropbox_button: getElem(element,  ".frube-connector-dropbox"),
         action_container: getElem(element, ".frube-action"),
         main: getElem(element, ".frube-page-content"),
         video_info: getElem(element, ".frube-video-info"),
@@ -385,19 +359,19 @@
     /////////////////////////////
     // acquired methods
     /////////////////////////////
-    .declareAcquiredMethod('frube_create', 'frube_create')
-    .declareAcquiredMethod('frube_repair', 'frube_repair')
-    .declareAcquiredMethod('frube_allDocs', 'frube_allDocs')
-    .declareAcquiredMethod('frube_put', 'frube_put')
-    .declareAcquiredMethod('frube_get', 'frube_get')
-    .declareAcquiredMethod('frube_remove', 'frube_remove')
-    .declareAcquiredMethod('tube_create', 'tube_create')
-    .declareAcquiredMethod('tube_allDocs', 'tube_allDocs')
-    .declareAcquiredMethod('tube_get', 'tube_get')
-    .declareAcquiredMethod('token_create', 'token_create')
-    .declareAcquiredMethod('token_getAttachment', 'token_getAttachment')
-    .declareAcquiredMethod('token_putAttachment', 'token_putAttachment')
-    .declareAcquiredMethod('token_removeAttachment', 'token_removeAttachment')
+    .declareAcquiredMethod("frube_create", "frube_create")
+    .declareAcquiredMethod("frube_repair", "frube_repair")
+    .declareAcquiredMethod("frube_allDocs", "frube_allDocs")
+    .declareAcquiredMethod("frube_put", "frube_put")
+    .declareAcquiredMethod("frube_get", "frube_get")
+    .declareAcquiredMethod("frube_remove", "frube_remove")
+    .declareAcquiredMethod("tube_create", "tube_create")
+    .declareAcquiredMethod("tube_allDocs", "tube_allDocs")
+    .declareAcquiredMethod("tube_get", "tube_get")
+    .declareAcquiredMethod("token_create", "token_create")
+    .declareAcquiredMethod("token_getAttachment", "token_getAttachment")
+    .declareAcquiredMethod("token_putAttachment", "token_putAttachment")
+    .declareAcquiredMethod("token_removeAttachment", "token_removeAttachment")
 
     /////////////////////////////
     // published methods
@@ -407,9 +381,9 @@
     // declared methods
     /////////////////////////////
     .declareMethod("render", function (my_option_dict) {
-      var gadget = this,
-        dict = gadget.property_dict,
-        video = getVideoHash() || dict.queue_list[0];
+      var gadget = this;
+      var dict = gadget.property_dict;
+      var video = getVideoHash() || dict.queue_list[0];
 
       // apply material design to injected DOM - lone heavy duty call
       window.componentHandler.upgradeDom();
@@ -417,16 +391,10 @@
 
       return new RSVP.Queue()
         .push(function () {
-          return gadget.token_create({"type": 'local', "sessiononly": false});
+          return gadget.setRemoteConnection();
         })
         .push(function () {
-          return gadget.verifyConnection();
-        })
-        .push(function () {
-          return RSVP.all([
-            gadget.tube_create({"type": 'youtube', "api_key": dict.youtube_id}),
-            gadget.frube_create({"type": 'indexeddb', "database": 'frube'})
-          ]);
+          return gadget.tube_create({"type": "youtube", "api_key": dict.youtube_id});
         })
         .push(function () {
           if (video) {
@@ -448,26 +416,36 @@
         });
     })
 
-    .declareMethod("verifyConnection", function () {
+    .declareMethod("setRemoteConnection", function () {
       var gadget = this;
 
       return new RSVP.Queue()
         .push(function () {
+          return gadget.token_create({"type": "local", "sessiononly": false});
+        })
+        .push(function () {
           return gadget.token_getAttachment("/", "token", {"format": "text"});
+        })
+        .push(undefined, function (error) {
+          if (error.status_code === 404) {
+            return 0;
+          }
+          throw error;
         })
         .push(function (token) {
           var payload = JSON.parse(token);
-          if (getTimeStamp() - payload.timestamp > TEN_MINUTES) {
+          if (!payload && getTimeStamp() - payload.timestamp > TEN_MINUTES) {
             setButtonIcon(gadget.property_dict.sync_button, "sync_disabled");
             return RSVP.all([
               gadget.token_removeAttachment("/", "token"),
-              gadget.changeState({"dropbox_connected": null})
-            ]);
+              gadget.changeState({"dropbox_connected": null}),
+              gadget.frube_create(getFrubeConfig())
+            ]); 
           }
           return new RSVP.Queue()
             .push(function () {
               return RSVP.all([
-                gadget.frube_create(getStorageConfig(payload.token)),
+                gadget.frube_create(getFrubeConfig(payload.token)),
                 gadget.changeState({"dropbox_connected": true})
               ]);
             })
@@ -477,18 +455,12 @@
               setButtonIcon(dict.sync_button, "sync");
               return gadget.syncPlaylist();
             });
-        })
-        .push(undefined, function (error) {
-          if (error.status_code === 404) {
-            return {};
-          }
-          throw error;
         });
     })
 
     .declareMethod("handleError", function (my_error) {
-      var gadget = this,
-        dict = gadget.property_dict;
+      var gadget = this;
+      var dict = gadget.property_dict;
 
       if (my_error.resume) {
         return RSVP.all([
@@ -497,15 +469,15 @@
         ]);
       }
 
-      // try to catch and handle
+      // XXX try to catch and handle
       throw my_error;
     })
 
     .declareMethod("loadVideo", function (my_video_id) {
-      var gadget = this,
-        dict = gadget.property_dict,
-        element = gadget.element,
-        tube_data;
+      var gadget = this;
+      var dict = gadget.property_dict;
+      var element = gadget.element;
+      var tube_data;
 
       if (!navigator.onLine) {
         return gadget.handleError({"resume": my_video_id});
@@ -513,8 +485,8 @@
 
       return new RSVP.Queue()
         .push(function () {
-          var hd_check = getElem(element, QUALITY).checked,
-            state = gadget.state;
+          var hd_check = getElem(element, QUALITY).checked;
+          var state = gadget.state;
 
           if (state.quality === LO && hd_check) {
             dict.player.destroy();
@@ -527,11 +499,11 @@
           return;
         })
         .push(function () {
-          var player = dict.player,
-            main = dict.main;
+          var player = dict.player;
+          var main = dict.main;
 
           if (!player || (player && !player.h)) {
-            dict.player = new YT.Player('player', {
+            dict.player = new YT.Player("player", {
               "videoId": my_video_id,
               "width": main.clientWidth,
               "height": Math.max(main.clientWidth * 0.66 * 9 / 16, 250),
@@ -573,12 +545,12 @@
           throw error;
         })
         .push(function (frube_response) {
-          var frube_data = frube_response,
-            info = dict.video_info,
-            temp = gadget.template_dict,
-            item = dict.search_result_dict[my_video_id] = tube_data.items[0],
-            score = getScore(frube_data.upvote_list, frube_data.timestamp) -
-              getScore(frube_data.downvote_list, frube_data.timestamp);
+          var frube_data = frube_response;
+          var info = dict.video_info;
+          var temp = gadget.template_dict;
+          var item = dict.search_result_dict[my_video_id] = tube_data.items[0];
+          var score = getScore(frube_data.upvote_list, frube_data.timestamp) -
+            getScore(frube_data.downvote_list, frube_data.timestamp);
 
           setDom(info, temp.video_entry_template.supplant({
             "title": item.snippet.title,
@@ -587,7 +559,7 @@
             "score": score.toFixed(5)
           }), true);
 
-          setTitle(item.snippet.title);
+          window.document.title = item.snippet.title;
           setVideoSlider(dict.video_slider, item.contentDetails);
           setViewsSlider(getElem(info, LIKE), score);
           return;
@@ -596,19 +568,19 @@
           if (error.type === FORBIDDEN && error.detail === QUOTA) {
             dict.error_status.textContent = ERR_QUOTA;
             dict.error_status.classList.remove(HIDDEN);
-            getElem(element, '.frube-dialog-configure').showModal();
+            getElem(element, ".frube-dialog-configure").showModal();
           }
           throw error;
         });
     })
 
     .declareMethod("getRandomId", function () {
-      var gadget = this,
-        dict = gadget.property_dict,
-        select_list = [],
-        len = dict.queue_list.length,
-        pick = Math.round(len/5, 0),
-        id;
+      var gadget = this;
+      var dict = gadget.property_dict;
+      var select_list = [];
+      var len = dict.queue_list.length;
+      var pick = Math.round(len/5, 0);
+      var id;
   
       if (pick === 0) {
         return getRandomDigit(len);
@@ -625,15 +597,15 @@
           return RSVP.all(select_list);
         })
         .push(function (my_result_list) {
-          var high_score_id,
-            zero = gadget.state.zero_stamp;
+          var high_score_id;
+          var zero = gadget.state.zero_stamp;
 
           my_result_list.reduce(function (total, item) {
-            var up_list = item.upvote_list,
-              down_list = item.downvote_list,
-              ups = (getScore(up_list, zero)/up_list.length) || 0,
-              downs = (getScore(item.down_list, zero)/down_list.length) || 0,
-              score = ups - downs;
+            var up_list = item.upvote_list;
+            var down_list = item.downvote_list;
+            var ups = (getScore(up_list, zero)/up_list.length) || 0;
+            var downs = (getScore(item.down_list, zero)/down_list.length) || 0;
+            var score = ups - downs;
 
             if (score > total) {
               high_score_id = id;
@@ -647,15 +619,15 @@
     })
 
     .declareMethod("getVideoId", function (my_jump) {
-      var gadget = this,
-        dict = gadget.property_dict;
-      
+      var gadget = this;
+      var dict = gadget.property_dict;
+
       return new RSVP.Queue()
         .push(function () {
-          var queue_list = dict.queue_list,
-            len = queue_list.length,
-            new_id,
-            i;
+          var queue_list = dict.queue_list;
+          var len = queue_list.length;
+          var new_id;
+          var i;
 
           if (!my_jump && len > 0) {
             return gadget.getRandomId();
@@ -694,8 +666,8 @@
     })
 
     .declareMethod("rateVideo", function (my_id, my_direction) {
-      var gadget = this,
-        dict = gadget.property_dict;
+      var gadget = this;
+      var dict = gadget.property_dict;
       return new RSVP.Queue()
         .push(function () {
           return gadget.frube_get(my_id);
@@ -709,7 +681,7 @@
           }
           score = getScore(video.upvote_list, video.timestamp) -
             getScore(video.downvote_list, video.timestamp);
-          getElem(gadget.element, '.frube-like-count').textContent = score.toFixed(5);
+          getElem(gadget.element, ".frube-like-count").textContent = score.toFixed(5);
           setViewsSlider(getElem(dict.video_info, ".frube-like"), score);
           return RSVP.all([
             gadget.frube_put(my_id, video),
@@ -719,10 +691,10 @@
     })
 
     .declareMethod("videoOnStateChange", function () {
-      var gadget = this,
-        player = gadget.property_dict.player,
-        current_state = player.getPlayerState(), 
-        play_icon = getElem(gadget.element, ".frube-btn-play-pause i");
+      var gadget = this;
+      var player = gadget.property_dict.player;
+      var current_state = player.getPlayerState(); 
+      var play_icon = getElem(gadget.element, ".frube-btn-play-pause i");
 
       if (current_state === YT.PlayerState.ENDED) {
         if (gadget.element.querySelector(REPEAT).checked) {
@@ -740,10 +712,10 @@
     })
 
     .declareMethod("resetFrube", function (my_offline) {
-      var gadget = this,
-        dict = gadget.property_dict,
-        player = dict.player,
-        temp = gadget.template_dict;
+      var gadget = this;
+      var dict = gadget.property_dict;
+      var player = dict.player;
+      var temp = gadget.template_dict;
 
       window.location.hash = STR;
       getElem(gadget.element, SEARCH_INPUT).value = STR;
@@ -766,10 +738,10 @@
     })
         
     .declareMethod("removeVideo", function (my_video_id, my_element) {
-      var gadget = this,
-        dict = gadget.property_dict,
-        video;
-      
+      var gadget = this;
+      var dict = gadget.property_dict;
+      var video;
+
       // undo = unflag for deletion
       if (dict.buffer_dict.hasOwnProperty(my_video_id)) {
         setButtonIcon(getElem(my_element, BUTTON), REMOVE);
@@ -797,12 +769,12 @@
     })
 
     .declareMethod("handleDialog", function (my_event) {
-      var gadget = this,
-        action = my_event.target.getAttribute(ACTION),
-        dialog = getElem(gadget.element, (DIALOG + action)),
-        active_element = getActiveElem(),
-        video_id,
-        form_data;
+      var gadget = this;
+      var action = my_event.target.getAttribute(ACTION);
+      var dialog = getElem(gadget.element, (DIALOG + action));
+      var active_element = window.document.activeElement;
+      var video_id;
+      var form_data;
 
       if (active_element && active_element.classList.contains(CLOSE)) {
         dialog.close();
@@ -812,7 +784,7 @@
         dialog.showModal();
         return;
       }
-      if (action === 'edit') {
+      if (action === "edit") {
         video_id = getAttr(event, ID);
         form_data = new FormData(my_event.target);
 
@@ -841,11 +813,11 @@
     })
 
     .declareMethod("editVideo", function (my_event, my_video_id) {
-      var gadget = this,
-        action = my_event.target.getAttribute(ACTION),
-        dialog = getElem(gadget.element, (DIALOG + action)),
-        temp = gadget.template_dict,
-        button = dialog.querySelector(SPC + SUBMIT);
+      var gadget = this;
+      var action = my_event.target.getAttribute(ACTION);
+      var dialog = getElem(gadget.element, (DIALOG + action));
+      var temp = gadget.template_dict;
+      var button = dialog.querySelector(SPC + SUBMIT);
 
       if (button) {
         button.setAttribute("data-video", my_video_id);
@@ -854,7 +826,7 @@
             return gadget.frube_get(my_video_id);
           })
           .push(function (video_data) {
-            setDom(getElem(dialog, '.frube-dialog-content'),
+            setDom(getElem(dialog, ".frube-dialog-content"),
               temp.edit_entry_template.supplant({
                 "video_title": video_data.custom_title,
                 "video_artist": video_data.custom_artist,
@@ -871,10 +843,10 @@
     })
 
     .declareMethod("addVideo", function (my_video_id, my_element) {
-      var gadget = this,
-        dict = gadget.property_dict,
-        video_dict = dict.search_result_dict[my_video_id],
-        video_id = video_dict.id.videoId || my_video_id;
+      var gadget = this;
+      var dict = gadget.property_dict;
+      var video_dict = dict.search_result_dict[my_video_id];
+      var video_id = video_dict.id.videoId || my_video_id;
 
       // undo = unflag for adding
       if (dict.buffer_dict.hasOwnProperty(my_video_id)) {      
@@ -890,14 +862,14 @@
           "id": video_id,
           "type": video_dict.id.kind,
           "original_title": video_dict.snippet.title,
-          "original_artist": '',
+          "original_artist": STR,
           "original_cover": video_dict.snippet.thumbnails.medium.url,
-          "custom_title": '',
-          "custom_artist": '',
-          "custom_album": '',
-          "custom_cover": '',
-          "upvote_list": [],
-          "downvote_list": [],
+          "custom_title": STR,
+          "custom_artist": STR,
+          "custom_album": STR,
+          "custom_cover": STR,
+          "upvote_list": ARR,
+          "downvote_list": ARR,
           "timestamp": new Date().getTime(),
           "pos": 0
         };
@@ -906,11 +878,11 @@
     })
 
     .declareMethod("clearBuffer", function () {
-      var gadget = this,
-        dict = gadget.property_dict,
-        buffer = dict.buffer_dict,
-        promise_list = [],
-        id;
+      var gadget = this;
+      var dict = gadget.property_dict;
+      var buffer = dict.buffer_dict;
+      var promise_list = [];
+      var id;
 
       for (id in buffer) {
         if (buffer.hasOwnProperty(id)) {
@@ -936,10 +908,10 @@
     })
 
     .declareMethod("refreshPlaylist", function () {
-      var gadget = this,
-        dict = gadget.property_dict,
-        temp = gadget.template_dict,
-        query = getElem(gadget.element, FILTER_INPUT).value;
+      var gadget = this;
+      var dict = gadget.property_dict;
+      var temp = gadget.template_dict;
+      var query = getElem(gadget.element, FILTER_INPUT).value;
 
       dict.queue_list = [];
 
@@ -951,25 +923,32 @@
           return gadget.frube_allDocs({"include_docs": true});
         })
         .push(function (my_response) {
+          var len = my_response.data.total_rows;
+          var oldest_timestamp = getTimeStamp();
+          var html_content = STR;
           var response = my_response.data.rows.map(function (item, index) {
+            var doc = item.doc;
             
             // filter replication records hash
-            if (!item.doc.original_title) {
+            if (!doc.original_title) {
               return;
             }
+
+            doc.title = [
+              doc.custom_artist,
+              (doc.custom_title || doc.original_title),
+              doc.custom_album
+            ].filter(Boolean).join(AND);
 
             // filter playlist
-            if (query !== STR && setArtistAndTitle(item.doc).toLowerCase().indexOf(query.toLowerCase()) === -1) {
+            if (query !== STR && doc.title.toLowerCase().indexOf(query.toLowerCase()) === -1) {
               return;
             }
 
-            item.doc.id = item.doc.id || item.id;
-            return item.doc;
-          }).filter(Boolean).sort(dynamicSort("-pos")),
-          len = my_response.data.total_rows,
-          oldest_timestamp = getTimeStamp(),
-          html_content;
-          
+            doc.id = doc.id || item.id;
+            return doc;
+          }).filter(Boolean).sort(dynamicSort("-pos"));
+
           response.forEach(function (doc, pos) {
             var play = gadget.state.play;
             dict.queue_list.push(doc.id);
@@ -978,7 +957,7 @@
             }
             html_content += temp.queue_entry_template.supplant({
               "video_id": doc.id,
-              "title": setArtistAndTitle(doc),
+              "title": doc.title,
               "thumbnail_url": doc.custom_cover || doc.original_cover,
               "pos": doc.pos,
               "disable_first": pos === 0 ? DISABLED : STR,
@@ -995,21 +974,21 @@
     })
 
     .declareMethod("refreshSearchResults", function () {
-      var gadget = this,
-        dict = gadget.property_dict,
-        catalog = dict.search_result_dict,
-        list = dict.queue_list,
-        response = STR;
+      var gadget = this;
+      var dict = gadget.property_dict;
+      var catalog = dict.search_result_dict;
+      var list = dict.queue_list;
+      var response = STR;
 
       return new RSVP.Queue()
         .push(function () {
           return gadget.clearBuffer();
         })
         .push(function () {
-          var item_id,
-            item,
-            video_id,
-            is_listed;
+          var item_id;
+          var item;
+          var video_id;
+          var is_listed;
 
           for (item_id in catalog) {
             if (catalog.hasOwnProperty(item_id)) {
@@ -1034,10 +1013,10 @@
     })
 
     .declareMethod("jumpVideo", function (my_jump) {
-      var gadget = this,
-        dict = gadget.property_dict,
-        element = gadget.element,
-        jump = getElem(element, SHUFFLE).checked ? null : my_jump;
+      var gadget = this;
+      var dict = gadget.property_dict;
+      var element = gadget.element;
+      var jump = getElem(element, SHUFFLE).checked ? null : my_jump;
 
       return new RSVP.Queue()
         .push(function () {
@@ -1052,11 +1031,11 @@
     })
 
     .declareMethod("updateSlider", function () {
-      var gadget = this,
-        state = gadget.state,
-        dict = gadget.property_dict,
-        player = dict.player,
-        slider = dict.video_slider;
+      var gadget = this;
+      var state = gadget.state;
+      var dict = gadget.property_dict;
+      var player = dict.player;
+      var slider = dict.video_slider;
 
       if (state.mode === WATCHING) {
         return;
@@ -1071,8 +1050,8 @@
     })
 
     .declareMethod("connectAndSyncWithDropbox", function(my_event) {
-      var gadget = this,
-        dict = gadget.property_dict;
+      var gadget = this;
+      var dict = gadget.property_dict;
 
       return new RSVP.Queue()
         .push(function () {
@@ -1082,10 +1061,10 @@
           return my_dropbox_gadget.setDropboxConnect(dict.dropbox_id);
         })
         .push(function (my_oauth_dict) {
-          var token = my_oauth_dict.access_token,
-            payload = new Blob([
-              JSON.stringify({"token": token, "timestamp": getTimeStamp()})
-            ], {type: "text/plain"});
+          var token = my_oauth_dict.access_token;
+          var payload = new Blob([
+            JSON.stringify({"token": token, "timestamp": getTimeStamp()})
+          ], {type: "text/plain"});
 
           return RSVP.all([
             gadget.frube_create(getStorageConfig(token)),
@@ -1117,12 +1096,12 @@
     })
 
     .declareMethod("triggerSearchFromScroll", function (my_event) {
-      var gadget = this,
-        state = gadget.state,
-        main = event.target,
-        main_pos = main.scrollTop,
-        height_trigger,
-        sec_trigger;
+      var gadget = this;
+      var state = gadget.state;
+      var main = event.target;
+      var main_pos = main.scrollTop;
+      var height_trigger;
+      var sec_trigger;
 
       if (state.mode === SEARCHING) {
         if (main_pos >= state.last_main_pos) {
@@ -1155,16 +1134,16 @@
           return resizeFileToBase64(my_event.target.files[0]);
         })
         .push(function (blob) {
-          getElem(element, '.frube-edit-custom-cover-image').src =
-            getElem(element, '.frube-edit-custom-cover-input').value = blob;
+          getElem(element, ".frube-edit-custom-cover-image").src =
+            getElem(element, ".frube-edit-custom-cover-input").value = blob;
           my_event.target.previousElementSibling.textContent = DELETE;
         });
     })
 
     .declareMethod("bufferInput", function (my_event, my_trigger) {
-      var gadget = this,
-        target = my_event.target,
-        is_search = my_trigger === SEARCH;
+      var gadget = this;
+      var target = my_event.target;
+      var is_search = my_trigger === SEARCH;
       
       // empty filter clears all filters, let it pass
       if (target.value.length === 0 && is_search) {
@@ -1191,10 +1170,10 @@
     })
 
     .declareMethod("runSearch", function (my_no_delay, my_next_page) {
-      var gadget = this,
-        dict = gadget.property_dict,
-        state = gadget.state,
-        time = getTimeStamp();
+      var gadget = this;
+      var dict = gadget.property_dict;
+      var state = gadget.state;
+      var time = getTimeStamp();
       
       if (!my_no_delay && time - state.last_key_stroke < state.search_buffer) {
         return gadget.changeState({"is_searching": false});
@@ -1219,8 +1198,8 @@
           });
         })
         .push(function () {
-          var search_input = getElem(gadget.element, SEARCH_INPUT),
-            token = STR;
+          var search_input = getElem(gadget.element, SEARCH_INPUT);
+          var token = STR;
           if (my_next_page && gadget.state.next_page_token) {
             token = gadget.state.next_page_token;
           }
@@ -1230,8 +1209,8 @@
           });
         })
         .push(function (response) {
-          var item,
-            i;
+          var item;
+          var i;
           if (response.data.total_rows > 0) {
             response.nextPageToken = response.data.rows.nextPageToken;
           }
@@ -1250,7 +1229,7 @@
           if (error.type === FORBIDDEN && error.detail === QUOTA) {
             dict.error_status.textContent = ERR_QUOTA;
             dict.error_status.classList.remove(HIDDEN);
-            getElem(gadget.element, '.frube-dialog-configure').showModal();
+            getElem(gadget.element, ".frube-dialog-configure").showModal();
             return;
           }
 
@@ -1262,7 +1241,6 @@
     /////////////////////////////
     // declared jobs
     /////////////////////////////
-
     .declareJob("waitForNetwork", function (my_video_id) {
       var gadget = this;
 
@@ -1297,8 +1275,8 @@
     })
 
     .declareJob("syncPlaylist", function () {
-      var gadget = this,
-        sync_button = gadget.property_dict.sync_button;
+      var gadget = this;
+      var sync_button = gadget.property_dict.sync_button;
 
       return new RSVP.Queue()
         .push(function () {
@@ -1338,9 +1316,9 @@
     // on state change
     /////////////////////////////
     .onStateChange(function (modification_dict) {
-      var gadget = this,
-        dict = gadget.property_dict,
-        queue;
+      var gadget = this;
+      var dict = gadget.property_dict;
+      var queue;
 
       if (!gadget.state.play) {
         dict.video_controller.classList.add(HIDDEN);
@@ -1367,7 +1345,7 @@
             if (modification_dict.play === video_hash) {
               return gadget.loadVideo(video_hash);
             }
-            setVideoHash(modification_dict.play);
+            window.location.hash = modification_dict.play;
             swapVideo(dict.playlist, video_hash);
             return;
           });
@@ -1409,10 +1387,10 @@
 
     // clickediclick, try to handle through forms, too
     .onEvent("click", function (event) {
-      var target = event.target,
-        video_id = target.getAttribute(ID),
-        bad_indicator,
-        element;
+      var target = event.target;
+      var video_id = target.getAttribute(ID);
+      var bad_indicator;
+      var element;
 
       if (video_id) {
         return this.changeState({"play": video_id});
@@ -1429,8 +1407,8 @@
           element = this.element;
           if (bad_indicator.textContent === DELETE) {
             bad_indicator.textContent = ATTACH;
-            getElem(element, '.frube-edit-custom-cover-image').src = PLACEHOLDER;
-            getElem(element, '.frube-edit-custom-cover-input').value = '';
+            getElem(element, ".frube-edit-custom-cover-image").src = PLACEHOLDER;
+            getElem(element, ".frube-edit-custom-cover-input").value = STR;
             event.preventDefault();
             return false;
           }
@@ -1515,4 +1493,3 @@
     }, false, true);
 
 }(window, rJS, jIO, RSVP, YT, JSON, Blob, FormData, URL, loopEventListener, Math, navigator));
-

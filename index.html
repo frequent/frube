@@ -31,7 +31,7 @@
     <script type="text/javascript" src="renderjs.latest.js"></script>
     <script type="text/javascript" src="index.js"></script>
 
-    <script id="video_entry_template" type="text/x-supplant-template">
+    <script id="video_entry_template" type="text/x-supplant">
       <div class="mdl-card__title frube-title-container">
         <h3 class="mdl-card__title-text frube-video-title">{title}</h3>
       </div>
@@ -80,7 +80,7 @@
       </div>
     </script>
 
-    <script id="queue_entry_template" type="text/x-supplant-template">
+    <script id="queue_entry_template" type="text/x-supplant">
       <div class="frube-video-card mdl-cell {overlay} mdl-cell--3-col mdl-cell--6-col-phone mdl-shadow--2dp" data-video="{video_id}">
         <div class="mdl-card">
           <figure class="mdl-card__media material-icons">
@@ -122,7 +122,7 @@
       </div>
     </script>
 
-    <script id="search_entry_template" type="text/x-supplant-template">
+    <script id="search_entry_template" type="text/x-supplant">
       <div class="frube-search-card mdl-cell {overlay} mdl-cell--3-col mdl-cell--6-col-phone mdl-shadow--2dp" data-video="{video_id}">
         <div class="mdl-card">
           <figure class="mdl-card__media material-icons">
@@ -151,7 +151,7 @@
       </div>
     </script>
 
-    <script id="edit_entry_template" type="text/x-supplant-template">
+    <script id="edit_entry_template" type="text/x-supplant">
       <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
         <input class="mdl-textfield__input" type="text" name="frube-edit-custom-artist" value="{video_artist}">
         <label class="mdl-textfield__label" for="frube-edit-custom-artist">Custom Artist</label>
@@ -175,7 +175,7 @@
       </div>
     </script>
     
-    <script id="search_template" type="text/x-supplant-template">
+    <script id="search_template" type="text/x-supplant">
       <div class="frube-overlay frube-video-{status}"></div>
     </script>
   </head>
