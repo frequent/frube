@@ -393,23 +393,35 @@ font-family: 'Material Icons';
   /* filter: blur(1px); */
   pointer-events: none;
 }
-.frube-overlay.frube-video-playing:before {
+.frube-video-playing:before {
   content: "play_circle_outline";
 }
-.frube-overlay.frube-video-deleted:before {
+.frube-video-deleted:before {
   content: "delete_sweep";
 }
-.frube-overlay.frube-video-listed:before {
+.frube-video-listed:before {
   content: "playlist_add_check";
 }
-.frube-overlay.frube-video-editing:before {
+.frube-video-editing:before {
   content: "edit";
 }
-.frube-overlay.frube-video-searching:before {
+.frube-video-offline:before {
+  content: "signal_wifi_off";
+}
+.frube-video-scanning:before {
+  content: "perm_scan_wifi";
+}
+.frube-video-offline:after {
+  content: "Playing will resume once connection is back";
+}
+.frube-video-searching:before {
   content: "youtube_searched_for";
 }
-.frube-overlay.frube-video-searching:after {
+.frube-video-searching:after {
   content: "Search Youtube to add videos";
+}
+.frube-video-searching:after,
+.frube-video-offline:after {
   font-family: "Roboto","Helvetica","Arial", sans-serif;
   font-size: 14px;
   color: rgba(107, 107, 107, .5);
@@ -422,12 +434,11 @@ font-family: 'Material Icons';
   top: 60%;
 }
 @media (max-width: 1023px) {
-  .frube-overlay.frube-video-searching:after {
+  .frube-video-searching:after,
+  .frube-video-offline {
     top: 65%;
   }
 }
-
-
 
 /* take this, mdl action button! */
 .frube-action form .mdl-button.mdl-button--colored,

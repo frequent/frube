@@ -1,6 +1,6 @@
 /*jslint nomen: true, indent: 2 */
-/*global window, rJS, jIO, RSVP, YT, JSON, Blob, FormData, URL, loopEventListener, Math */
-(function (window, rJS, jIO, RSVP, YT, JSON, Blob, FormData, URL, loopEventListener, Math) {
+/*global window, rJS, jIO, RSVP, YT, JSON, Blob, FormData, URL, loopEventListener, Math, navigator */
+(function (window, rJS, jIO, RSVP, YT, JSON, Blob, FormData, URL, loopEventListener, Math, navigator) {
   "use strict";
 
   // KUDOS: https://github.com/boramalper/Essential-YouTube
@@ -49,6 +49,7 @@
   var NONDO = 'frube-can-undo';
   var SEARCHING = 'searching';
   var WATCHING = 'watching';
+  var OFFLINE = 'offline';
   var SLIDER = 'frube-slider';
   var HIDDEN = 'frube-hidden';
   var REPEAT = '.frube-btn-repeat';
@@ -61,6 +62,7 @@
   var LIKE = '.frube-like';
   var OPAQUE = 'frube-disabled';
   var SPIN = 'frube-spin';
+  var TEN_MINUTES = 600000;
 
   /////////////////////////////
   // methods
@@ -360,19 +362,19 @@
         buffer_dict: {},
         queue_list: [],
         player: null,
-        error_status: element.querySelector('.frube-error'),
-        dropbox_button: element.querySelector('.frube-connector-dropbox'),
-        action_container: element.querySelector(".frube-action"),
-        main: element.querySelector(".frube-page-content"),
-        video_info: element.querySelector(".frube-video-info"),
-        video_controller: element.querySelector(".frube-video-controls"),
-        video_slider: element.querySelector(".frube-slider"),
-        sync_button: element.querySelector(".frube-btn-sync"),
-        search_results: element.querySelector(".frube-search-results"),
-        playlist: element.querySelector(".frube-playlist-results"),
-        playlist_menu: element.querySelector(".frube-playlist-menu"),
-        player_container: element.querySelector(".frube-player-container"),
-        player_controller: element.querySelector(".frube-player-controller"),
+        error_status: getElem(element, '.frube-error'),
+        dropbox_button: getElem(element,  '.frube-connector-dropbox'),
+        action_container: getElem(element, ".frube-action"),
+        main: getElem(element, ".frube-page-content"),
+        video_info: getElem(element, ".frube-video-info"),
+        video_controller: getElem(element, ".frube-video-controls"),
+        video_slider: getElem(element, ".frube-slider"),
+        sync_button: getElem(element, ".frube-btn-sync"),
+        search_results: getElem(element, ".frube-search-results"),
+        playlist: getElem(element, ".frube-playlist-results"),
+        playlist_menu: getElem(element, ".frube-playlist-menu"),
+        player_container: getElem(element, ".frube-player-container"),
+        player_controller: getElem(element, ".frube-player-controller"),
       };
 
       gadget.template_dict = buildTemplateDict({});
@@ -455,7 +457,7 @@
         })
         .push(function (token) {
           var payload = JSON.parse(token);
-          if (getTimeStamp() - payload.timestamp > 600000) {
+          if (getTimeStamp() - payload.timestamp > TEN_MINUTES) {
             setButtonIcon(gadget.property_dict.sync_button, "sync_disabled");
             return RSVP.all([
               gadget.token_removeAttachment("/", "token"),
@@ -484,10 +486,19 @@
         });
     })
 
-    .declareMethod("digestError", function (my_error) {
+    .declareMethod("handleError", function (my_error) {
+      var gadget = this,
+        dict = gadget.property_dict;
+
+      if (my_error.resume) {
+        return RSVP.all([
+          gadget.resetFrube(true),
+          gadget.waitForNetwork(my_error.resume)
+        ]);
+      }
 
       // try to catch and handle
-      throw error;
+      throw my_error;
     })
 
     .declareMethod("loadVideo", function (my_video_id) {
@@ -495,6 +506,10 @@
         dict = gadget.property_dict,
         element = gadget.element,
         tube_data;
+
+      if (!navigator.onLine) {
+        return gadget.handleError({"resume": my_video_id});
+      }
 
       return new RSVP.Queue()
         .push(function () {
@@ -724,32 +739,30 @@
       }
     })
 
-    .declareMethod("resetFrube", function () {
+    .declareMethod("resetFrube", function (my_offline) {
       var gadget = this,
         dict = gadget.property_dict,
+        player = dict.player,
         temp = gadget.template_dict;
 
       window.location.hash = STR;
-
-      dict.player.stopVideo();
-      dict.player.destroy();
-      dict.search_result_dict = {};
       getElem(gadget.element, SEARCH_INPUT).value = STR;
-  
-      return new RSVP.Queue()
-        .push(function () {
-          return RSVP.all([
-            gadget.refreshSearchResults(),
-            gadget.enterSearch()
-          ]);
-        })
-        .push(function () {
-          dict.video_controller.classList.add(HIDDEN);
-          dict.player_controller.classList.add(HIDDEN);
-
-          purgeDom(dict.video_info);
-          setDom(dict.search_results, temp.search_template.supplant({})); 
-        });
+      if (!player || (player && !player.h)) {
+        dict.player.stopVideo();
+        dict.player.destroy();
+      }
+      dict.search_result_dict = {};
+      dict.video_controller.classList.add(HIDDEN);
+      dict.player_controller.classList.add(HIDDEN);
+      purgeDom(dict.video_info);
+      setDom(dict.search_results, temp.search_template.supplant({
+        "status": my_offline ? OFFLINE : SEARCHING
+      }), true);
+      return RSVP.all([
+        gadget.refreshSearchResults(),
+        gadget.enterSearch(),
+        gadget.changeState({"play": null})
+      ]);
     })
         
     .declareMethod("removeVideo", function (my_video_id, my_element) {
@@ -1240,20 +1253,33 @@
             getElem(gadget.element, '.frube-dialog-configure').showModal();
             return;
           }
-          return new RSVP.Queue()
-            .push(function () {
-              return gadget.changeState({"is_searching": false});
-            });
-            // XXX can't throw from here, requests fail often with 403
-            //.push(function () {
-            //  throw error;
-            //});
+
+          // XXX throw?
+          return gadget.changeState({"is_searching": false});
         });
     })
 
     /////////////////////////////
     // declared jobs
     /////////////////////////////
+
+    .declareJob("waitForNetwork", function (my_video_id) {
+      var gadget = this;
+
+      return new RSVP.Queue()
+        .push(function () {
+          return RSVP.delay(TEN_MINUTES/40);
+        })
+        .push(function () {
+          var status;
+          if (navigator.onLine) {
+            status = getElem(gadget.property_dict.search_results, "div");
+            status.className = status.className.replace(OFFLINE, SEARCHING);
+            return gadget.changeState({"play": my_video_id, "mode": WATCHING});
+          }
+          return gadget.waitForNetwork(my_video_id);
+        });
+    })
 
     // onLoop broken
     .declareJob("loopSlider", function () {
@@ -1346,8 +1372,7 @@
             return;
           });
       }
-      
-      // switch between search and playlist mode
+
       if (modification_dict.hasOwnProperty("mode")) {
         if (modification_dict.mode === SEARCHING) {
           setButtonIcon(getElem(dict.action_container, BUTTON), PLAY);
@@ -1360,7 +1385,7 @@
           // clear search, else videos played will be shown as search results
           dict.search_result_dict = {};
 
-          // else search input gets hung up here
+          // refresh, else search input gets hung up
           if (!modification_dict.hasOwnProperty("last_key_stroke")) {
             return gadget.refreshSearchResults();
           }
@@ -1371,8 +1396,6 @@
           dict.search_results.classList.add(HIDDEN);
           dict.player_controller.classList.add(HIDDEN);
           dict.player_container.classList.remove(HIDDEN);
-
-          // ok, cause tab is active
           return gadget.refreshPlaylist();
         }
         dict.main.scrollTop = 0;
@@ -1383,6 +1406,37 @@
     /////////////////////////////
     // on Event
     /////////////////////////////
+
+    // clickediclick, try to handle through forms, too
+    .onEvent("click", function (event) {
+      var target = event.target,
+        video_id = target.getAttribute(ID),
+        bad_indicator,
+        element;
+
+      if (video_id) {
+        return this.changeState({"play": video_id});
+      }
+      switch (target.getAttribute(NAME)) {
+        case "frube-connector-dropbox":
+          return this.connectAndSyncWithDropbox(event);
+        case "frube-view-switch":
+          return this.changeState({
+            "mode": this.state.mode === SEARCHING ? WATCHING : SEARCHING
+          });
+        case "frube-upload":
+          bad_indicator = target.previousElementSibling;
+          element = this.element;
+          if (bad_indicator.textContent === DELETE) {
+            bad_indicator.textContent = ATTACH;
+            getElem(element, '.frube-edit-custom-cover-image').src = PLACEHOLDER;
+            getElem(element, '.frube-edit-custom-cover-input').value = '';
+            event.preventDefault();
+            return false;
+          }
+      }
+    }, false, false)
+
     .onEvent("change", function (event) {
       var target = event.target;
       if (target.classList.contains(SLIDER)) {
@@ -1412,36 +1466,6 @@
           return this.bufferInput(event, SEARCH); 
         case "frube-filter-input":
           return this.bufferInput(event, FILTER);
-      }
-    }, false, false)
-
-    // clickediclick, try to handle through forms, too
-    .onEvent("click", function (event) {
-      var target = event.target,
-        video_id = target.getAttribute(ID),
-        bad_indicator,
-        element;
-
-      if (video_id) {
-        return this.changeState({"play": video_id});
-      }
-      switch (target.getAttribute(NAME)) {
-        case "frube-connector-dropbox":
-          return this.connectAndSyncWithDropbox(event);
-        case "frube-view-switch":
-          return this.changeState({
-            "mode": this.state.mode === SEARCHING ? WATCHING : SEARCHING
-          });
-        case "frube-upload":
-          bad_indicator = target.previousElementSibling;
-          element = this.element;
-          if (bad_indicator.textContent === DELETE) {
-            bad_indicator.textContent = ATTACH;
-            getElem(element, '.frube-edit-custom-cover-image').src = PLACEHOLDER;
-            getElem(element, '.frube-edit-custom-cover-input').value = '';
-            event.preventDefault();
-            return false;
-          }
       }
     }, false, false)
 
@@ -1490,5 +1514,5 @@
       }
     }, false, true);
 
-}(window, rJS, jIO, RSVP, YT, JSON, Blob, FormData, URL, loopEventListener, Math));
+}(window, rJS, jIO, RSVP, YT, JSON, Blob, FormData, URL, loopEventListener, Math, navigator));
 
