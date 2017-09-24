@@ -1069,7 +1069,10 @@
         .push(function () {
           setButtonIcon(dict.dropbox_button, "done");
           setButtonIcon(dict.sync_button, "sync");
-          return gadget.syncPlaylist();
+          return RSVP.all([
+            gadget.syncPlaylist(),
+            gadget.changeState({"mode": WATCHING})
+          ]);
         })
         .push(undefined, function (err) {
           throw err;
@@ -1278,7 +1281,10 @@
       return new RSVP.Queue()
         .push(function () {
           sync_button.classList.add(SPIN);
-          return gadget.frube_repair();
+          return RSVP.all([
+            gadget.frube_repair(),
+            gadget.refreshPlaylist(5000)
+          ]);
         })
         .push(function () {
           sync_button.classList.remove(SPIN);
@@ -1487,3 +1493,4 @@
     }, false, true);
 
 }(window, rJS, RSVP, YT, JSON, Blob, FormData, URL, Math));
+
