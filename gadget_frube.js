@@ -64,9 +64,20 @@
   var SPIN = "frube-spin";
   var TEN_MINUTES = 600000;
 
+  var GADGET_KLASS = rJS(window);
+  var VIDEO_TEMPLATE = getTemplate(GADGET_KLASS, "video_template");
+  var QUEUE_TEMPLATE = getTemplate(GADGET_KLASS, "queue_template");
+  var SEARCH_TEMPLATE = getTemplate(GADGET_KLASS, "search_template");
+  var EDIT_TEMPLATE = getTemplate(GADGET_KLASS, "edit_template");
+  var STATUS_TEMPLATE = getTemplate(GADGET_KLASS, "status_template");
+
   /////////////////////////////
   // methods
   /////////////////////////////
+  function getTemplate(my_klass, my_id) {
+    return my_klass.__template_element.getElementById(my_id).innerHTML;
+  }
+
   function makeList(my_nodeList) {
     return ARR.slice.call(my_nodeList);
   }
@@ -97,14 +108,6 @@
 
   function setButtonIcon(my_button, my_icon) {
     getElem(my_button, ICON).textContent = my_icon;
-  }
-
-  function buildTemplateDict(my_template_dict) {
-    makeList(window.document.querySelectorAll("script[type='text/x-supplant']"))
-      .forEach(function (item) {
-        my_template_dict[item.id] = item.textContent;
-      });
-    return my_template_dict;
   }
 
   function mergeDict(my_return_dict, my_new_dict) {
@@ -298,7 +301,7 @@
     }
   }
 
-  rJS(window)
+  GADGET_KLASS
 
     /////////////////////////////
     // state
@@ -349,8 +352,6 @@
         player_container: getElem(element, ".frube-player-container"),
         player_controller: getElem(element, ".frube-player-controller")
       };
-
-      gadget.template_dict = buildTemplateDict({});
 
       return gadget.loopSlider();
     })
@@ -544,12 +545,11 @@
         .push(function (frube_response) {
           var frube_data = frube_response;
           var info = dict.video_info;
-          var temp = gadget.template_dict;
           var item = dict.search_result_dict[my_video_id] = tube_data.items[0];
           var score = getScore(frube_data.upvote_list, frube_data.timestamp) -
             getScore(frube_data.downvote_list, frube_data.timestamp);
 
-          setDom(info, temp.video_entry_template.supplant({
+          setDom(info, VIDEO_TEMPLATE.supplant({
             "title": item.snippet.title,
             "video_id": my_video_id,
             "views": parseInt(item.statistics.viewCount, 10).toLocaleString(),
@@ -712,7 +712,6 @@
       var gadget = this;
       var dict = gadget.property_dict;
       var player = dict.player;
-      var temp = gadget.template_dict;
 
       window.location.hash = STR;
       getElem(gadget.element, SEARCH_INPUT).value = STR;
@@ -724,7 +723,7 @@
       dict.video_controller.classList.add(HIDDEN);
       dict.player_controller.classList.add(HIDDEN);
       purgeDom(dict.video_info);
-      setDom(dict.search_results, temp.search_template.supplant({
+      setDom(dict.search_results, STATUS_TEMPLATE.supplant({
         "status": my_offline ? OFFLINE : SEARCHING
       }), true);
       return RSVP.all([
@@ -810,7 +809,6 @@
       var gadget = this;
       var action = my_event.target.getAttribute(ACTION);
       var dialog = getElem(gadget.element, (DIALOG + action));
-      var temp = gadget.template_dict;
       var button = dialog.querySelector(SPC + SUBMIT);
 
       if (button) {
@@ -821,7 +819,7 @@
           })
           .push(function (video_data) {
             setDom(getElem(dialog, ".frube-dialog-content"),
-              temp.edit_entry_template.supplant({
+              EDIT_TEMPLATE.supplant({
                 "video_title": video_data.custom_title,
                 "video_artist": video_data.custom_artist,
                 "video_album": video_data.custom_album,
@@ -951,7 +949,7 @@
             if (oldest_timestamp > doc.timestamp) {
               oldest_timestamp = doc.timestamp;
             }
-            html_content += temp.queue_entry_template.supplant({
+            html_content += QUEUE_TEMPLATE.supplant({
               "video_id": doc.id,
               "title": doc.title,
               "thumbnail_url": doc.custom_cover || doc.original_cover,
@@ -991,7 +989,7 @@
               item = catalog[item_id];
               video_id = item.id.videoId;
               is_listed = list.indexOf(video_id) > -1;
-              response += gadget.template_dict.search_entry_template.supplant({
+              response += SEARCH_TEMPLATE.supplant({
                 "video_id": video_id,
                 "title": item.snippet.title,
                 "thumbnail_url": item.snippet.thumbnails.medium.url,
