@@ -259,6 +259,16 @@
 .frube-playlist-controller-filter {
   text-align: right;
 }
+@media (max-width: 1023px) {
+  .frube-playlist-controller-filter {
+    width: 100%;
+    padding-left: 0;
+  }
+  .frube-playlist-controller-repeat,
+  .frube-playlist-controller-shuffle {
+    min-width: 85px;
+  }
+}
 
 .frube-player-container {
   margin-top: 16px;
@@ -271,7 +281,7 @@
 }
 @media (max-width: 1023px) {
   .frube-playlist-switch-icon {
-    margin-right: 12px;   
+    margin-right: 0;
   }
 }
 
@@ -738,4 +748,5 @@ dialog.fixed {
   border-color: #fff;
   border-color: rgba(255, 255, 255, 0.7);
 }
+
 
