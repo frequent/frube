@@ -63,6 +63,9 @@
   var OPAQUE = "frube-disabled";
   var SPIN = "frube-spin";
   var TEN_MINUTES = 600000;
+  var FRUBE = "frube_jio";
+  var TUBE = "tube_jio";
+  var TOKEN = "token_jio";
 
   var GADGET_KLASS = rJS(window);
   var VIDEO_TEMPLATE = getTemplate(GADGET_KLASS, "video_template");
@@ -78,10 +81,6 @@
   /////////////////////////////
   function getTemplate(my_klass, my_id) {
     return my_klass.__template_element.getElementById(my_id).innerHTML;
-  }
-
-  function makeList(my_nodeList) {
-    return ARR.slice.call(my_nodeList);
   }
 
   function getTimeStamp() {
@@ -184,7 +183,7 @@
       purgeDom(my_node);
     }
     faux_element.innerHTML = my_string;
-    makeList(faux_element.children).forEach(function (element) {
+    ARR.slice.call(faux_element.children).forEach(function (element) {
       my_node.appendChild(element);
     });
   }
@@ -369,88 +368,52 @@
     /////////////////////////////
     // declared methods
     /////////////////////////////
-    // frube bridge
-    .declareMethod("frube_create", function (my_option_dict) {
-      return this.getDeclaredGadget("frube_jio")
+
+    // jio bridge
+    .declareMethod("route", function (my_scope, my_call, my_p1, my_p2, my_p3) {
+      return this.getDeclaredGadget(my_scope)
         .push(function (my_gadget) {
-          return my_gadget.createJIO(my_option_dict);
+          return my_gadget[my_call](my_p1, my_p2, my_p3);
         });
+    })
+    .declareMethod("frube_create", function (my_option_dict) {
+      return this.route(FRUBE, "createJIO", my_option_dict);
     })
     .declareMethod("frube_repair", function () {
-      return this.getDeclaredGadget("frube_jio")
-        .push(function (my_gadget) {
-          return my_gadget.repair();
-        });
+      return this.route(FRUBE, "repair");
     })
     .declareMethod("frube_allDocs", function (my_option_dict) {
-      return this.getDeclaredGadget("frube_jio")
-        .push(function (my_gadget) {
-          return my_gadget.allDocs(my_option_dict);
-        });
+      return this.route(FRUBE, "allDocs", my_option_dict);
     })
     .declareMethod("frube_put", function (my_id, my_dict) {
-      return this.getDeclaredGadget("frube_jio")
-        .push(function (my_gadget) {
-          return my_gadget.put(my_id, my_dict);
-        });
+      return this.route(FRUBE, "put", my_id, my_dict);
     })
     .declareMethod("frube_get", function (my_id) {
-      return this.getDeclaredGadget("frube_jio")
-        .push(function (my_gadget) {
-          return my_gadget.get(my_id);
-        });
+      return this.route(FRUBE, "get", my_id);
     })
     .declareMethod("frube_remove", function (my_id) {
-      return this.getDeclaredGadget("frube_jio")
-        .push(function (my_gadget) {
-          return my_gadget.remove(my_id);
-        });
+      return this.route(FRUBE, "remove", my_id);
     })
-
-    // tube bridge
     .declareMethod("tube_create", function (my_option_dict) {
-      return this.getDeclaredGadget("tube_jio")
-        .push(function (my_gadget) {
-          return my_gadget.createJIO(my_option_dict);
-        });
+      return this.route(TUBE, "createJIO", my_option_dict);
     })
     .declareMethod("tube_allDocs", function (my_option_dict) {
-      return this.getDeclaredGadget("tube_jio")
-        .push(function (my_gadget) {
-          return my_gadget.allDocs(my_option_dict);
-        });
+      return this.route(TUBE, "allDocs", my_option_dict);
     })
     .declareMethod("tube_get", function (my_id) {
-      return this.getDeclaredGadget("tube_jio")
-        .push(function (my_gadget) {
-          return my_gadget.get(my_id);
-        });
+      return this.route(TUBE, "get", my_id);
     })
-
-    // token bridge
     .declareMethod("token_create", function (my_option_dict) {
-      return this.getDeclaredGadget("token_jio")
-        .push(function (my_gadget) {
-          return my_gadget.createJIO(my_option_dict);
-        });
+      return this.route(TOKEN, "createJIO", my_option_dict);
     })
-    .declareMethod("token_getAttachment", function (my_id, my_tag) {
-      return this.getDeclaredGadget("token_jio")
-        .push(function (my_gadget) {
-          return my_gadget.getAttachment(my_id, my_tag);
-        });
+    .declareMethod("token_getAttachment", function (my_id, my_tag, my_dict) {
+      return this.route(TOKEN, "getAttachment", my_id, my_tag, my_dict);
     })
     .declareMethod("token_putAttachment", function (my_id, my_tag, my_dict) {
-      return this.getDeclaredGadget("token_jio")
-        .push(function (my_gadget) {
-          return my_gadget.putAttachment(my_id, my_tag, my_dict);
-        });
+      return this.route(TOKEN, "putAttachment", my_id, my_tag, my_dict);
     })
     .declareMethod("token_removeAttachment", function (my_id, my_tag) {
-      return this.getDeclaredGadget("token_jio")
-        .push(function (my_gadget) {
-          return my_gadget.removeAttachment(my_id, my_tag);
-        });
+      return this.route(TOKEN, "removeAttachment", my_id, my_tag);
     })
 
     .declareMethod("render", function (my_option_dict) {
@@ -506,6 +469,7 @@
           throw error;
         })
         .push(function (token) {
+          console.log(token)
           var payload = JSON.parse(token);
           if (!payload || (getTimeStamp() - payload.timestamp > TEN_MINUTES)) {
             setButtonIcon(gadget.property_dict.sync_button, "sync_disabled");
@@ -1144,9 +1108,6 @@
             gadget.syncPlaylist(),
             gadget.changeState({"mode": WATCHING})
           ]);
-        })
-        .push(undefined, function (err) {
-          throw err;
         });
     })
 
