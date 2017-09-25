@@ -71,6 +71,8 @@
   var EDIT_TEMPLATE = getTemplate(GADGET_KLASS, "edit_template");
   var STATUS_TEMPLATE = getTemplate(GADGET_KLASS, "status_template");
 
+  var DIALOG_POLYFILL = window.dialogPolyfill;
+
   /////////////////////////////
   // methods
   /////////////////////////////
@@ -835,9 +837,9 @@
       return;
     })
 
-    .declareMethod("handleDialog", function (my_event) {
+    .declareMethod("handleDialog", function (my_event, my_action) {
       var gadget = this;
-      var action = my_event.target.getAttribute(ACTION);
+      var action = my_action || my_event.target.getAttribute(ACTION);
       var dialog = getElem(gadget.element, (DIALOG + action));
       var active_element = window.document.activeElement;
       var video_id;
@@ -848,6 +850,9 @@
         return;
       }
       if (!dialog.open) {
+        if (!dialog.showModal) {
+          DIALOG_POLYFILL.registerDialog(dialog);
+        }
         dialog.showModal();
         return;
       }
@@ -897,10 +902,7 @@
                 "video_cover": video_data.custom_cover || PLACEHOLDER
               }), true);
             window.componentHandler.upgradeElements(dialog);
-            return;
-          })
-          .push(function () {
-            getElem(gadget.element, (DIALOG + action)).showModal();
+            return gadget.handleDialog(null, action);
           });
       }
     })
@@ -1298,8 +1300,7 @@
           if (error.type === FORBIDDEN && error.detail === QUOTA) {
             dict.error_status.textContent = ERR_QUOTA;
             dict.error_status.classList.remove(HIDDEN);
-            getElem(gadget.element, ".frube-dialog-configure").showModal();
-            return;
+            return gadget.handleDialog(null, CONFIGURE);
           }
 
           // XXX throw?
