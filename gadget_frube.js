@@ -73,6 +73,7 @@
   var SEARCH_TEMPLATE = getTemplate(GADGET_KLASS, "search_template");
   var EDIT_TEMPLATE = getTemplate(GADGET_KLASS, "edit_template");
   var STATUS_TEMPLATE = getTemplate(GADGET_KLASS, "status_template");
+  var LOADER_TEMPLATE = getTemplate(GADGET_KLASS, "loader_template");
 
   var DIALOG_POLYFILL = window.dialogPolyfill;
 
@@ -442,6 +443,9 @@
           return gadget.refreshPlaylist();
         })
         .push(function () {
+          var loader = getElem(gadget.element, ".frube-loader");
+          loader.parentElement.removeChild(loader);
+          getElem(gadget.element, ".frube-wip").classList.remove("frube-wip");
           if (video) {
             return;
           }
@@ -469,7 +473,6 @@
           throw error;
         })
         .push(function (token) {
-          console.log(token)
           var payload = JSON.parse(token);
           if (!payload || (getTimeStamp() - payload.timestamp > TEN_MINUTES)) {
             setButtonIcon(gadget.property_dict.sync_button, "sync_disabled");
@@ -1047,7 +1050,6 @@
       var gadget = this;
       var element = gadget.element;
       var jump = getElem(element, SHUFFLE).checked ? null : my_jump;
-
       return new RSVP.Queue()
         .push(function () {
           return gadget.getVideoId(jump);
@@ -1236,7 +1238,7 @@
             token = gadget.state.next_page_token;
           }
           return gadget.tube_allDocs({
-            "query": search_input.value,
+            "query": search_input.value /* AND token.... */,
             "token": token
           });
         })
@@ -1274,7 +1276,10 @@
     /////////////////////////////
     .declareJob("waitForNetwork", function (my_video_id) {
       var gadget = this;
+      var view_button = getElem(gadget.element, ".frube-action-view");
 
+      setDom(view_button, LOADER_TEMPLATE.supplant());
+      window.componentHandler.upgradeElements(view_button);
       return new RSVP.Queue()
         .push(function () {
           return RSVP.delay(TEN_MINUTES/40);
@@ -1282,6 +1287,7 @@
         .push(function () {
           var status;
           if (window.navigator.onLine) {
+            view_button.removeChild(getElem(view_button, ".frube-loader"));
             status = getElem(gadget.property_dict.search_results, "div");
             status.className = status.className.replace(OFFLINE, SEARCHING);
             return gadget.changeState({"play": my_video_id, "mode": WATCHING});
