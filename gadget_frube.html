@@ -169,6 +169,10 @@
       <div class="frube-overlay frube-video-{status}"></div>
     </script>
 
+    <script id="loader_template" type="text/x-supplant">
+      <div class="mdl-spinner mdl-js-spinner mdl-spinner--single-color is-active frube-loader"></div>
+    </script>
+
   </head>
   <body>
     <dialog class="mdl-dialog frube-dialog-about">
@@ -218,7 +222,7 @@
       </form>
     </dialog>
 
-    <div class="mdl-layout mdl-js-layout mdl-layout--fixed-header">
+    <div class="mdl-layout mdl-js-layout mdl-layout--fixed-header frube-wip">
       <header class="mdl-layout__header">
         <div class="mdl-layout__header-row">
           <form name="frube-home">
@@ -354,7 +358,8 @@
 
     <div class="frube-action">
       <form>
-        <button name="frube-view-switch" class="mdl-button mdl-button--fab mdl-button--colored">
+        <button name="frube-view-switch" class="mdl-button mdl-button--fab mdl-button--colored frube-action-view">
+          <div class="mdl-spinner mdl-js-spinner mdl-spinner--single-color is-active frube-loader"></div>
           <i class="material-icons">search</i>
         </button>
       </form>

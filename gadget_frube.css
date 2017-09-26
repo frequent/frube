@@ -1,4 +1,17 @@
 /* --- content --- */
+.frube-wip {
+  visibility: hidden;
+}
+.frube-loader {
+  width: 62px;
+  height: 62px;
+  left: -3px;
+  top: -3px;
+}
+.mdl-spinner:not(.is-upgraded).is-active:after {
+  content: none;
+  color: rgb(244,67,54);
+}
 .frube-page-content {
   width: 100%;
 }
@@ -259,7 +272,7 @@
 .frube-playlist-controller-filter {
   text-align: right;
 }
-@media (max-width: 1023px) {
+@media (max-width: 480px) {
   .frube-playlist-controller-filter {
     width: 100%;
     padding-left: 0;
@@ -445,7 +458,7 @@ font-family: 'Material Icons';
 }
 @media (max-width: 1023px) {
   .frube-video-searching:after,
-  .frube-video-offline {
+  .frube-video-offline:after {
     top: 65%;
   }
 }
@@ -457,7 +470,7 @@ font-family: 'Material Icons';
   background: 0 0;
   position: absolute;
   right: 100px;
-  bottom: 28px;
+  bottom: 36px;
   width: 56px;
   height: 56px;
   overflow: visible;
@@ -748,5 +761,4 @@ dialog.fixed {
   border-color: #fff;
   border-color: rgba(255, 255, 255, 0.7);
 }
-
 
