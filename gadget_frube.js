@@ -29,7 +29,6 @@
   var CONFIGURE = "configure";
   var FORBIDDEN = 403;
   var QUOTA = "quotaExceeded";
-  var ERR_QUOTA = "(Quota exceeded)&nbsp;";
   var SECTION = "section";
   var ICON = "i";
   var PLAYING = "frube-video-playing";
@@ -498,6 +497,14 @@
         });
     })
 
+    .declareMethod("setError", function (my_message) {
+      var gadget = this;
+      var dict = gadget.property_dict;
+      dict.error_status.textContent = my_message;
+      dict.error_status.classList.remove(HIDDEN);
+      return gadget.handleDialog(null, CONFIGURE);
+    })
+
     .declareMethod("handleError", function (my_error) {
       var gadget = this;
       if (my_error.resume) {
@@ -506,7 +513,9 @@
           gadget.waitForNetwork(my_error.resume)
         ]);
       }
-
+      if (my_error.code === 400) {
+        return gadget.setError("(Invalid Key) ");
+      }
       // XXX try to catch and handle
       throw my_error;
     })
@@ -515,7 +524,7 @@
       var gadget = this;
       var dict = gadget.property_dict;
       var element = gadget.element;
-      var tube_data;
+      var tube_data = {"items": ARR};
 
       if (!window.navigator.onLine) {
         return gadget.handleError({"resume": my_video_id});
@@ -549,7 +558,7 @@
                 "onReady": function (event) {
                   event.target.playVideo();
                 },
-                "onStateChange": function () {
+                "onStateChange": function (event) {
                   return gadget.videoOnStateChange();
                 },
                 "onError": function (event) {
@@ -580,32 +589,36 @@
           if (error.status_code === 404) {
             return {};
           }
+          if (error.target && error.target.status === 400) {
+            return gadget.handleError(JSON.parse(error.target.response).error);
+          }
           throw error;
         })
         .push(function (frube_response) {
           var frube_data = frube_response;
           var info = dict.video_info;
           var item = dict.search_result_dict[my_video_id] = tube_data.items[0];
-          var score = getScore(frube_data.upvote_list, frube_data.timestamp) -
-            getScore(frube_data.downvote_list, frube_data.timestamp);
+          var score;
+          if (item) {
+            score = getScore(frube_data.upvote_list, frube_data.timestamp) -
+              getScore(frube_data.downvote_list, frube_data.timestamp);
 
-          setDom(info, VIDEO_TEMPLATE.supplant({
-            "title": item.snippet.title,
-            "video_id": my_video_id,
-            "views": parseInt(item.statistics.viewCount, 10).toLocaleString(),
-            "score": score.toFixed(5)
-          }), true);
+            setDom(info, VIDEO_TEMPLATE.supplant({
+              "title": item.snippet.title,
+              "video_id": my_video_id,
+              "views": parseInt(item.statistics.viewCount, 10).toLocaleString(),
+              "score": score.toFixed(5)
+            }), true);
 
-          window.document.title = item.snippet.title;
-          setVideoSlider(dict.video_slider, item.contentDetails);
-          setViewsSlider(getElem(info, LIKE), score);
+            window.document.title = item.snippet.title;
+            setVideoSlider(dict.video_slider, item.contentDetails);
+            setViewsSlider(getElem(info, LIKE), score);
+          }
           return;
         })
         .push(undefined, function (error) {
           if (error.type === FORBIDDEN && error.detail === QUOTA) {
-            dict.error_status.textContent = ERR_QUOTA;
-            dict.error_status.classList.remove(HIDDEN);
-            getElem(element, ".frube-dialog-configure").showModal();
+            return gadget.setError("(Quota exceeded) ");
           }
           throw error;
         });
@@ -1261,12 +1274,11 @@
         })
         .push(undefined, function (error) {
           if (error.type === FORBIDDEN && error.detail === QUOTA) {
-            dict.error_status.textContent = ERR_QUOTA;
-            dict.error_status.classList.remove(HIDDEN);
-            return gadget.handleDialog(null, CONFIGURE);
+            return gadget.setError("(Quota exceeded) ");
           }
-
-          // XXX throw?
+          if (error.target && error.target.status === 400) {
+            return gadget.handleError(JSON.parse(error.target.response).error);
+          }
           return gadget.changeState({"is_searching": false});
         });
     })
@@ -1530,4 +1542,3 @@
     }, false, true);
 
 }(window, rJS, RSVP, YT, JSON, Blob, FormData, URL, Math));
-
