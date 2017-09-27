@@ -1,6 +1,6 @@
 /*jslint nomen: true, indent: 2, maxlen: 80 */
-/*global window, rJS, RSVP, YT, JSON, Blob, FormData, URL, Math */
-(function (window, rJS, RSVP, YT, JSON, Blob, FormData, URL, Math) {
+/*global window, rJS, RSVP, YT, JSON, Blob, URL, Math */
+(function (window, rJS, RSVP, YT, JSON, Blob, URL, Math) {
     "use strict";
 
   // KUDOS: https://github.com/boramalper/Essential-YouTube
@@ -144,6 +144,10 @@
       };
     }
     return {"type": "indexeddb", "database": "frube"};
+  }
+
+  function getTubeConfig(my_id) {
+    return {"type": "youtube", "api_key": my_id};
   }
 
   function getVideoHash() {
@@ -302,6 +306,17 @@
     }
   }
 
+  function unsetLoader(my_dict) {
+    var button = my_dict.action_button;
+    button.removeChild(getElem(button, ".frube-loader"));
+  }
+
+  function setLoader(my_dict) {
+    var button = my_dict.action_button;
+    setDom(button, LOADER_TEMPLATE.supplant());
+    window.componentHandler.upgradeElements(button);
+  }
+
   GADGET_KLASS
 
     /////////////////////////////
@@ -342,6 +357,7 @@
         error_status: getElem(element, ".frube-error"),
         dropbox_button: getElem(element,  ".frube-connector-dropbox"),
         action_container: getElem(element, ".frube-action"),
+        action_button: getElem(element, ".frube-action-view"),
         main: getElem(element, ".frube-page-content"),
         video_info: getElem(element, ".frube-video-info"),
         video_controller: getElem(element, ".frube-video-controls"),
@@ -430,7 +446,7 @@
           return gadget.setRemoteConnection();
         })
         .push(function () {
-          return gadget.tube_create({"type": "youtube", "api_key": dict.youtube_id});
+          return gadget.tube_create(getTubeConfig(dict.youtube_id));
         })
         .push(function () {
           if (video) {
@@ -517,7 +533,7 @@
         return gadget.setError("(Invalid Key) ");
       }
       if (my_error.code === 408) {
-        return gadget.setError("(Timeout/Invalid Key) ", true);
+        return gadget.setError("(Timeout/Invalid Key) ", 1);
       }
       throw my_error;
     })
@@ -824,8 +840,9 @@
       var action = my_action || my_event.target.getAttribute(ACTION);
       var dialog = getElem(gadget.element, (DIALOG + action));
       var active_element = window.document.activeElement;
+      var promise_list = [];
+      var input;
       var video_id;
-      var form_data;
 
       if (active_element && active_element.classList.contains(CLOSE)) {
         dialog.close();
@@ -837,23 +854,23 @@
         }
         dialog.showModal();
         if (my_focus) {
-          getElem(dialog, ".frube-dropbox-key").focus();
+          dialog.querySelectorAll("input")[my_focus].focus();
         }
         return;
       }
+
       if (action === "edit") {
         video_id = getAttr(event, ID);
-        form_data = new FormData(my_event.target);
 
-        return new RSVP.Queue()
+        promise_list.push(new RSVP.Queue()
           .push(function () {
             return gadget.frube_get(video_id);
           })
           .push(function (video) {
-            video.custom_title = form_data.get("frube-edit-custom-title");
-            video.custom_album = form_data.get("frube-edit-custom-album");
-            video.custom_artist = form_data.get("frube-edit-custom-artist");
-            video.custom_cover = form_data.get("frube-edit-custom-cover");
+            video.custom_title = getElem(dialog, ".frube-edit-title").value;
+            video.custom_album = getElem(dialog, ".frube-edit-album").value;
+            video.custom_artist = getElem(dialog, ".frube-edit-artist").value;
+            video.custom_cover = getElem(dialog, ".frube-edit-cover").value;
             dialog.close();
             return RSVP.all([
               gadget.frube_put(video_id, video),
@@ -862,8 +879,25 @@
           })
           .push(function () {
             return gadget.refreshPlaylist();
-          });
+          })
+        );
       }
+      if (action === "configure") {
+        input = getElem(dialog, ".frube-youtube-key");
+        if (input.value) {
+          promise_list.push(gadget.tube_create(getTubeConfig(input.value)));
+          promise_list.push(gadget.runSearch(true, null, true));
+          input.value = STR;
+        }
+        input = getElem(dialog, ".frube-dropbox-key");
+        if (input.value) {
+          promise_list.push(gadget.connectAndSyncWithDropbox(input.value));
+          promise_list.pu
+          input.value = STR;
+        }
+        dialog.close();
+      }
+      return RSVP.all(promise_list);
     })
 
     .declareMethod("editVideo", function (my_event, my_video_id) {
@@ -1099,22 +1133,21 @@
       slider.MaterialSlider.change(player.getCurrentTime());
     })
 
-    .declareMethod("connectAndSyncWithDropbox", function() {
+    .declareMethod("connectAndSyncWithDropbox", function(my_token) {
       var gadget = this;
       var dict = gadget.property_dict;
+      var token = my_token || dict.dropbox_id;
 
-      return new RSVP.Queue()
-        .push(function () {
-          return gadget.getDeclaredGadget("dropbox");
-        })
+      return gadget.getDeclaredGadget("dropbox")
         .push(function (my_dropbox_gadget) {
-          return my_dropbox_gadget.setDropboxConnect(dict.dropbox_id);
+          return my_dropbox_gadget.setDropbox(token);
         })
         .push(function (my_oauth_dict) {
           var token = my_oauth_dict.access_token;
           var payload = new Blob([
             JSON.stringify({"token": token, "timestamp": getTimeStamp()})
           ], {type: "text/plain"});
+          console.log(my_oauth_dict)
           return RSVP.all([
             gadget.frube_create(getFrubeConfig(token)),
             gadget.changeState({"dropbox_connected": true}),
@@ -1122,6 +1155,7 @@
           ]);
         })
         .push(function () {
+          console.log("token set")
           setButtonIcon(dict.dropbox_button, "done");
           setButtonIcon(dict.sync_button, "sync");
           return RSVP.all([
@@ -1224,7 +1258,7 @@
         });
     })
 
-    .declareMethod("runSearch", function (my_no_delay, my_next_page) {
+    .declareMethod("runSearch", function (my_no_delay, my_next_page, my_skip) {
       var gadget = this;
       var dict = gadget.property_dict;
       var state = gadget.state;
@@ -1233,19 +1267,15 @@
       if (!my_no_delay && time - state.last_key_stroke < state.search_buffer) {
         return gadget.changeState({"is_searching": false});
       }
-      if (state.is_searching) {
+      if (state.is_searching && !my_skip) {
         return gadget.changeState({"is_searching": false});
       }
-
-      // blank index unless loading more or coming from deeplink
       if (!my_next_page || Object.keys(dict.search_result_dict).length === 1) {
         dict.search_result_dict = {};
       }
 
-      return new RSVP.Queue()
-        .push(function () {
-          return gadget.enterSearch();
-        })
+      setLoader(dict);
+      return gadget.enterSearch()
         .push(function () {
           return gadget.changeState({
             "is_searching": true,
@@ -1274,6 +1304,7 @@
             item = response.data.rows[i];
             dict.search_result_dict[item.id.videoId] = item;
           }
+          unsetLoader(dict);
           return RSVP.all([
             gadget.refreshSearchResults(),
             gadget.changeState({"next_page_token": response.nextPageToken}),
@@ -1281,6 +1312,7 @@
           ]);
         })
         .push(undefined, function (error) {
+          unsetLoader(dict);
           if (error.type === FORBIDDEN && error.detail === QUOTA) {
             return gadget.setError("(Quota exceeded) ");
           }
@@ -1296,10 +1328,9 @@
     /////////////////////////////
     .declareJob("waitForNetwork", function (my_video_id) {
       var gadget = this;
-      var view_button = getElem(gadget.element, ".frube-action-view");
+      var dict = gadget.property_dict;
 
-      setDom(view_button, LOADER_TEMPLATE.supplant());
-      window.componentHandler.upgradeElements(view_button);
+      setLoader(dict);
       return new RSVP.Queue()
         .push(function () {
           return RSVP.delay(TEN_MINUTES/40);
@@ -1307,8 +1338,8 @@
         .push(function () {
           var status;
           if (window.navigator.onLine) {
-            view_button.removeChild(getElem(view_button, ".frube-loader"));
-            status = getElem(gadget.property_dict.search_results, "div");
+            unsetLoader(dict);
+            status = getElem(dict.search_results, "div");
             status.className = status.className.replace(OFFLINE, SEARCHING);
             return gadget.changeState({"play": my_video_id, "mode": WATCHING});
           }
@@ -1334,7 +1365,6 @@
     .declareJob("syncPlaylist", function () {
       var gadget = this;
       var sync_button = gadget.property_dict.sync_button;
-
       return new RSVP.Queue()
         .push(function () {
           sync_button.classList.add(SPIN);
@@ -1356,20 +1386,20 @@
       var gadget = this;
       var listener = window.loopEventListener;
 
-      function isHash() {
+      function handleHash() {
         var video_id = getVideoHash();
         if (video_id) {
           return gadget.loadVideo(video_id);
         }
       }
 
-      function isScroll(event) {
+      function handleScroll(event) {
         return gadget.triggerSearchFromScroll(event);
       }
 
       return RSVP.all([
-        listener(window, "hashchange", false, isHash),
-        listener(gadget.property_dict.main, "scroll", false, isScroll)
+        listener(window, "hashchange", false, handleHash),
+        listener(gadget.property_dict.main, "scroll", false, handleScroll)
       ]);
     })
 
@@ -1549,5 +1579,5 @@
       }
     }, false, true);
 
-}(window, rJS, RSVP, YT, JSON, Blob, FormData, URL, Math));
+}(window, rJS, RSVP, YT, JSON, Blob, URL, Math));
 

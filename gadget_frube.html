@@ -143,21 +143,21 @@
 
     <script id="edit_template" type="text/x-supplant">
       <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
-        <input class="mdl-textfield__input" type="text" name="frube-edit-custom-artist" value="{video_artist}">
-        <label class="mdl-textfield__label" for="frube-edit-custom-artist">Custom Artist</label>
+        <input class="mdl-textfield__input frube-edit-artist" type="text" name="frube-edit-artist" value="{video_artist}">
+        <label class="mdl-textfield__label" for="frube-edit-artist">Custom Artist</label>
       </div>
       <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
-        <input class="mdl-textfield__input" type="text" name="frube-edit-custom-title" value="{video_title}">
-        <label class="mdl-textfield__label" for="frube-edit-custom-title">Custom Title</label>
+        <input class="mdl-textfield__input frube-edit-title" type="text" name="frube-edit-title" value="{video_title}">
+        <label class="mdl-textfield__label" for="frube-edit-title">Custom Title</label>
       </div>
       <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
-        <input class="mdl-textfield__input" type="text" name="frube-edit-custom-album" value="{video_album}">
-        <label class="mdl-textfield__label" for="frube-edit-custom-album">Custom Album</label>
+        <input class="mdl-textfield__input frube-edit-album" type="text" name="frube-edit-album" value="{video_album}">
+        <label class="mdl-textfield__label" for="frube-edit-album">Custom Album</label>
       </div>
       <div class="frube-edit-custom-cover-container">
         <div class="mdl-textfield mdl-js-textfield mdl-textfield--file">
           <img src="{video_cover}" alt="{video_artist} - {video_title} | {video_cover}" class="frube-edit-custom-cover-image" />
-          <input class="mdl-textfield__input frube-edit-custom-cover-input" name="frube-edit-custom-cover" placeholder="Custom thumbnail" type="text" readonly/>
+          <input class="mdl-textfield__input frube-edit-cover" name="frube-edit-cover" placeholder="Custom thumbnail" type="text" readonly/>
           <div class="mdl-button mdl-button--icon mdl-button--file">
             <i class="frube-icons material-icons">attach_file</i><input type="file" class="frube-upload" name="frube-upload">
           </div>
@@ -196,7 +196,7 @@
         <div class="mdl-dialog__content">
           <p><span class="frube-error"></span>Provide your API keys to search videos and store meta with Frube.</p>
           <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
-            <input class="mdl-textfield__input" type="text" id="frube-configure-youtube-api">
+            <input class="mdl-textfield__input frube-youtube-key" type="text" id="frube-configure-youtube-api">
             <label class="mdl-textfield__label" for="frube-configure-youtube-api">Youtube Data API Key (Search)</label>
           </div>
           <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
