@@ -1,10 +1,15 @@
-/*jslint nomen: true, indent: 2 */
-/*global window, rJS, RSVP */
-(function (window, rJS, RSVP) {
+/*jslint nomen: true, indent: 2, maxlen: 80 */
+/*global window, rJS, RSVP, promiseEventListener */
+(function (window, rJS, RSVP, promiseEventListener) {
   "use strict";
 
   /////////////////////////////
-  // some methods
+  // parameters
+  /////////////////////////////
+  var REQUEST_TIMEOUT = 15000;
+
+  /////////////////////////////
+  // methods
   /////////////////////////////
   function getUrlParameter(name, url) {
     return decodeURIComponent(
@@ -48,8 +53,10 @@
     // declared methods
     /////////////////////////////
     .declareMethod("getDropboxConnect", function (my_url, my_name, my_config) {
-      return new Promise(function (resolve, reject) {
-        var popup_resolver = function resolver(href) {
+      var popup;
+      var popup_resolver;
+      var resolver = new Promise(function (resolve, reject) {
+        popup_resolver = function resolver(href) {
           var test = getUrlParameter("state", href);
 
           // already logged in
@@ -61,39 +68,42 @@
               "type": getUrlParameter("token_type", href)
             });
           } else {
-            reject("forbidden - state parameter does not match.");
+            reject("forbidden");
           }
         };
 
-        return new RSVP.Queue()
-          .push(function () {
-            return window.open(my_url, my_name, my_config);
-          })
-          .push(function (my_opened_window) {
-            my_opened_window.opener.popup_resolver = popup_resolver;
-            return;
-          });
+        popup = window.open(my_url, my_name, my_config);
+        popup.opener.popup_resolver = popup_resolver;
+        return promiseEventListener(popup, "load", true);
       });
+
+      //return resolver;
+      return new RSVP.Queue()
+        .push(function () {
+          return RSVP.any([
+            resolver,
+            RSVP.delay(REQUEST_TIMEOUT)
+          ]);
+        })
+        .push(function (my_ouath_dict) {
+          popup.close();
+          if (my_ouath_dict) {
+            return my_ouath_dict;
+          }
+          throw {"code": 408};
+        });
     })
 
     .declareMethod("setDropboxConnect", function (my_client_id) {
-      var gadget = this;
-
-      return new RSVP.Queue()
-        .push(function () {
-          return gadget.getDropboxConnect(
-            "https://www.dropbox.com/1/oauth2/authorize?" +
-              "client_id=" + my_client_id +
-              "&response_type=token" +
-              "&state=" + setState() +
-              "&redirect_uri=" + window.location.href,
-            "",
-            "width=480,height=480,resizable=yes,scrollbars=yes,status=yes"
-          );
-        })
-        .push(function (my_oauth_dict) {
-          return my_oauth_dict;
-        });
+      return this.getDropboxConnect(
+        "https://www.dropbox.com/1/oauth2/authorize?" +
+          "client_id=" + my_client_id +
+          "&response_type=token" +
+          "&state=" + setState() +
+          "&redirect_uri=" + window.location.href,
+        "",
+        "width=480,height=480,resizable=yes,scrollbars=yes,status=yes"
+      );
     })
 
     .declareMethod("initializeDropboxConnection", function () {
@@ -103,20 +113,16 @@
       if (window.opener === null) {
         return;
       }
-      return new RSVP.Queue()
-        .push(function () {
+      
+      // window.opener returns reference to  window that opened this window
+      // https://developer.mozilla.org/en-US/docs/Web/API/Window/opener
+      // this passes the token to the promise waiting above
 
-          // window.opener returns reference to  window that opened this window
-          // https://developer.mozilla.org/en-US/docs/Web/API/Window/opener
-          // this passes the token to the promise waiting above
-          return window.opener.popup_resolver(
-            window.location.hash.replace("#", "?")
-          );
-        })
-        .push(function () {
-          window.close();
-          return;
-        });
+      // NOTE: if auth fails, dropbox overloads the page, we never reach this
+      return window.opener.popup_resolver(
+        window.location.hash.replace("#", "?")
+      );
     });
 
-}(window, rJS, RSVP));
+}(window, rJS, RSVP, promiseEventListener));
+
