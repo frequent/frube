@@ -67,13 +67,6 @@
   var TOKEN = "token_jio";
 
   var GADGET_KLASS = rJS(window);
-  var VIDEO_TEMPLATE = getTemplate(GADGET_KLASS, "video_template");
-  var QUEUE_TEMPLATE = getTemplate(GADGET_KLASS, "queue_template");
-  var SEARCH_TEMPLATE = getTemplate(GADGET_KLASS, "search_template");
-  var EDIT_TEMPLATE = getTemplate(GADGET_KLASS, "edit_template");
-  var STATUS_TEMPLATE = getTemplate(GADGET_KLASS, "status_template");
-  var LOADER_TEMPLATE = getTemplate(GADGET_KLASS, "loader_template");
-
   var DIALOG_POLYFILL = window.dialogPolyfill;
 
   /////////////////////////////
@@ -313,7 +306,7 @@
 
   function setLoader(my_dict) {
     var button = my_dict.action_button;
-    setDom(button, LOADER_TEMPLATE.supplant());
+    setDom(button, getTemplate(GADGET_KLASS, "loader_template").supplant());
     window.componentHandler.upgradeElements(button);
   }
 
@@ -441,10 +434,7 @@
       window.componentHandler.upgradeDom();
       mergeDict(dict, my_option_dict);
 
-      return new RSVP.Queue()
-        .push(function () {
-          return gadget.setRemoteConnection();
-        })
+      return gadget.setRemoteConnection()
         .push(function () {
           return gadget.tube_create(getTubeConfig(dict.youtube_id));
         })
@@ -474,10 +464,7 @@
     .declareMethod("setRemoteConnection", function () {
       var gadget = this;
 
-      return new RSVP.Queue()
-        .push(function () {
-          return gadget.token_create({"type": "local", "sessiononly": false});
-        })
+      return gadget.token_create({"type": "local", "sessiononly": false})
         .push(function () {
           return gadget.token_getAttachment("/", "token", {"format": "text"});
         })
@@ -621,7 +608,7 @@
             score = getScore(frube_data.upvote_list, frube_data.timestamp) -
               getScore(frube_data.downvote_list, frube_data.timestamp);
 
-            setDom(info, VIDEO_TEMPLATE.supplant({
+            setDom(info, getTemplate(GADGET_KLASS, "video_template").supplant({
               "title": item.snippet.title,
               "video_id": my_video_id,
               "views": parseInt(item.statistics.viewCount, 10).toLocaleString(),
@@ -717,10 +704,7 @@
 
     .declareMethod("rankVideo", function (my_id, my_pos, my_shift) {
       var gadget = this;
-      return new RSVP.Queue()
-        .push(function () {
-          return gadget.frube_get(my_id);
-        })
+      return gadget.frube_get(my_id)
         .push(function (video_data) {
           video_data.pos = parseInt(my_pos, 10) + my_shift;
           return gadget.frube_put(my_id, video_data);
@@ -736,10 +720,7 @@
     .declareMethod("rateVideo", function (my_id, my_direction) {
       var gadget = this;
       var dict = gadget.property_dict;
-      return new RSVP.Queue()
-        .push(function () {
-          return gadget.frube_get(my_id);
-        })
+      return gadget.frube_get(my_id)
         .push(function (video) {
           var score;
           if (my_direction > 0) {
@@ -794,7 +775,7 @@
       dict.video_controller.classList.add(HIDDEN);
       dict.player_controller.classList.add(HIDDEN);
       purgeDom(dict.video_info);
-      setDom(dict.search_results, STATUS_TEMPLATE.supplant({
+      setDom(dict.search_results, getTemplate(GADGET_KLASS, "status_template").supplant({
         "status": my_offline ? OFFLINE : SEARCHING
       }), true);
       return RSVP.all([
@@ -914,7 +895,7 @@
           })
           .push(function (video_data) {
             setDom(getElem(dialog, ".frube-dialog-content"),
-              EDIT_TEMPLATE.supplant({
+              getTemplate(GADGET_KLASS, "edit_template").supplant({
                 "video_title": video_data.custom_title,
                 "video_artist": video_data.custom_artist,
                 "video_album": video_data.custom_album,
@@ -1041,7 +1022,7 @@
             if (oldest_timestamp > doc.timestamp) {
               oldest_timestamp = doc.timestamp;
             }
-            html_content += QUEUE_TEMPLATE.supplant({
+            html_content += getTemplate(GADGET_KLASS, "queue_template").supplant({
               "video_id": doc.id,
               "title": doc.title,
               "thumbnail_url": doc.custom_cover || doc.original_cover,
@@ -1066,10 +1047,7 @@
       var list = dict.queue_list;
       var response = STR;
 
-      return new RSVP.Queue()
-        .push(function () {
-          return gadget.clearBuffer();
-        })
+      return gadget.clearBuffer()
         .push(function () {
           var item_id;
           var item;
@@ -1081,7 +1059,7 @@
               item = catalog[item_id];
               video_id = item.id.videoId;
               is_listed = list.indexOf(video_id) > -1;
-              response += SEARCH_TEMPLATE.supplant({
+              response += getTemplate(GADGET_KLASS, "search_template").supplant({
                 "video_id": video_id,
                 "title": item.snippet.title,
                 "thumbnail_url": item.snippet.thumbnails.medium.url,
@@ -1102,10 +1080,7 @@
       var gadget = this;
       var element = gadget.element;
       var jump = getElem(element, SHUFFLE).checked ? null : my_jump;
-      return new RSVP.Queue()
-        .push(function () {
-          return gadget.getVideoId(jump);
-        })
+      return gadget.getVideoId(jump)
         .push(function (my_id) {
           return gadget.changeState({"play": my_id});
         })
@@ -1147,7 +1122,6 @@
           var payload = new Blob([
             JSON.stringify({"token": token, "timestamp": getTimeStamp()})
           ], {type: "text/plain"});
-          console.log(my_oauth_dict)
           return RSVP.all([
             gadget.frube_create(getFrubeConfig(token)),
             gadget.changeState({"dropbox_connected": true}),
@@ -1155,7 +1129,6 @@
           ]);
         })
         .push(function () {
-          console.log("token set")
           setButtonIcon(dict.dropbox_button, "done");
           setButtonIcon(dict.sync_button, "sync");
           return RSVP.all([
@@ -1164,6 +1137,7 @@
           ]);
         })
         .push(undefined, function (connection_error) {
+          console.log(connection_error)
           return gadget.handleError(connection_error);
         });
     })
@@ -1580,4 +1554,3 @@
     }, false, true);
 
 }(window, rJS, RSVP, YT, JSON, Blob, URL, Math));
-
