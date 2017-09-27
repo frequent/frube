@@ -1,4 +1,4 @@
-/*jslint nomen: true, indent: 2 */
+/*jslint nomen: true, indent: 2, maxlen: 80 */
 /*global window, rJS, RSVP, YT, JSON, Blob, FormData, URL, Math */
 (function (window, rJS, RSVP, YT, JSON, Blob, FormData, URL, Math) {
     "use strict";
@@ -497,12 +497,12 @@
         });
     })
 
-    .declareMethod("setError", function (my_message) {
+    .declareMethod("setError", function (my_message, my_focus) {
       var gadget = this;
       var dict = gadget.property_dict;
       dict.error_status.textContent = my_message;
       dict.error_status.classList.remove(HIDDEN);
-      return gadget.handleDialog(null, CONFIGURE);
+      return gadget.handleDialog(null, CONFIGURE, my_focus);
     })
 
     .declareMethod("handleError", function (my_error) {
@@ -516,7 +516,9 @@
       if (my_error.code === 400) {
         return gadget.setError("(Invalid Key) ");
       }
-      // XXX try to catch and handle
+      if (my_error.code === 408) {
+        return gadget.setError("(Timeout/Invalid Key) ", true);
+      }
       throw my_error;
     })
 
@@ -817,7 +819,7 @@
       return;
     })
 
-    .declareMethod("handleDialog", function (my_event, my_action) {
+    .declareMethod("handleDialog", function (my_event, my_action, my_focus) {
       var gadget = this;
       var action = my_action || my_event.target.getAttribute(ACTION);
       var dialog = getElem(gadget.element, (DIALOG + action));
@@ -834,6 +836,9 @@
           DIALOG_POLYFILL.registerDialog(dialog);
         }
         dialog.showModal();
+        if (my_focus) {
+          getElem(dialog, ".frube-dropbox-key").focus();
+        }
         return;
       }
       if (action === "edit") {
@@ -1123,6 +1128,9 @@
             gadget.syncPlaylist(),
             gadget.changeState({"mode": WATCHING})
           ]);
+        })
+        .push(undefined, function (connection_error) {
+          return gadget.handleError(connection_error);
         });
     })
 
@@ -1542,3 +1550,4 @@
     }, false, true);
 
 }(window, rJS, RSVP, YT, JSON, Blob, FormData, URL, Math));
+
