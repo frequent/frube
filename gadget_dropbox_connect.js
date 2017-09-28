@@ -1,12 +1,12 @@
 /*jslint nomen: true, indent: 2, maxlen: 80 */
-/*global window, rJS, RSVP, promiseEventListener */
-(function (window, rJS, RSVP, promiseEventListener) {
+/*global window, rJS, RSVP */
+(function (window, rJS, RSVP) {
   "use strict";
 
   /////////////////////////////
   // parameters
   /////////////////////////////
-  var REQUEST_TIMEOUT = 15000;
+  var REQUEST_TIMEOUT = 24000;
 
   /////////////////////////////
   // methods
@@ -46,13 +46,13 @@
     // ready
     /////////////////////////////
     .ready(function () {
-      return this.initializeDropboxConnection();
+      return this.initializeDropbox();
     })
 
     /////////////////////////////
     // declared methods
     /////////////////////////////
-    .declareMethod("getDropboxConnect", function (my_url, my_name, my_config) {
+    .declareMethod("getDropbox", function (my_url, my_name, my_config) {
       var popup;
       var popup_resolver;
       var resolver = new Promise(function (resolve, reject) {
@@ -74,7 +74,7 @@
 
         popup = window.open(my_url, my_name, my_config);
         popup.opener.popup_resolver = popup_resolver;
-        return promiseEventListener(popup, "load", true);
+        return window.promiseEventListener(popup, "load", true);
       });
 
       //return resolver;
@@ -94,8 +94,8 @@
         });
     })
 
-    .declareMethod("setDropboxConnect", function (my_client_id) {
-      return this.getDropboxConnect(
+    .declareMethod("setDropbox", function (my_client_id) {
+      return this.getDropbox(
         "https://www.dropbox.com/1/oauth2/authorize?" +
           "client_id=" + my_client_id +
           "&response_type=token" +
@@ -106,7 +106,7 @@
       );
     })
 
-    .declareMethod("initializeDropboxConnection", function () {
+    .declareMethod("initializeDropbox", function () {
 
       // the oauth popup will open same page and we will end up at this line, too,
       // but when inside the popup, the opener must be set
@@ -124,5 +124,4 @@
       );
     });
 
-}(window, rJS, RSVP, promiseEventListener));
-
+}(window, rJS, RSVP));

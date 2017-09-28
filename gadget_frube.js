@@ -1137,25 +1137,22 @@
           ]);
         })
         .push(undefined, function (connection_error) {
-          console.log(connection_error)
           return gadget.handleError(connection_error);
         });
     })
 
     .declareMethod("enterSearch", function () {
-      var gadget = this;
-      if (gadget.state.mode === SEARCHING) {
+      if (this.state.mode === SEARCHING) {
         return;
       }
-      return gadget.changeState({"mode": SEARCHING});
+      return this.changeState({"mode": SEARCHING});
     })
 
     .declareMethod("exitSearch", function () {
-      var gadget = this;
-      if (gadget.state.mode === WATCHING) {
+      if (this.state.mode === WATCHING) {
         return;
       }
-      return gadget.changeState({"mode": WATCHING});
+      return this.changeState({"mode": WATCHING});
     })
 
     .declareMethod("triggerSearchFromScroll", function () {
@@ -1554,3 +1551,4 @@
     }, false, true);
 
 }(window, rJS, RSVP, YT, JSON, Blob, URL, Math));
+
