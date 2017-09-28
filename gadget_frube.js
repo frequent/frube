@@ -1454,6 +1454,9 @@
         return this.changeState({"play": video_id});
       }
       switch (target.getAttribute(NAME)) {
+        case "frube-video-searching":
+          getElem(this.element, SEARCH_INPUT).focus();
+          break;
         case "frube-connector-dropbox":
           return this.connectAndSyncWithDropbox();
         case "frube-view-switch":
@@ -1551,3 +1554,4 @@
     }, false, true);
 
 }(window, rJS, RSVP, YT, JSON, Blob, URL, Math));
+
