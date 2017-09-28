@@ -439,6 +439,7 @@ font-family: 'Material Icons';
 }
 .frube-video-searching:before {
   content: "youtube_searched_for";
+  cursor: pointer;
 }
 .frube-video-searching:after {
   content: "Search Youtube to add videos";
