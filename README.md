@@ -4,19 +4,19 @@ Youtube player with private playlist.
 
 Use on [https://frube.eu](https://frube.eu) (while API limits last).
 
-Inspired by Boramalper's [Essentia Youtube Player](https://github.com/boramalper/Essential-YouTube). Built using [RenderJS](https://renderjs.nexedi.com) and [jIO](https://jio.nexed.com).
+Inspired by Boramalper's [Essentia Youtube Player](https://github.com/boramalper/Essential-YouTube). Built using [RenderJS](https://renderjs.nexedi.com/) and [jIO](https://jio.nexed.com/).
 
 ## Why Frube?
 
 * My Chromebook OS is running only free software. No web-radio, no flash, Youtube works.
 * I don't want to upload my playlist to some site. Sites disappear. And sell my taste.
-* In times where I owning merely means streaming, I want to at least own my taste.
+* In times where owning merely means streaming, I want to at least own my taste.
 
 ## Features
 
 * Search Youtube and save to your playlist 
 * Playlist is kept on Indexeddb and Dropbox, syncs on refresh/manual trigger
-* Play Shuffle/Repeat/Hi-Lo Res Video/(should) resume after connection loss
+* Shuffle/Repeat/HiLo Res Video/(should) resume after connection loss
 * Keep playing if tab is not active
 * Edit/Rate/Rank video
 
@@ -29,10 +29,10 @@ Inspired by Boramalper's [Essentia Youtube Player](https://github.com/boramalper
 * Modify your [index.html file](https://github.com/frequent/frube/blob/master/index.html) to your liking
 * Host your fork on gh-pages following steps [outlined here](https://pages.github.com/)
 * Your Frube will be on **https://[username].github.io/frube/**
-* Make sure your Youtube/Dropbox redirect URIs point to this gh-pages url
-* Viola!
+* Make sure your Youtube/Dropbox redirect URIs point to your gh-pages url
+* Viola! Continue sharing your Frube.
 
 
 ## License
 
-Frube is Free Software. [RenderJS](https://renderjs.nexedi.com) and [jIO](https://jio.nexed.com) are GPLv3 - use, improve and contribute back.
+Frube is Free Software. [RenderJS](https://renderjs.nexedi.com/) and [jIO](https://jio.nexed.com/) are GPLv3 - use, improve and contribute back.
