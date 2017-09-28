@@ -507,7 +507,11 @@ font-family: 'Material Icons';
   padding: 0;
   min-width: 16px;
 }
-
+.frube-action-info {
+  font-size: 12px;
+  padding-right: 6px;
+  color: rgb(117, 117, 117);
+}    
 /* loading video blanks */
 .frube-search-results .mdl-card__media,
 .frube-playlist-results .mdl-card__media {
@@ -685,7 +689,7 @@ dialog.fixed {
   right: 0;
   z-index: 9999;
   pointer-events: none;
-  font-size: 13px;
+  font-size: 14px;
   text-decoration: none;
   text-indent: -999999px;
 }
