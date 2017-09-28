@@ -873,7 +873,6 @@
         input = getElem(dialog, ".frube-dropbox-key");
         if (input.value) {
           promise_list.push(gadget.connectAndSyncWithDropbox(input.value));
-          promise_list.pu
           input.value = STR;
         }
         dialog.close();
