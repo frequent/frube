@@ -310,6 +310,12 @@
     window.componentHandler.upgradeElements(button);
   }
 
+  function unsetSearch(my_dict, my_offline) {
+    setDom(my_dict, getTemplate(GADGET_KLASS, "status_template").supplant({
+      "status": my_offline ? OFFLINE : SEARCHING
+    }), true);
+  }
+
   GADGET_KLASS
 
     /////////////////////////////
@@ -602,7 +608,7 @@
         .push(function (frube_response) {
           var frube_data = frube_response;
           var info = dict.video_info;
-          var item = dict.search_result_dict[my_video_id] = tube_data.items[0];
+          var item = tube_data.items[0];
           var score;
           if (item) {
             score = getScore(frube_data.upvote_list, frube_data.timestamp) -
@@ -775,9 +781,7 @@
       dict.video_controller.classList.add(HIDDEN);
       dict.player_controller.classList.add(HIDDEN);
       purgeDom(dict.video_info);
-      setDom(dict.search_results, getTemplate(GADGET_KLASS, "status_template").supplant({
-        "status": my_offline ? OFFLINE : SEARCHING
-      }), true);
+      unsetSearch(dict.search_results, my_offline);
       return RSVP.all([
         gadget.refreshSearchResults(),
         gadget.enterSearch(),
@@ -909,8 +913,8 @@
     .declareMethod("addVideo", function (my_video_id, my_element) {
       var gadget = this;
       var dict = gadget.property_dict;
-      var video_dict = dict.search_result_dict[my_video_id];
-      var video_id = video_dict.id.videoId || my_video_id;
+      var meta = dict.search_result_dict[my_video_id];
+      var video_id = meta ? meta.id.videoId || meta.id : my_video_id;
 
       // undo = unflag for adding
       if (dict.buffer_dict.hasOwnProperty(my_video_id)) {
@@ -924,10 +928,10 @@
         // stack for storing
         dict.buffer_dict[video_id] = {
           "id": video_id,
-          "type": video_dict.id.kind,
-          "original_title": video_dict.snippet.title,
+          "type": meta.id.kind,
+          "original_title": meta.snippet.title,
           "original_artist": STR,
-          "original_cover": video_dict.snippet.thumbnails.medium.url,
+          "original_cover": meta.snippet.thumbnails.medium.url,
           "custom_title": STR,
           "custom_artist": STR,
           "custom_album": STR,
@@ -1243,7 +1247,7 @@
       if (!my_next_page || Object.keys(dict.search_result_dict).length === 1) {
         dict.search_result_dict = {};
       }
-
+      
       setLoader(dict);
       return gadget.enterSearch()
         .push(function () {
@@ -1253,13 +1257,12 @@
           });
         })
         .push(function () {
-          var search_input = getElem(gadget.element, SEARCH_INPUT);
           var token = STR;
           if (my_next_page && gadget.state.next_page_token) {
             token = gadget.state.next_page_token;
           }
           return gadget.tube_allDocs({
-            "query": search_input.value /* AND token.... */,
+            "query": getElem(gadget.element, SEARCH_INPUT).value,
             "token": token
           });
         })
@@ -1409,6 +1412,7 @@
           });
       }
       if (modification_dict.hasOwnProperty("mode")) {
+        dict.main.scrollTop = 0;
         if (modification_dict.mode === SEARCHING) {
           setButtonIcon(getElem(dict.action_container, BUTTON), PLAY);
           dict.playlist_menu.classList.add(HIDDEN);
@@ -1417,12 +1421,9 @@
           dict.player_controller.classList.remove(HIDDEN);
           dict.search_results.classList.remove(HIDDEN);
 
-          // clear search, else videos played will be shown as search results
-          dict.search_result_dict = {};
-
           // refresh, else search input gets hung up
           if (!modification_dict.hasOwnProperty("last_key_stroke")) {
-            return gadget.refreshSearchResults();
+             return gadget.refreshSearchResults();
           }
         } else {
           setButtonIcon(getElem(dict.action_container, BUTTON), SEARCH);
@@ -1433,7 +1434,6 @@
           dict.player_container.classList.remove(HIDDEN);
           return gadget.refreshPlaylist();
         }
-        dict.main.scrollTop = 0;
       }
       return;
     })
