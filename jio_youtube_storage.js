@@ -12,7 +12,7 @@
   var ALLDOCS_URL = "https://www.googleapis.com/youtube/v3/search?" +
     "part=snippet{&pageToken}&q={search}&type=video&maxResults=10{&key}";
   var ALLDOCS_TEMPLATE = UriTemplate.parse(ALLDOCS_URL);
-         
+
   function handleError(error, id) {
     if (error.target && error.target.status === 404) {
       throw new jIO.util.jIOError("Cannot find document: " + id, 404);
@@ -74,7 +74,7 @@
         }
         obj.items.nextPageToken = obj.nextPageToken;
         return obj.items;
-    
+
       }, handleError);
   };
 
