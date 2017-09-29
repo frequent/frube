@@ -96,7 +96,7 @@
 
     .declareMethod("setDropbox", function (my_client_id) {
       return this.getDropbox(
-        "https://www.dropbox.com/1/oauth2/authorize?" +
+        "https://www.dropbox.com/oauth2/authorize?" +
           "client_id=" + my_client_id +
           "&response_type=token" +
           "&state=" + setState() +
