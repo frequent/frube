@@ -222,6 +222,16 @@
     };
   }
 
+  // https://stackoverflow.com/a/39336206/
+  function isConstructor(value) {
+    try {
+      new new Proxy(value, {construct() { return {}; }});
+      return true;
+    } catch (err) {
+      return false;
+    }
+  }
+
   //https://stackoverflow.com/a/4760279
   function dynamicSort(prop) {
     var sortOrder = 1;
@@ -555,6 +565,9 @@
             return gadget.changeState({"quality": LO});
           }
           return;
+        })
+        .push(function () {
+          return gadget.throttleQueueForDependencies(YT.Player);
         })
         .push(function () {
           var player = dict.player;
@@ -1247,7 +1260,7 @@
       if (!my_next_page || Object.keys(dict.search_result_dict).length === 1) {
         dict.search_result_dict = {};
       }
-      
+
       setLoader(dict);
       return gadget.enterSearch()
         .push(function () {
@@ -1299,6 +1312,20 @@
     /////////////////////////////
     // declared jobs
     /////////////////////////////
+    .declareJob("throttleQueueForDependencies", function (my_dependency) {
+      var gadget = this;
+      if (isConstructor(my_dependency)) {
+        return;
+      }
+      return new RSVP.Queue()
+        .push(function () {
+          return RSVP.delay(scroll_buffer);
+        })
+        .push(function () {
+          return gadget.throttleQueueForDependencies(my_dependency);
+        });
+    })
+    
     .declareJob("waitForNetwork", function (my_video_id) {
       var gadget = this;
       var dict = gadget.property_dict;
@@ -1423,7 +1450,7 @@
 
           // refresh, else search input gets hung up
           if (!modification_dict.hasOwnProperty("last_key_stroke")) {
-             return gadget.refreshSearchResults();
+            return gadget.refreshSearchResults();
           }
         } else {
           setButtonIcon(getElem(dict.action_container, BUTTON), SEARCH);
