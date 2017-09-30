@@ -282,7 +282,7 @@
   function unsetBufferDict(my_dict, my_video) {
     delete my_dict.buffer_dict[my_video];
     if (Object.keys(my_dict.search_result_dict).length === 0) {
-      dict.sync_button.setAttribute(DISABLED, DISABLED);
+      my_dict.sync_button.setAttribute(DISABLED, DISABLED);
     }
   }
 
@@ -335,12 +335,11 @@
       zero_stamp: null,
       scroll_trigger: 300,
       scroll_buffer: 250,
-      search_buffer: 500,
+      filter_buffer: 500,
       slider_interval: 500,
       mode: WATCHING,
       search_time: null,
       video_duration: null,
-      last_key_stroke: null,
       last_main_pos: 0,
       next_page_token: null,
       slider_in_use: false,
@@ -884,7 +883,7 @@
         input = getElem(dialog, ".frube-youtube-key");
         if (input.value) {
           promise_list.push(gadget.tube_create(getTubeConfig(input.value)));
-          promise_list.push(gadget.runSearch(true, null, true));
+          promise_list.push(gadget.runSearch(null, true));
           input.value = STR;
         }
         input = getElem(dialog, ".frube-dropbox-key");
@@ -964,6 +963,7 @@
       var buffer = dict.buffer_dict;
       var promise_list = [];
       var id;
+      var show_sync;
 
       for (id in buffer) {
         if (buffer.hasOwnProperty(id)) {
@@ -972,28 +972,21 @@
           } else {
             promise_list.push(gadget.frube_remove(id));
           }
+          delete buffer[id];
         }
       }
-
-      return new RSVP.Queue()
-        .push(function () {
-          return RSVP.all(promise_list);
-        })
-        .push(function (response_list) {
-          dict.buffer_dict = {};
-          if (response_list.length > 0 && gadget.state.flag_sync !== null) {
-            return gadget.changeState({"flag_sync": response_list.length > 0});
-          }
-          return;
-        });
+      show_sync = promise_list.length > 0 || gadget.state.flag_sync || null;
+      if (gadget.state.flag_sync !== show_sync) {
+        promise_list.push(gadget.changeState({"flag_sync": show_sync}));
+      }
+      return RSVP.all(promise_list);
     })
 
     .declareMethod("refreshPlaylist", function (my_delay) {
       var gadget = this;
       var dict = gadget.property_dict;
-      var temp = gadget.template_dict;
+      var state = gadget.state;
       var query = getElem(gadget.element, FILTER_INPUT).value;
-
       dict.queue_list = [];
 
       return new RSVP.Queue()
@@ -1032,8 +1025,9 @@
             doc.id = doc.id || item.id;
             return doc;
           }).filter(Boolean).sort(dynamicSort("-pos"));
+
           response.forEach(function (doc, pos) {
-            var play = gadget.state.play;
+            var play = state.play;
             dict.queue_list.push(doc.id);
             if (oldest_timestamp > doc.timestamp) {
               oldest_timestamp = doc.timestamp;
@@ -1049,7 +1043,7 @@
             });
           });
           setDom(gadget.property_dict.playlist, html_content, true);
-          if (gadget.state.zero_stamp !== oldest_timestamp) {
+          if (state.zero_stamp !== oldest_timestamp) {
             return gadget.changeState({"zero_stamp": oldest_timestamp});
           }
           return;
@@ -1193,7 +1187,7 @@
                 if (!state.is_searching && sec_trigger) {
                   return RSVP.all([
                     gadget.enterSearch(),
-                    gadget.runSearch(true, true)
+                    gadget.runSearch(true)
                   ]);
                 }
 
@@ -1216,44 +1210,11 @@
         });
     })
 
-    .declareMethod("bufferInput", function (my_event, my_trigger) {
-      var gadget = this;
-      var target = my_event.target;
-      var is_search = my_trigger === SEARCH;
-
-      // empty filter clears all filters, let it pass
-      if (target.value.length === 0 && is_search) {
-        return gadget.exitSearch();
-      }
-
-      return new RSVP.Queue()
-        .push(function () {
-          var promise_list = [
-            gadget.changeState({"last_key_stroke": getTimeStamp()}),
-            RSVP.delay(gadget.state.search_buffer)
-          ];
-          if (is_search) {
-            promise_list.push(gadget.enterSearch());
-          }
-          return RSVP.all(promise_list);
-        })
-        .push(function () {
-          if (is_search) {
-            return gadget.runSearch();
-          }
-          return gadget.refreshPlaylist();
-        });
-    })
-
-    .declareMethod("runSearch", function (my_no_delay, my_next_page, my_skip) {
+    .declareMethod("runSearch", function (my_next_page, my_skip) {
       var gadget = this;
       var dict = gadget.property_dict;
       var state = gadget.state;
-      var time = getTimeStamp();
 
-      if (!my_no_delay && time - state.last_key_stroke < state.search_buffer) {
-        return gadget.changeState({"is_searching": false});
-      }
       if (state.is_searching && !my_skip) {
         return gadget.changeState({"is_searching": false});
       }
@@ -1266,7 +1227,7 @@
         .push(function () {
           return gadget.changeState({
             "is_searching": true,
-            "search_time": time
+            "search_time": getTimeStamp()
           });
         })
         .push(function () {
@@ -1312,6 +1273,35 @@
     /////////////////////////////
     // declared jobs
     /////////////////////////////
+    .declareJob("bufferKeyInput", function (my_event, my_input) {
+      var gadget = this;
+      var state = gadget.state;
+
+      if (my_event.target.value.length === 0) {
+        return;
+      }
+
+      // new key inputs will cancel previous job unless there was a 500ms lag
+      return new RSVP.Queue()
+        .push(function() {
+          return RSVP.delay(state.filter_buffer);
+        })
+        .push(function () {
+          if (my_input === SEARCH) {
+            return gadget.enterSearch();
+          } else {
+            return gadget.exitSearch();
+          }
+        })
+        .push(function () {
+          if (my_input === SEARCH) {
+            gadget.runSearch();
+          } else {
+            gadget.refreshPlaylist();
+          }
+        });
+    })
+
     .declareJob("throttleQueueForDependencies", function (my_dependency) {
       var gadget = this;
       if (isConstructor(my_dependency)) {
@@ -1376,6 +1366,7 @@
         .push(function () {
           sync_button.classList.remove(SPIN);
           sync_button.setAttribute(DISABLED, DISABLED);
+          return gadget.changeState({"flag_sync": null});
         });
     })
 
@@ -1410,13 +1401,14 @@
       var gadget = this;
       var dict = gadget.property_dict;
       var queue;
+
       if (!gadget.state.play) {
         dict.video_controller.classList.add(HIDDEN);
       } else {
         dict.video_controller.classList.remove(HIDDEN);
       }
       if (modification_dict.hasOwnProperty("flag_sync")) {
-        if (gadget.state.dropbox_connected) {
+        if (gadget.state.dropbox_connected && modification_dict.flag_sync) {
           dict.sync_button.removeAttribute(DISABLED);
         }
       }
@@ -1448,10 +1440,6 @@
           dict.player_controller.classList.remove(HIDDEN);
           dict.search_results.classList.remove(HIDDEN);
 
-          // refresh, else search input gets hung up
-          if (!modification_dict.hasOwnProperty("last_key_stroke")) {
-            return gadget.refreshSearchResults();
-          }
         } else {
           setButtonIcon(getElem(dict.action_container, BUTTON), SEARCH);
           dict.playlist_menu.classList.remove(HIDDEN);
@@ -1528,9 +1516,9 @@
     .onEvent("input", function (event) {
       switch (event.target.getAttribute("name")) {
         case "frube-search-input":
-          return this.bufferInput(event, SEARCH);
+          return this.bufferKeyInput(event, SEARCH);
         case "frube-filter-input":
-          return this.bufferInput(event, FILTER);
+          return this.bufferKeyInput(event, FILTER);
       }
     }, false, false)
 
@@ -1555,7 +1543,7 @@
         case "frube-filter-source":
           return this.refreshPlaylist();
         case "frube-search-source":
-          return this.runSearch(true);
+          return this.runSearch();
         case "frube-trending-up":
           return this.rateVideo(getAttr(event, ID), 1);
         case "frube-trending-down":
