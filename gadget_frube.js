@@ -115,6 +115,7 @@
     if (my_token) {
       return {
         "type": "replicate",
+        "parallel_operation_amount": 6,
         "check_local_modification": true,
         "check_local_creation": true,
         "check_local_deletion": true,
@@ -593,7 +594,8 @@
                 "disablekb": 1,
                 "iv_load_policy": 3,
                 "rel": 0,
-                "vq": gadget.state.quality
+                "vq": gadget.state.quality,
+                //"fs": 0
               }
             });
           } else {
@@ -1277,10 +1279,6 @@
       var gadget = this;
       var state = gadget.state;
 
-      if (my_event.target.value.length === 0) {
-        return;
-      }
-
       // new key inputs will cancel previous job unless there was a 500ms lag
       return new RSVP.Queue()
         .push(function() {
@@ -1439,7 +1437,7 @@
           dict.player_container.classList.add(HIDDEN);
           dict.player_controller.classList.remove(HIDDEN);
           dict.search_results.classList.remove(HIDDEN);
-
+          return gadget.refreshSearchResults();
         } else {
           setButtonIcon(getElem(dict.action_container, BUTTON), SEARCH);
           dict.playlist_menu.classList.remove(HIDDEN);
@@ -1568,4 +1566,3 @@
     }, false, true);
 
 }(window, rJS, RSVP, YT, JSON, Blob, URL, Math));
-
