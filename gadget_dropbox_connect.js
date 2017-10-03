@@ -116,7 +116,10 @@
 
     .declareMethod("setDropbox", function (my_client_id) {
       var gadget = this;
-      return gadget.createState()
+      return new RSVP.Queue()
+        .push(function () {
+          return gadget.createState();
+        })
         .push(function () {
           return gadget.getDropbox(
             "https://www.dropbox.com/oauth2/authorize?" +
@@ -166,4 +169,3 @@
     });
 
 }(window, rJS, RSVP));
-
