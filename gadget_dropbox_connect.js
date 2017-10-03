@@ -6,7 +6,10 @@
   /////////////////////////////
   // parameters
   /////////////////////////////
-  var REQUEST_TIMEOUT = 24000;
+  var REQUEST_TIMEOUT = 30000;
+  var SESSION = "session_jio";
+  var STATE = "state";
+  var SLASH = "/";
 
   /////////////////////////////
   // methods
@@ -30,46 +33,64 @@
       S4() + S4() + S4();
   }
 
-  function setState() {
-    var state = uuid();
-    window.sessionStorage.setItem("state", state);
-    return state;
-  }
-
-  function getState() {
-    return window.sessionStorage.getItem("state");
-  }
-
   rJS(window)
 
     /////////////////////////////
     // ready
     /////////////////////////////
     .ready(function () {
+      this.property_dict = {};
       return this.initializeDropbox();
     })
 
     /////////////////////////////
     // declared methods
     /////////////////////////////
+
+    // jio bridge
+    .declareMethod("route", function (my_scope, my_call, my_p1, my_p2, my_p3) {
+      return this.getDeclaredGadget(my_scope)
+        .push(function (my_gadget) {
+          return my_gadget[my_call](my_p1, my_p2, my_p3);
+        });
+    })
+    .declareMethod("session_create", function (my_option_dict) {
+      return this.route(SESSION, "createJIO", my_option_dict);
+    })
+    .declareMethod("session_getAttachment", function (my_id, my_tag, my_dict) {
+      return this.route(SESSION, "getAttachment", my_id, my_tag, my_dict);
+    })
+    .declareMethod("session_putAttachment", function (my_id, my_tag, my_dict) {
+      return this.route(SESSION, "putAttachment", my_id, my_tag, my_dict);
+    })
+    .declareMethod("session_removeAttachment", function (my_id, my_tag) {
+      return this.route(SESSION, "removeAttachment", my_id, my_tag);
+    })
+
     .declareMethod("getDropbox", function (my_url, my_name, my_config) {
+      var gadget = this;
       var popup;
       var popup_resolver;
       var resolver = new Promise(function (resolve, reject) {
         popup_resolver = function resolver(href) {
-          var test = getUrlParameter("state", href);
+          return gadget.session_getAttachment(SLASH, STATE, {"format": "text"})
+            .push(function (state) {
+              var test = getUrlParameter("state", href);
 
-          // already logged in
-          if (test && getState() === test) {
-            window.sessionStorage.setItem("state", null);
-            resolve({
-              "access_token": getUrlParameter("access_token", href),
-              "uid": getUrlParameter("uid", href),
-              "type": getUrlParameter("token_type", href)
+              // already logged in
+              if (test && state === test) {
+                return gadget.session_removeAttachment(SLASH, STATE)
+                  .push(function () {
+                    return resolve({
+                      "access_token": getUrlParameter("access_token", href),
+                      "uid": getUrlParameter("uid", href),
+                      "type": getUrlParameter("token_type", href)
+                    });
+                  });
+              } else {
+                return reject("forbidden");
+              }
             });
-          } else {
-            reject("forbidden");
-          }
         };
 
         popup = window.open(my_url, my_name, my_config);
@@ -77,7 +98,6 @@
         return window.promiseEventListener(popup, "load", true);
       });
 
-      //return resolver;
       return new RSVP.Queue()
         .push(function () {
           return RSVP.any([
@@ -95,25 +115,29 @@
     })
 
     .declareMethod("setDropbox", function (my_client_id) {
-      return this.getDropbox(
-        "https://www.dropbox.com/oauth2/authorize?" +
-          "client_id=" + my_client_id +
-          "&response_type=token" +
-          "&state=" + setState() +
-          "&redirect_uri=" + window.location.href,
-        "",
-        "width=480,height=480,resizable=yes,scrollbars=yes,status=yes"
-      );
+      var gadget = this;
+      return gadget.createState()
+        .push(function () {
+          return gadget.getDropbox(
+            "https://www.dropbox.com/oauth2/authorize?" +
+              "client_id=" + my_client_id +
+              "&response_type=token" +
+              "&state=" + gadget.property_dict.state +
+              "&redirect_uri=" + window.location.href,
+            "",
+            "width=480,height=480,resizable=yes,scrollbars=yes,status=yes"
+          );
+        });
     })
 
     .declareMethod("initializeDropbox", function () {
 
-      // the oauth popup will open same page and we will end up at this line, too,
+      // the oauth popup will open same page and we will end up here, too,
       // but when inside the popup, the opener must be set
       if (window.opener === null) {
         return;
       }
-      
+
       // window.opener returns reference to  window that opened this window
       // https://developer.mozilla.org/en-US/docs/Web/API/Window/opener
       // this passes the token to the promise waiting above
@@ -122,6 +146,23 @@
       return window.opener.popup_resolver(
         window.location.hash.replace("#", "?")
       );
+    })
+
+    /////////////////////////////
+    // declared jobs
+    /////////////////////////////
+    .declareJob("createState", function () {
+      this.property_dict.state = uuid();
+      return this.session_putAttachment(SLASH, STATE, new Blob(
+        [this.property_dict.state], {type: "text/plain"})
+      );
+    })
+
+    /////////////////////////////
+    // declared service
+    /////////////////////////////
+    .declareService(function () {
+      return this.session_create({"type": "local", "sessiononly": true});
     });
 
 }(window, rJS, RSVP));
