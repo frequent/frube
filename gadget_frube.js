@@ -511,7 +511,7 @@
               var dict = gadget.property_dict;
               setButtonIcon(dict.dropbox_button, "done");
               setButtonIcon(dict.sync_button, "sync");
-              return gadget.syncPlaylist();
+              //return gadget.syncPlaylist();
             });
         });
     })
@@ -1044,7 +1044,13 @@
               "overlay": play === doc.id ? (OVERLAY + SPC + PLAYING) : STR
             });
           });
-          setDom(gadget.property_dict.playlist, html_content, true);
+          if (len === 0) {
+            setDom(dict.playlist, getTemplate(GADGET_KLASS, "status_template")
+              .supplant({"status": "playlist"}), true
+            );
+          } else {
+            setDom(dict.playlist, html_content, true);
+          }
           if (state.zero_stamp !== oldest_timestamp) {
             return gadget.changeState({"zero_stamp": oldest_timestamp});
           }
@@ -1307,7 +1313,7 @@
       }
       return new RSVP.Queue()
         .push(function () {
-          return RSVP.delay(scroll_buffer);
+          return RSVP.delay(gadget.property_dict.scroll_buffer);
         })
         .push(function () {
           return gadget.throttleQueueForDependencies(my_dependency);

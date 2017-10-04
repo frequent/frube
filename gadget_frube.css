@@ -15,6 +15,16 @@
 .frube-page-content {
   width: 100%;
 }
+/* grouping placeholder declarations disactivates them */
+.frube-search-input::-webkit-input-placeholder {
+  color: #fff;
+}
+.frube-search-input::-moz-placeholder {
+  color: #fff;
+}
+.frube-search-input::placeholder {
+  color: #fff;
+}
 .mdl-card {
   width: 100%;
 }
@@ -437,6 +447,12 @@ font-family: 'Material Icons';
 .frube-video-offline:after {
   content: "Playing will resume once connection is back";
 }
+.frube-video-playlist:before {
+  content: "playlist_add";
+}
+.frube-video-playlist:after {
+  content: "Search and add videos to your playlist";
+}
 .frube-video-searching:before {
   content: "youtube_searched_for";
   cursor: pointer;
@@ -444,6 +460,7 @@ font-family: 'Material Icons';
 .frube-video-searching:after {
   content: "Search Youtube to add videos";
 }
+.frube-video-playlist:after,
 .frube-video-searching:after,
 .frube-video-offline:after {
   font-family: "Roboto","Helvetica","Arial", sans-serif;
@@ -458,6 +475,7 @@ font-family: 'Material Icons';
   top: 60%;
 }
 @media (max-width: 1023px) {
+  .frube-video-playlist:after,
   .frube-video-searching:after,
   .frube-video-offline:after {
     top: 65%;

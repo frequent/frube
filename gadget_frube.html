@@ -167,7 +167,7 @@
     </script>
     
     <script id="status_template" type="text/x-supplant">
-      <div class="frube-overlay frube-video-{status}"></div>
+      <div class="frube-overlay frube-video-{status}" name="frube-video-{status}"></div>
     </script>
 
     <script id="loader_template" type="text/x-supplant">
@@ -258,7 +258,7 @@
               <div class="mdl-textfield mdl-js-textfield mdl-textfield--expandable mdl-textfield--floating-label mdl-textfield--align-right">
                 <label class="mdl-button mdl-js-button mdl-button--icon" for="fixed-header-drawer-exp"><i class="material-icons">search</i></label>
                 <div class="mdl-textfield__expandable-holder">
-                  <input class="mdl-textfield__input frube-search-input" name="frube-search-input" type="text" id="fixed-header-drawer-exp">
+                  <input class="mdl-textfield__input frube-search-input" name="frube-search-input" placeholder="Search videos" type="text" id="fixed-header-drawer-exp">
                 </div>
               </div>
             </form>
@@ -337,7 +337,7 @@
                       <i class="material-icons">filter_list</i>
                     </label>
                     <div class="mdl-textfield__expandable-holder">
-                      <input class="mdl-textfield__input frube-filter-input" type="text" id="frube-player-drawer-exp" name="frube-filter-input">
+                      <input class="mdl-textfield__input frube-filter-input" placeholder="Filter Playlist" type="text" id="frube-player-drawer-exp" name="frube-filter-input">
                       <label class="mdl-textfield__label" for="frube-player-drawer-exp">Filter Playlist</label>
                     </div>
                   </div>
@@ -353,7 +353,9 @@
         </div>
         
         <!-- queue grid -->
-        <div class="mdl-grid frube-playlist-results"></div>
+        <div class="mdl-grid frube-playlist-results">
+          <div class="frube-overlay frube-video-playlist" name="frube-video-playlist"></div>
+        </div>
       </main>
     </div>
 
@@ -365,6 +367,7 @@
         </button>
       </form>
     </div>
+
     <div data-gadget-url="gadget_dropbox_connect.html"
       data-gadget-scope="dropbox"
       data-gadget-sandbox="public">
