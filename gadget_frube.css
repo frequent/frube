@@ -399,7 +399,8 @@ font-family: 'Material Icons';
   -moz-box-sizing: border-box;
   box-sizing: border-box;
 }
-.frube-search-results .frube-overlay:before {
+.frube-search-results .frube-overlay:before,
+.frube-playlist-results .frube-overlay:before {
   padding: 0;
   top: 50%;
 }
@@ -784,4 +785,3 @@ dialog.fixed {
   border-color: #fff;
   border-color: rgba(255, 255, 255, 0.7);
 }
-
