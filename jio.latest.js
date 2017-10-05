@@ -6684,7 +6684,7 @@ return new Parser;
     }
     return new RegExp("^" + stringEscapeRegexpCharacters(string)
       .replace(regexp_percent, '[\\s\\S]*')
-      .replace(regexp_underscore, '.') + "$");
+      .replace(regexp_underscore, '.') + "$", "i");
   }
 
   /**
@@ -10319,7 +10319,7 @@ return new Parser;
       throw new jIO.util.jIOError("id " + id + " is forbidden (no end /)",
                                   400);
     }
-    return id;
+    return id.slice(0, -1);
   }
 
   function restrictAttachmentId(id) {
@@ -10329,31 +10329,28 @@ return new Parser;
     }
   }
 
-  // root of a folder only accepts "" on api v2
-  function restrictRoot(id) {
-    if (id === "/") {
-      return ""
-    }
-    return id;
-  }
-
-  function listPage(result, token, id, cursor) {
-    var data = {
-      "path": id,
-      "recursive": false,
-      "include_media_info": false,
-      "include_deleted": false,
-      "include_has_explicit_shared_members": false,
-      "include_mounted_folders": true
-    };
-    if (cursor) {
+  function recursiveAllAttachments(result, token, id, cursor) {
+    var data,
+      url;
+    if (cursor === undefined) {
+      data = {
+        "path": id,
+        "recursive": false,
+        "include_media_info": false,
+        "include_deleted": false,
+        "include_has_explicit_shared_members": false,
+        "include_mounted_folders": true
+      };
+      url = LIST_FOLDER_URL;
+    } else {
       data = {"cursor": cursor};
+      url = LIST_MORE_URL;
     }
     return new RSVP.Queue()
       .push(function () {
         return jIO.util.ajax({
           type: "POST",
-          url: cursor ? LIST_MORE_URL : LIST_FOLDER_URL,
+          url: url,
           headers: {
             "Authorization": "Bearer " + token,
             "Content-Type": "application/json"
@@ -10364,37 +10361,31 @@ return new Parser;
       .push(function (evt) {
         var obj = JSON.parse(evt.target.response || evt.target.responseText),
           i;
-        if (obj.has_more) {
-          result.has_more = obj.has_more;
-        }
-        if (obj.entries.length === 1 && obj.entries[0][".tag"] !== "folder") {
-          throw new jIO.util.jIOError("Not a directory: " + id, 404);
-        }
         for (i = 0; i < obj.entries.length; i += 1) {
           if (obj.entries[i][".tag"] === "file") {
-            result[obj.entries[i].path_display.split("/").pop()] = {};
+            result[obj.entries[i].name] = {};
           }
+        }
+        if (obj.has_more) {
+          return recursiveAllAttachments(result, token, id, obj.cursor);
         }
         return result;
       }, function (error) {
         if (error.target !== undefined && error.target.status === 409) {
-          throw new jIO.util.jIOError("Cannot find document: " + id, 404);
+          var err_content = JSON.parse(error.target.response ||
+                                       error.target.responseText);
+          if ((err_content.error['.tag'] === 'path') &&
+              (err_content.error.path['.tag'] === 'not_folder')) {
+            throw new jIO.util.jIOError("Not a directory: " + id + "/",
+                                        404);
+          }
+          if ((err_content.error['.tag'] === 'path') &&
+              (err_content.error.path['.tag'] === 'not_found')) {
+            throw new jIO.util.jIOError("Cannot find document: " + id + "/",
+                                        404);
+          }
         }
         throw error;
-      });
-  }
-
-  function recursiveAllAttachments(result, accessToken, id) {
-    var cursor = result.cursor;
-    return new RSVP.Queue()
-      .push(function () {
-        return listPage(result, accessToken, id);
-      })
-      .push(function () {
-        if (result.has_more) {
-          return recursiveAllAttachments(result, accessToken, id, cursor);
-        }
-        return result;
       });
   }
 
@@ -10434,22 +10425,26 @@ return new Parser;
       })
       .push(undefined, function (err) {
         if ((err.target !== undefined) &&
-            (err.target.status === 405)) {
-          // Directory already exists, no need to fail
-          return;
+            (err.target.status === 409)) {
+          var err_content = JSON.parse(err.target.response ||
+                                       err.target.responseText);
+          if ((err_content.error['.tag'] === 'path') &&
+              (err_content.error.path['.tag'] === 'conflict')) {
+            // Directory already exists, no need to fail
+            return;
+          }
         }
         throw err;
       });
   };
 
   DropboxStorage.prototype.remove = function (id) {
-    var that = this;
     id = restrictDocumentId(id);
     return jIO.util.ajax({
       type: "POST",
       url: REMOVE_URL,
       headers: {
-        "Authorization": "Bearer " + that._access_token,
+        "Authorization": "Bearer " + this._access_token,
         "Content-Type": "application/json"
       },
       data: JSON.stringify({"path": id})
@@ -10482,17 +10477,24 @@ return new Parser;
         if (obj[".tag"] === "folder") {
           return {};
         }
-        throw new jIO.util.jIOError("Not a directory: " + id, 404);
+        throw new jIO.util.jIOError("Not a directory: " + id + "/", 404);
       }, function (error) {
         if (error.target !== undefined && error.target.status === 409) {
-          throw new jIO.util.jIOError("Cannot find document: " + id, 404);
+          var err_content = JSON.parse(error.target.response ||
+                                       error.target.responseText);
+          if ((err_content.error['.tag'] === 'path') &&
+              (err_content.error.path['.tag'] === 'not_found')) {
+            throw new jIO.util.jIOError("Cannot find document: " + id + "/",
+                                        404);
+          }
         }
         throw error;
       });
   };
 
   DropboxStorage.prototype.allAttachments = function (id) {
-    return recursiveAllAttachments({}, this._access_token, restrictRoot(id));
+    id = restrictDocumentId(id);
+    return recursiveAllAttachments({}, this._access_token, id);
   };
 
   //currently, putAttachment will fail with files larger than 150MB,
@@ -10503,7 +10505,6 @@ return new Parser;
   //to an inexisting foler.
 
   DropboxStorage.prototype.putAttachment = function (id, name, blob) {
-    var that = this;
     id = restrictDocumentId(id);
     restrictAttachmentId(name);
 
@@ -10511,12 +10512,12 @@ return new Parser;
       type: "POST",
       url: UPLOAD_URL,
       headers: {
-        "Authorization": "Bearer " + that._access_token,
+        "Authorization": "Bearer " + this._access_token,
         "Content-Type": "application/octet-stream",
         "Dropbox-API-Arg": JSON.stringify({
-          "path": id + name,
+          "path": id + "/" + name,
           "mode": "overwrite",
-          "autorename": true,
+          "autorename": false,
           "mute": false
         })
       },
@@ -10525,7 +10526,8 @@ return new Parser;
   };
 
   DropboxStorage.prototype.getAttachment = function (id, name) {
-    var that = this;
+    var context = this;
+
     id = restrictDocumentId(id);
     restrictAttachmentId(name);
 
@@ -10536,21 +10538,44 @@ return new Parser;
           type: "POST",
           dataType: "blob",
           headers: {
-            "Authorization": "Bearer " + that._access_token,
-            "Dropbox-API-Arg": JSON.stringify({"path": id + name})
+            "Authorization": "Bearer " + context._access_token,
+            "Dropbox-API-Arg": JSON.stringify({"path": id + "/" + name})
           }
         });
       })
       .push(function (evt) {
+        if (evt.target.response instanceof Blob) {
+          return evt.target.response;
+        }
         return new Blob(
-          [evt.target.response || evt.target.responseText],
+          [evt.target.responseText],
           {"type": evt.target.getResponseHeader('Content-Type') ||
             "application/octet-stream"}
         );
       }, function (error) {
         if (error.target !== undefined && error.target.status === 409) {
-          throw new jIO.util.jIOError("Cannot find attachment: " +
-                                      id + ", " + name, 404);
+          if (!(error.target.response instanceof Blob)) {
+            var err_content = JSON.parse(error.target.responseText);
+            if ((err_content.error['.tag'] === 'path') &&
+                (err_content.error.path['.tag'] === 'not_found')) {
+              throw new jIO.util.jIOError("Cannot find attachment: " +
+                                          id + "/, " + name, 404);
+            }
+            throw error;
+          }
+          return new RSVP.Queue()
+            .push(function () {
+              return jIO.util.readBlobAsText(error.target.response);
+            })
+            .push(function (evt) {
+              var err_content = JSON.parse(evt.target.result);
+              if ((err_content.error['.tag'] === 'path') &&
+                  (err_content.error.path['.tag'] === 'not_found')) {
+                throw new jIO.util.jIOError("Cannot find attachment: " +
+                                            id + "/, " + name, 404);
+              }
+              throw error;
+            });
         }
         throw error;
       });
@@ -10572,12 +10597,17 @@ return new Parser;
             "Authorization": "Bearer " + that._access_token,
             "Content-Type": "application/json"
           },
-          data: JSON.stringify({"path": id + name})
+          data: JSON.stringify({"path": id + "/" + name})
         });
       }).push(undefined, function (error) {
         if (error.target !== undefined && error.target.status === 409) {
-          throw new jIO.util.jIOError("Cannot find attachment: " +
-                                      id + ", " + name, 404);
+          var err_content = JSON.parse(error.target.response ||
+                                       error.target.responseText);
+          if ((err_content.error['.tag'] === 'path_lookup') &&
+              (err_content.error.path_lookup['.tag'] === 'not_found')) {
+            throw new jIO.util.jIOError("Cannot find attachment: " +
+                                        id + "/, " + name, 404);
+          }
         }
         throw error;
       });
@@ -12396,10 +12426,9 @@ return new Parser;
 
 }(jIO, RSVP, Blob));
 ;/*jslint nomen: true*/
-/*global Blob, atob, btoa, RSVP*/
-(function (jIO, Blob, atob, btoa, RSVP) {
+/*global Blob, RSVP, unescape, escape*/
+(function (jIO, Blob, RSVP, unescape, escape) {
   "use strict";
-
   /**
    * The jIO DocumentStorage extension
    *
@@ -12415,7 +12444,13 @@ return new Parser;
   var DOCUMENT_EXTENSION = ".json",
     DOCUMENT_REGEXP = new RegExp("^jio_document/([\\w=]+)" +
                                  DOCUMENT_EXTENSION + "$"),
-    ATTACHMENT_REGEXP = new RegExp("^jio_attachment/([\\w=]+)/([\\w=]+)$");
+    ATTACHMENT_REGEXP = new RegExp("^jio_attachment/([\\w=]+)/([\\w=]+)$"),
+    btoa = function (str) {
+      return window.btoa(unescape(encodeURIComponent(str)));
+    },
+    atob = function (str) {
+      return decodeURIComponent(escape(window.atob(str)));
+    };
 
   function getSubAttachmentIdFromParam(id, name) {
     if (name === undefined) {
@@ -12622,7 +12657,7 @@ return new Parser;
 
   jIO.addStorage('document', DocumentStorage);
 
-}(jIO, Blob, atob, btoa, RSVP));
+}(jIO, Blob, RSVP, unescape, escape));
 ;/*
  * Copyright 2013, Nexedi SA
  * Released under the LGPL license.
@@ -13119,7 +13154,9 @@ return new Parser;
               end_index -= 1;
             }
             function resolver(result) {
-              result_list.push(result);
+              if (result.blob !== undefined) {
+                result_list.push(result);
+              }
               resolve(result_list);
             }
             function getPart(i) {
@@ -13819,3 +13856,117 @@ return new Parser;
   jIO.addStorage('websql', WebSQLStorage);
 
 }(jIO, RSVP, Blob, openDatabase));
+;/*jslint nomen: true */
+/*global RSVP, UriTemplate*/
+(function (jIO, RSVP, UriTemplate) {
+  "use strict";
+
+  var GET_POST_URL = "https://graph.facebook.com/v2.9/{+post_id}" +
+      "?fields={+fields}&access_token={+access_token}",
+    get_post_template = UriTemplate.parse(GET_POST_URL),
+    GET_FEED_URL = "https://graph.facebook.com/v2.9/{+user_id}/feed" +
+        "?fields={+fields}&limit={+limit}&since={+since}&access_token=" +
+        "{+access_token}",
+    get_feed_template = UriTemplate.parse(GET_FEED_URL);
+
+  function FBStorage(spec) {
+    if (typeof spec.access_token !== 'string' || !spec.access_token) {
+      throw new TypeError("Access Token must be a string " +
+                          "which contains more than one character.");
+    }
+    if (typeof spec.user_id !== 'string' || !spec.user_id) {
+      throw new TypeError("User ID must be a string " +
+                          "which contains more than one character.");
+    }
+    this._access_token = spec.access_token;
+    this._user_id = spec.user_id;
+    this._default_field_list = spec.default_field_list || [];
+    this._default_limit = spec.default_limit || 500;
+  }
+
+  FBStorage.prototype.get = function (id) {
+    var that = this;
+    return new RSVP.Queue()
+      .push(function () {
+        return jIO.util.ajax({
+          type: "GET",
+          url: get_post_template.expand({post_id: id,
+            fields: that._default_field_list, access_token: that._access_token})
+        });
+      })
+      .push(function (result) {
+        return JSON.parse(result.target.responseText);
+      });
+  };
+
+  function paginateResult(url, result, select_list) {
+    return new RSVP.Queue()
+      .push(function () {
+        return jIO.util.ajax({
+          type: "GET",
+          url: url
+        });
+      })
+      .push(function (response) {
+        return JSON.parse(response.target.responseText);
+      },
+        function (err) {
+          throw new jIO.util.jIOError("Getting feed failed " + err.toString(),
+            err.target.status);
+        })
+      .push(function (response) {
+        if (response.data.length === 0) {
+          return result;
+        }
+        var i, j, obj = {};
+        for (i = 0; i < response.data.length; i += 1) {
+          obj.id = response.data[i].id;
+          obj.value = {};
+          for (j = 0; j < select_list.length; j += 1) {
+            obj.value[select_list[j]] = response.data[i][select_list[j]];
+          }
+          result.push(obj);
+          obj = {};
+        }
+        return paginateResult(response.paging.next, result, select_list);
+      });
+  }
+
+  FBStorage.prototype.buildQuery = function (query) {
+    var that = this, fields = [], limit = this._default_limit,
+      template_argument = {
+        user_id: this._user_id,
+        limit: limit,
+        access_token: this._access_token
+      };
+    if (query.include_docs) {
+      fields = fields.concat(that._default_field_list);
+    }
+    if (query.select_list) {
+      fields = fields.concat(query.select_list);
+    }
+    if (query.limit) {
+      limit = query.limit[1];
+    }
+    template_argument.fields = fields;
+    template_argument.limit = limit;
+    return paginateResult(get_feed_template.expand(template_argument), [],
+      fields)
+      .push(function (result) {
+        if (!query.limit) {
+          return result;
+        }
+        return result.slice(query.limit[0], query.limit[1]);
+      });
+  };
+
+  FBStorage.prototype.hasCapacity = function (name) {
+    var this_storage_capacity_list = ["list", "select", "include", "limit"];
+    if (this_storage_capacity_list.indexOf(name) !== -1) {
+      return true;
+    }
+  };
+
+  jIO.addStorage('facebook', FBStorage);
+
+}(jIO, RSVP, UriTemplate));
