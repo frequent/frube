@@ -45,7 +45,6 @@
   var SEARCH = "search";
   var ADD = "playlist_add";
   var UNDO = "undo_edit";
-  var NONDO = "frube-can-undo";
   var SEARCHING = "searching";
   var WATCHING = "watching";
   var OFFLINE = "offline";
@@ -54,8 +53,6 @@
   var REPEAT = ".frube-btn-repeat";
   var QUALITY = ".frube-btn-quality";
   var SHUFFLE = ".frube-btn-shuffle";
-  var SEARCH_INPUT = ".frube-search-input";
-  var FILTER_INPUT = ".frube-filter-input";
   var SUBMIT = ".frube-dialog-submit";
   var PLACEHOLDER = "placeholder.png";
   var LIKE = ".frube-like";
@@ -88,12 +85,10 @@
     return my_event.target.querySelector(BUTTON).getAttribute(my_attribute);
   }
 
-  function setOverlay(my_element, my_class_flag) {
-    my_element.classList.add(OVERLAY, my_class_flag);
-  }
-
-  function unsetOverlay(my_element, my_class_flag) {
-    my_element.classList.remove(OVERLAY, my_class_flag);
+  function setOverlay(my_element, my_class_flag, my_action) {
+    if (my_element) {
+      my_element.classList[my_action](OVERLAY, my_class_flag);
+    }
   }
 
   function getVideo(my_element, my_video_id) {
@@ -186,13 +181,16 @@
     });
   }
 
-  function getScore(my_list, my_zero_stamp) {
-    var now = getTimeStamp();
-    var age =  now - my_zero_stamp;
-
-    return (my_list || ARR).reduce(function (points, up_timestamp) {
-      return points + (1 - (now - up_timestamp)/age);
+  function calc(my_list, my_now, my_lifetime) {
+    return (my_list || ARR).reduce(function (total, tick) {
+      return total + (1 - (my_now - tick)/my_lifetime);
     }, 0);
+  }
+
+  function getScore(my_ups, my_downs, my_item) {
+    var now = getTimeStamp();
+    var life = now - my_item.timestamp;
+    return (calc(my_ups, now, life) - calc(my_downs, now, life));
   }
 
   function setViewsSlider(my_element, my_score) {
@@ -303,10 +301,10 @@
     var current_video = getVideo(my_element, my_id);
     var next_video = getVideo(my_element, getVideoHash());
     if (current_video) {
-      unsetOverlay(current_video, PLAYING);
+      setOverlay(current_video, PLAYING, "remove");
     }
     if (next_video) {
-      setOverlay(next_video, PLAYING);
+      setOverlay(next_video, PLAYING, "add");
     }
   }
 
@@ -325,6 +323,12 @@
     setDom(my_dict, getTemplate(GADGET_KLASS, "status_template").supplant({
       "status": my_offline ? OFFLINE : SEARCHING
     }), true);
+  }
+
+  function unsetQueueList(my_id, my_list) {
+    return my_list.filter(function (item) {
+      return item !== my_id;
+    });
   }
 
   GADGET_KLASS
@@ -347,7 +351,7 @@
       is_searching: false,
       play: null,
       quality: LO,
-      flag_sync: null,
+      flag_sync: false,
       dropbox_connected: null
     })
 
@@ -363,7 +367,8 @@
         buffer_dict: {},
         queue_list: [],
         player: null,
-        error_status: getElem(element, ".frube-error"),
+        current_video: null,
+        search_input: getElem(element, ".frube-search-input"),
         dropbox_button: getElem(element,  ".frube-connector-dropbox"),
         action_container: getElem(element, ".frube-action"),
         action_button: getElem(element, ".frube-action-view"),
@@ -455,13 +460,14 @@
           return gadget.tube_create(getTubeConfig(dict.youtube_id));
         })
         .push(function () {
-          if (video) {
-            return gadget.changeState({"play": video});
-          }
-          return;
+          return gadget.refreshPlaylist();
         })
         .push(function () {
-          return gadget.refreshPlaylist();
+          if (video) {
+            //return gadget.changeState({"play": video});
+            return gadget.stateChange({"play": video});
+          }
+          return;
         })
         .push(function () {
           var loader = getElem(gadget.element, ".frube-loader");
@@ -471,7 +477,8 @@
             return;
           }
           if (!video && dict.queue_list && dict.queue_list.length > 0) {
-            return gadget.changeState({"play": dict.queue_list[0]});
+            //return gadget.changeState({"play": dict.queue_list[0]});
+            return gadget.stateChange({"play": dict.queue_list[0]});
           }
           return gadget.enterSearch();
         });
@@ -494,33 +501,35 @@
           var payload = JSON.parse(token);
           if (!payload || (getTimeStamp() - payload.timestamp > TEN_MINUTES)) {
             setButtonIcon(gadget.property_dict.sync_button, "sync_disabled");
+            gadget.state.dropbox_connected = null;
             return RSVP.all([
               gadget.token_removeAttachment("/", "token"),
-              gadget.changeState({"dropbox_connected": null}),
+              //gadget.changeState({"dropbox_connected": null}),
               gadget.frube_create(getFrubeConfig())
             ]);
           }
           return new RSVP.Queue()
             .push(function () {
+              gadget.state.dropbox_connected = true;
               return RSVP.all([
                 gadget.frube_create(getFrubeConfig(payload.token)),
-                gadget.changeState({"dropbox_connected": true})
+                //gadget.changeState({"dropbox_connected": true})
               ]);
             })
             .push(function () {
               var dict = gadget.property_dict;
               setButtonIcon(dict.dropbox_button, "done");
               setButtonIcon(dict.sync_button, "sync");
-              //return gadget.syncPlaylist();
+              return gadget.syncPlaylist();
             });
         });
     })
 
     .declareMethod("setError", function (my_message, my_focus) {
       var gadget = this;
-      var dict = gadget.property_dict;
-      dict.error_status.textContent = my_message;
-      dict.error_status.classList.remove(HIDDEN);
+      var error_element = getElem(element, ".frube-error");
+      error_element.textContent = my_message;
+      error_element.classList.remove(HIDDEN);
       return gadget.handleDialog(null, CONFIGURE, my_focus);
     })
 
@@ -558,11 +567,13 @@
 
           if (state.quality === LO && hd_check) {
             dict.player.destroy();
-            return gadget.changeState({"quality": HI});
+            //return gadget.changeState({"quality": HI});
+            gadget.state.quality = HI;
           }
           if (state.quality === HI && !hd_check) {
             dict.player.destroy();
-            return gadget.changeState({"quality": LO});
+            //return gadget.changeState({"quality": LO});
+            gadget.state.quality = LO;
           }
           return;
         })
@@ -620,19 +631,23 @@
           throw error;
         })
         .push(function (frube_response) {
-          var frube_data = frube_response;
+          var data = frube_response;
+          var item = dict.current_video = tube_data.items[0];
           var info = dict.video_info;
-          var item = tube_data.items[0];
+          var is_queued = dict.queue_list.indexOf(my_video_id) > -1;
           var score;
           if (item) {
-            score = getScore(frube_data.upvote_list, frube_data.timestamp) -
-              getScore(frube_data.downvote_list, frube_data.timestamp);
-
+            score = getScore(data.upvote_list, data.downvote_list, data);
             setDom(info, getTemplate(GADGET_KLASS, "video_template").supplant({
               "title": item.snippet.title,
               "video_id": my_video_id,
               "views": parseInt(item.statistics.viewCount, 10).toLocaleString(),
-              "score": score.toFixed(5)
+              "score": score.toFixed(5),
+              "action_title": is_queued ? "remove" : "add",
+              "action_hint": is_queued ? "Remove from List": "Add to Playlist",
+              "disabled_next": dict.queue_list.length < 2 ? DISABLED : STR,
+              "disabled_rate": is_queued ? STR : DISABLED,
+              "action_icon": is_queued ? REMOVE : ADD
             }), true);
 
             window.document.title = item.snippet.title;
@@ -676,12 +691,7 @@
           var zero = gadget.state.zero_stamp;
 
           my_result_list.reduce(function (total, item) {
-            var up_list = item.upvote_list;
-            var down_list = item.downvote_list;
-            var ups = (getScore(up_list, zero)/up_list.length) || 0;
-            var downs = (getScore(item.down_list, zero)/down_list.length) || 0;
-            var score = ups - downs;
-
+            var score = getScore(item.upvote_list, item.downvote_list, item);
             if (score > total) {
               high_score_id = id;
               return score;
@@ -731,7 +741,8 @@
         })
         .push(function () {
           return RSVP.all([
-            gadget.changeState({"flag_sync": true}),
+            //gadget.changeState({"flag_sync": true}),
+            gadget.stateChange({"flag_sync": true}),
             gadget.refreshPlaylist()
           ]);
         });
@@ -748,13 +759,13 @@
           } else {
             video.downvote_list.push(getTimeStamp());
           }
-          score = getScore(video.upvote_list, video.timestamp) -
-            getScore(video.downvote_list, video.timestamp);
+          score = getScore(video.upvote_list, video.downvote_list, video);
           getElem(gadget.element, ".frube-like-count").textContent = score.toFixed(5);
           setViewsSlider(getElem(dict.video_info, ".frube-like"), score);
           return RSVP.all([
             gadget.frube_put(my_id, video),
-            gadget.changeState({"flag_sync": true})
+            //gadget.changeState({"flag_sync": true})
+            gadget.stateChange({"flag_sync": true})
           ]);
         });
     })
@@ -786,7 +797,7 @@
       var player = dict.player;
 
       window.location.hash = STR;
-      getElem(gadget.element, SEARCH_INPUT).value = STR;
+      dict.search_input.value = STR;
       if (!player || (player && !player.h)) {
         dict.player.stopVideo();
         dict.player.destroy();
@@ -799,37 +810,24 @@
       return RSVP.all([
         gadget.refreshSearchResults(),
         gadget.enterSearch(),
-        gadget.changeState({"play": null})
+        //gadget.changeState({"play": null})
+        gadget.stateChange({"play": null})
       ]);
     })
 
     .declareMethod("removeVideo", function (my_video_id, my_element) {
       var gadget = this;
       var dict = gadget.property_dict;
-      var video;
 
       // undo = unflag for deletion
       if (dict.buffer_dict.hasOwnProperty(my_video_id)) {
         setButtonIcon(getElem(my_element, BUTTON), REMOVE);
-        unsetOverlay(getVideo(dict.playlist, my_video_id), DELETED);
+        setOverlay(getVideo(dict.playlist, my_video_id), DELETED, "remove");
         unsetBufferDict(dict, my_video_id);
       } else {
         dict.buffer_dict[my_video_id] = undefined;
-
-        // player removes are permanent
-        if (!getElem(my_element, BUTTON).classList.contains(NONDO)) {
-          video = getVideo(my_element, my_video_id);
-          // XXX not sure why this fails
-          if (video) {
-            video.parentElement.removeChild(video);
-          }
-          if (dict.queue_list.length === 0) {
-            return gadget.resetFrube();
-          }
-          return gadget.jumpVideo(1);
-        }
         setButtonIcon(getElem(my_element, BUTTON), UNDO);
-        setOverlay(getVideo(dict.playlist, my_video_id), DELETED);
+        setOverlay(getVideo(dict.playlist, my_video_id), DELETED, "add");  
       }
       return;
     })
@@ -873,7 +871,8 @@
             dialog.close();
             return RSVP.all([
               gadget.frube_put(video_id, video),
-              gadget.changeState({"flag_sync": true})
+              //gadget.changeState({"flag_sync": true})
+              gadget.stateChange({"flag_sync": true})
             ]);
           })
           .push(function () {
@@ -927,21 +926,18 @@
     .declareMethod("addVideo", function (my_video_id, my_element) {
       var gadget = this;
       var dict = gadget.property_dict;
-      var meta = dict.search_result_dict[my_video_id];
-      var video_id = meta ? meta.id.videoId || meta.id : my_video_id;
-
-      // undo = unflag for adding
+      var meta = dict.search_result_dict[my_video_id] || dict.current_video;
       if (dict.buffer_dict.hasOwnProperty(my_video_id)) {
         setButtonIcon(getElem(my_element, BUTTON), ADD);
-        unsetOverlay(getVideo(dict.search_results, my_video_id), LISTED);
+        setOverlay(getVideo(dict.search_results, my_video_id), LISTED, "remove");
         unsetBufferDict(dict, my_video_id);
       } else {
         setButtonIcon(getElem(my_element, BUTTON), UNDO);
-        setOverlay(getVideo(dict.search_results, my_video_id), LISTED);
+        setOverlay(getVideo(dict.search_results, my_video_id), LISTED, "add");
 
         // stack for storing
-        dict.buffer_dict[video_id] = {
-          "id": video_id,
+        dict.buffer_dict[my_video_id] = {
+          "id": my_video_id,
           "type": meta.id.kind,
           "original_title": meta.snippet.title,
           "original_artist": STR,
@@ -950,8 +946,8 @@
           "custom_artist": STR,
           "custom_album": STR,
           "custom_cover": STR,
-          "upvote_list": ARR,
-          "downvote_list": ARR,
+          "upvote_list": [],
+          "downvote_list": [],
           "timestamp": new Date().getTime(),
           "pos": 0
         };
@@ -973,31 +969,29 @@
             promise_list.push(gadget.frube_put(id, buffer[id]));
           } else {
             promise_list.push(gadget.frube_remove(id));
+            dict.queue_list = unsetQueueList(id, dict.queue_list);
           }
           delete buffer[id];
         }
       }
-      show_sync = promise_list.length > 0 || gadget.state.flag_sync || null;
-      if (gadget.state.flag_sync !== show_sync) {
-        promise_list.push(gadget.changeState({"flag_sync": show_sync}));
+      show_sync = promise_list.length > 0 || false;
+      if (show_sync && !gadget.state.flag_sync) {
+        promise_list.push(gadget.stateChange({"flag_sync": show_sync}));
+        //promise_list.push(function () {
+        //  return gadget.changeState({"flag_sync": show_sync});
+        //});
       }
       return RSVP.all(promise_list);
     })
 
-    .declareMethod("refreshPlaylist", function (my_delay) {
+    .declareMethod("refreshPlaylist", function () {
       var gadget = this;
       var dict = gadget.property_dict;
       var state = gadget.state;
-      var query = getElem(gadget.element, FILTER_INPUT).value;
+      var query = getElem(gadget.element, ".frube-filter-input").value;
       dict.queue_list = [];
 
-      return new RSVP.Queue()
-        .push(function () {
-          return RSVP.all([
-            gadget.clearBuffer(),
-            RSVP.delay(my_delay || 0)
-          ]);
-        })
+      return gadget.clearBuffer()
         .push(function () {
           return gadget.frube_allDocs({"include_docs": true});
         })
@@ -1044,7 +1038,7 @@
               "overlay": play === doc.id ? (OVERLAY + SPC + PLAYING) : STR
             });
           });
-          if (len === 0) {
+          if (len === 0 && !getVideoHash()) {
             setDom(dict.playlist, getTemplate(GADGET_KLASS, "status_template")
               .supplant({"status": "playlist"}), true
             );
@@ -1052,7 +1046,8 @@
             setDom(dict.playlist, html_content, true);
           }
           if (state.zero_stamp !== oldest_timestamp) {
-            return gadget.changeState({"zero_stamp": oldest_timestamp});
+            //return gadget.changeState({"zero_stamp": oldest_timestamp});
+            gadget.state.zero_stamp = oldest_timestamp;
           }
           return;
         });
@@ -1061,17 +1056,16 @@
     .declareMethod("refreshSearchResults", function () {
       var gadget = this;
       var dict = gadget.property_dict;
-      var catalog = dict.search_result_dict;
-      var list = dict.queue_list;
-      var response = STR;
-
+      
       return gadget.clearBuffer()
         .push(function () {
+          var catalog = dict.search_result_dict;
+          var list = dict.queue_list;
+          var response = STR;
           var item_id;
           var item;
           var video_id;
           var is_listed;
-
           for (item_id in catalog) {
             if (catalog.hasOwnProperty(item_id)) {
               item = catalog[item_id];
@@ -1100,7 +1094,8 @@
       var jump = getElem(element, SHUFFLE).checked ? null : my_jump;
       return gadget.getVideoId(jump)
         .push(function (my_id) {
-          return gadget.changeState({"play": my_id});
+          //return gadget.changeState({"play": my_id});
+          return gadget.stateChange({"play": my_id});
         })
         .push(function () {
           return gadget.updateSlider();
@@ -1140,9 +1135,10 @@
           var payload = new Blob([
             JSON.stringify({"token": token, "timestamp": getTimeStamp()})
           ], {type: "text/plain"});
+          gadget.state.dropbox_connected = true;
           return RSVP.all([
             gadget.frube_create(getFrubeConfig(token)),
-            gadget.changeState({"dropbox_connected": true}),
+            //gadget.changeState({"dropbox_connected": true}),
             gadget.token_putAttachment("/", "token", payload)
           ]);
         })
@@ -1151,7 +1147,8 @@
           setButtonIcon(dict.sync_button, "sync");
           return RSVP.all([
             gadget.syncPlaylist(),
-            gadget.changeState({"mode": WATCHING})
+            //gadget.changeState({"mode": WATCHING})
+            gadget.stateChange({"mode": WATCHING})
           ]);
         })
         .push(undefined, function (connection_error) {
@@ -1163,14 +1160,16 @@
       if (this.state.mode === SEARCHING) {
         return;
       }
-      return this.changeState({"mode": SEARCHING});
+      return this.stateChange({"mode": SEARCHING});
+      //return this.changeState({"mode": SEARCHING});
     })
 
     .declareMethod("exitSearch", function () {
       if (this.state.mode === WATCHING) {
         return;
       }
-      return this.changeState({"mode": WATCHING});
+      return this.stateChange({"mode": WATCHING});
+      //return this.changeState({"mode": WATCHING});
     })
 
     .declareMethod("triggerSearchFromScroll", function () {
@@ -1183,11 +1182,12 @@
 
       if (state.mode === SEARCHING) {
         if (main_pos >= state.last_main_pos) {
-          return new RSVP.Queue()
-            .push(function () {
-              return gadget.changeState({"last_main_pos": main_pos});
-            })
-            .push(function () {
+          gadget.state.last_main_pos = main_pos;
+          //return new RSVP.Queue()
+          //  .push(function () {
+          //    return gadget.changeState({"last_main_pos": main_pos});
+          //  })
+          //  .push(function () {
               height_trigger = main_pos + main.clientHeight + state.scroll_trigger;
               if (height_trigger >= main.scrollHeight) {
                 sec_trigger = getTimeStamp() - state.search_time > state.scroll_buffer;
@@ -1200,7 +1200,7 @@
                 }
 
               }
-            });
+          //  });
         }
       }
     })
@@ -1224,27 +1224,31 @@
       var state = gadget.state;
 
       if (state.is_searching && !my_skip) {
-        return gadget.changeState({"is_searching": false});
+        //return gadget.changeState({"is_searching": false});
+        gadget.state.is_searching = false;
+        return;
       }
       if (!my_next_page || Object.keys(dict.search_result_dict).length === 1) {
         dict.search_result_dict = {};
       }
 
       setLoader(dict);
+      gadget.state.is_searching = true;
+      gadget.state.search_time = getTimeStamp();
       return gadget.enterSearch()
-        .push(function () {
-          return gadget.changeState({
-            "is_searching": true,
-            "search_time": getTimeStamp()
-          });
-        })
+        //.push(function () {
+          //return gadget.changeState({
+          //  "is_searching": true,
+          //  "search_time": getTimeStamp()
+          //});
+        //})
         .push(function () {
           var token = STR;
           if (my_next_page && gadget.state.next_page_token) {
             token = gadget.state.next_page_token;
           }
           return gadget.tube_allDocs({
-            "query": getElem(gadget.element, SEARCH_INPUT).value,
+            "query": dict.search_input.value,
             "token": token
           });
         })
@@ -1260,10 +1264,12 @@
             dict.search_result_dict[item.id.videoId] = item;
           }
           unsetLoader(dict);
+          gadget.state.is_searching = false;
+          gadget.state.next_page_token = response.nextPageToken;
           return RSVP.all([
             gadget.refreshSearchResults(),
-            gadget.changeState({"next_page_token": response.nextPageToken}),
-            gadget.changeState({"is_searching": false})
+            //gadget.changeState({"next_page_token": response.nextPageToken}),
+            //gadget.changeState({"is_searching": false})
           ]);
         })
         .push(undefined, function (error) {
@@ -1274,8 +1280,70 @@
           if (error.target && error.target.status === 400) {
             return gadget.handleError(JSON.parse(error.target.response).error);
           }
-          return gadget.changeState({"is_searching": false});
+          gadget.state.is_searching = false;
+          //return gadget.changeState({"is_searching": false});
         });
+    })
+
+    .declareMethod("stateChange", function (modification_dict) {
+      var gadget = this;
+      var dict = gadget.property_dict;
+      var queue;
+
+      if (modification_dict.hasOwnProperty("flag_sync")) {
+        gadget.state.flag_sync = modification_dict.flag_sync;
+        if (gadget.state.dropbox_connected && modification_dict.flag_sync) {
+          dict.sync_button.removeAttribute(DISABLED);
+        }
+      }
+      if (modification_dict.hasOwnProperty("play")) {
+        gadget.state.play = modification_dict.play;
+        queue = new RSVP.Queue();
+        if (gadget.state.mode === WATCHING) {
+          queue.push(gadget.exitSearch());
+        } else {
+          dict.video_controller.classList.remove(HIDDEN);
+        }
+        return queue
+          .push(function () {
+            var video_hash = getVideoHash();
+            if (modification_dict.play === video_hash) {
+              return gadget.loadVideo(video_hash);
+            }
+            window.location.hash = modification_dict.play;
+            swapVideo(dict.playlist, video_hash);
+            return;
+          });
+      }
+      if (!gadget.state.play) {
+        dict.video_controller.classList.add(HIDDEN);
+      } else {
+        dict.video_controller.classList.remove(HIDDEN);
+      }
+
+      if (modification_dict.hasOwnProperty("mode")) {
+        gadget.state.mode = modification_dict.mode;
+        dict.main.scrollTop = 0;
+        if (modification_dict.mode === SEARCHING) {
+          setButtonIcon(getElem(dict.action_container, BUTTON), PLAY);
+          dict.playlist_menu.classList.add(HIDDEN);
+          dict.playlist.classList.add(HIDDEN);
+          dict.player_container.classList.add(HIDDEN);
+          dict.player_controller.classList.remove(HIDDEN);
+          dict.search_results.classList.remove(HIDDEN);
+          dict.search_input.focus();
+          return gadget.refreshSearchResults();
+        } else {
+          setButtonIcon(getElem(dict.action_container, BUTTON), SEARCH);
+          dict.playlist_menu.classList.remove(HIDDEN);
+          dict.playlist.classList.remove(HIDDEN);
+          dict.search_results.classList.add(HIDDEN);
+          dict.player_controller.classList.add(HIDDEN);
+          dict.player_container.classList.remove(HIDDEN);
+          return gadget.refreshPlaylist();
+        }
+      }
+      return;
     })
 
     /////////////////////////////
@@ -1288,21 +1356,20 @@
       // new key inputs will cancel previous job unless there was a 500ms lag
       return new RSVP.Queue()
         .push(function() {
+          
           return RSVP.delay(state.filter_buffer);
         })
         .push(function () {
           if (my_input === SEARCH) {
             return gadget.enterSearch();
-          } else {
-            return gadget.exitSearch();
           }
+          return gadget.exitSearch();
         })
         .push(function () {
           if (my_input === SEARCH) {
             gadget.runSearch();
-          } else {
-            gadget.refreshPlaylist();
           }
+          gadget.refreshPlaylist();
         });
     })
 
@@ -1335,7 +1402,8 @@
             unsetLoader(dict);
             status = getElem(dict.search_results, "div");
             status.className = status.className.replace(OFFLINE, SEARCHING);
-            return gadget.changeState({"play": my_video_id, "mode": WATCHING});
+            //return gadget.changeState({"play": my_video_id, "mode": WATCHING});
+            return gadget.stateChange({"play": my_video_id, "mode": WATCHING});
           }
           return gadget.waitForNetwork(my_video_id);
         });
@@ -1364,13 +1432,14 @@
           sync_button.classList.add(SPIN);
           return RSVP.all([
             gadget.frube_repair(),
-            gadget.refreshPlaylist(5000)
+            gadget.refreshPlaylist()
           ]);
         })
         .push(function () {
           sync_button.classList.remove(SPIN);
           sync_button.setAttribute(DISABLED, DISABLED);
-          return gadget.changeState({"flag_sync": null});
+          //return gadget.changeState({"flag_sync": false});
+          return gadget.stateChange({"flag_sync": false});
         });
     })
 
@@ -1402,6 +1471,7 @@
     // on state change
     /////////////////////////////
     .onStateChange(function (modification_dict) {
+      /*
       var gadget = this;
       var dict = gadget.property_dict;
       var queue;
@@ -1443,6 +1513,7 @@
           dict.player_container.classList.add(HIDDEN);
           dict.player_controller.classList.remove(HIDDEN);
           dict.search_results.classList.remove(HIDDEN);
+          dict.search_input.focus();
           return gadget.refreshSearchResults();
         } else {
           setButtonIcon(getElem(dict.action_container, BUTTON), SEARCH);
@@ -1455,6 +1526,7 @@
         }
       }
       return;
+      */
     })
 
     /////////////////////////////
@@ -1469,18 +1541,22 @@
       var element;
 
       if (video_id) {
-        return this.changeState({"play": video_id});
+        return this.stateChange({"play": video_id});
+        //return this.changeState({"play": video_id});
       }
       switch (target.getAttribute(NAME)) {
         case "frube-video-searching":
-          getElem(this.element, SEARCH_INPUT).focus();
+          this.property_dict.search_input.focus();
           break;
         case "frube-connector-dropbox":
           return this.connectAndSyncWithDropbox();
         case "frube-view-switch":
-          return this.changeState({
+          //return this.changeState({
+          //  "mode": this.state.mode === SEARCHING ? WATCHING : SEARCHING
+          //});
+          return this.stateChange({
             "mode": this.state.mode === SEARCHING ? WATCHING : SEARCHING
-          });
+          })
         case "frube-upload":
           bad_indicator = target.previousElementSibling;
           element = this.element;
@@ -1507,13 +1583,15 @@
 
     .onEvent("mouseDown", function (event) {
       if (event.target.id === IS_SLIDER) {
-        return this.changeState({"slider_in_use": true});
+        this.state.slider_in_use = true;
+        //return this.changeState({"slider_in_use": true});
       }
     }, false, false)
 
     .onEvent("mouseUp", function (event) {
       if (event.target.id === IS_SLIDER) {
-        return this.changeState({"slider_in_use": false});
+        this.state.slider_in_use = false;
+        //return this.changeState({"slider_in_use": false});
       }
     }, false, false)
 
@@ -1539,7 +1617,8 @@
         case "frube-playlist-edit":
           return this.editVideo(event, getAttr(event, ID));
         case "frube-playlist-play":
-          return this.changeState({"play": getAttr(event, ID)});
+          //return this.changeState({"play": getAttr(event, ID)});
+          return this.stateChange({"play": getAttr(event, ID)});
         case "frube-playlist-next":
           return this.jumpVideo(1);
         case "frube-playlist-previous":

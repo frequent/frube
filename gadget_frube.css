@@ -552,7 +552,7 @@ font-family: 'Material Icons';
   box-sizing: border-box;
   z-index: -1;
 }
-.frube-overlay .frube-can-undo {
+.frube-overlay .frube-overlay-actions {
   z-index: 11;
   pointer-events: all;
 }
