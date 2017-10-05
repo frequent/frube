@@ -552,7 +552,7 @@ font-family: 'Material Icons';
   box-sizing: border-box;
   z-index: -1;
 }
-.frube-overlay .frube-can-undo {
+.frube-overlay .frube-overlay-actions {
   z-index: 11;
   pointer-events: all;
 }
@@ -785,3 +785,4 @@ dialog.fixed {
   border-color: #fff;
   border-color: rgba(255, 255, 255, 0.7);
 }
+
