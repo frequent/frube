@@ -1,6 +1,8 @@
 /*jslint nomen: true, indent: 2, maxlen: 80 */
-/*global window, rJS, RSVP, YT, JSON, Blob, URL, Math */
-(function (window, rJS, RSVP, YT, JSON, Blob, URL, Math) {
+/*global window, rJS, RSVP, YT, JSON, Blob, URL, Math, SimpleQuery, Query,
+  ComplexQuery */
+(function (window, rJS, RSVP, YT, JSON, Blob, URL, Math, SimpleQuery, Query,
+  ComplexQuery) {
     "use strict";
 
   // KUDOS: https://github.com/boramalper/Essential-YouTube
@@ -329,6 +331,10 @@
     return my_list.filter(function (item) {
       return item !== my_id;
     });
+  }
+
+  function setQuery(my_key, my_val) {
+    return new SimpleQuery({"key": my_key, "value": my_val, "type": "simple"});
   }
 
   GADGET_KLASS
@@ -1225,7 +1231,7 @@
 
       if (state.is_searching && !my_skip) {
         //return gadget.changeState({"is_searching": false});
-        gadget.state.is_searching = false;
+        state.is_searching = false;
         return;
       }
       if (!my_next_page || Object.keys(dict.search_result_dict).length === 1) {
@@ -1233,8 +1239,8 @@
       }
 
       setLoader(dict);
-      gadget.state.is_searching = true;
-      gadget.state.search_time = getTimeStamp();
+      state.is_searching = true;
+      state.search_time = getTimeStamp();
       return gadget.enterSearch()
         //.push(function () {
           //return gadget.changeState({
@@ -1244,13 +1250,15 @@
         //})
         .push(function () {
           var token = STR;
-          if (my_next_page && gadget.state.next_page_token) {
-            token = gadget.state.next_page_token;
+          var query = setQuery("q", dict.search_input.value);
+          if (my_next_page && state.next_page_token) {
+            query = new ComplexQuery({
+              "operator": "AND",
+              "type": "complex",
+              "query_list": [query, setQuery("token", state.next_page_token)]
+            });
           }
-          return gadget.tube_allDocs({
-            "query": dict.search_input.value,
-            "token": token
-          });
+          return gadget.tube_allDocs({"query": Query.objectToSearchText(query)});
         })
         .push(function (response) {
           var item;
@@ -1650,4 +1658,6 @@
       }
     }, false, true);
 
-}(window, rJS, RSVP, YT, JSON, Blob, URL, Math));
+}(window, rJS, RSVP, YT, JSON, Blob, URL, Math, SimpleQuery, Query,
+  ComplexQuery));
+
