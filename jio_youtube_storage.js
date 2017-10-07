@@ -1,9 +1,9 @@
 /**
  * Youtube (Data) Storage. Type = "youtube".
  */
-/*global jIO, RSVP, UriTemplate, JSON*/
+/*global jIO, RSVP, UriTemplate, JSON, Query, SimpleQuery, ComplexQuery*/
 /*jslint nomen: true*/
-(function (jIO, RSVP, UriTemplate, JSON) {
+(function (jIO, RSVP, UriTemplate, JSON, Query, SimpleQuery, ComplexQuery) {
   "use strict";
 
   var GET_URL = "https://www.googleapis.com/youtube/v3/videos?" +
@@ -12,12 +12,21 @@
   var ALLDOCS_URL = "https://www.googleapis.com/youtube/v3/search?" +
     "part=snippet{&pageToken}&q={search}&type=video&maxResults=10{&key}";
   var ALLDOCS_TEMPLATE = UriTemplate.parse(ALLDOCS_URL);
-         
+
   function handleError(error, id) {
     if (error.target && error.target.status === 404) {
       throw new jIO.util.jIOError("Cannot find document: " + id, 404);
     }
     throw error;
+  }
+
+  function getValue(query_list, key) {
+    var i;
+    for (i = 0; i < query_list.length; i += 1) {
+      if (query_list[i].key === key) {
+        return query_list[i].value;
+      }
+    }
   }
 
   /**
@@ -55,14 +64,30 @@
 
   YoutubeStorage.prototype.buildQuery = function (options) {
     var key = this._api_key;
+    var query = Query.parseStringToObject(options.query);
+    if (query.type === undefined) {
+      throw new jIO.util.jIOError("Query must be SimpleQuery or ComplexQuery",
+                                    400);
+    }
     return new RSVP.Queue()
       .push(function () {
+        var token;
+        var search;
+
+        if (query.type === "simple") {
+          search = query.value;
+          token = "";
+        } else {
+          search = getValue(query.query_list, "q");
+          token = getValue(query.query_list, "token");
+        }
+
         return jIO.util.ajax({
           "type": "GET",
           "url": ALLDOCS_TEMPLATE.expand({
-            "search": options.query,
+            "search": search,
             "key": key,
-            "pageToken": options.token || ""
+            "pageToken": token
           })
         });
       })
@@ -74,7 +99,7 @@
         }
         obj.items.nextPageToken = obj.nextPageToken;
         return obj.items;
-    
+
       }, handleError);
   };
 
@@ -84,4 +109,4 @@
 
   jIO.addStorage('youtube', YoutubeStorage);
 
-} (jIO, RSVP, UriTemplate, JSON));
+} (jIO, RSVP, UriTemplate, JSON, Query, SimpleQuery, ComplexQuery));
