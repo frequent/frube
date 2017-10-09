@@ -246,24 +246,15 @@
   .is-focused .mdl-textfield__expandable-holder {
     max-width: 150px;
   }
+  .frube-playlist {
+    padding: 0;
+  }
   .frube-playlist-controller-repeat,
-  .frube-playlist-controller-shuffle {
+  .frube-playlist-controller-shuffle,
+  .frube-playlist-controller-quality {
     -webkit-box-sizing: border-box;
     -moz-box-sizing: border-box;
     box-sizing: border-box;
-    width: 70%;
-  }
-  .frube-playlist-controller-repeat {
-    padding: 16px 0 0 16px;
-  }
-  .frube-playlist-controller-shuffle {
-    padding: 16px 0 0 0;
-  }
-  .frube-playlist-controller-quality {
-    display: none;
-  }
-  .frube-playlist {
-    padding: 0;
   }
 }
 .frube-playlist-controller-repeat,
@@ -282,17 +273,6 @@
 .frube-playlist-controller-filter {
   text-align: right;
 }
-@media (max-width: 480px) {
-  .frube-playlist-controller-filter {
-    width: 100%;
-    padding-left: 0;
-  }
-  .frube-playlist-controller-repeat,
-  .frube-playlist-controller-shuffle {
-    min-width: 85px;
-  }
-}
-
 .frube-player-container {
   margin-top: 16px;
   height: 80%;
@@ -365,7 +345,7 @@
   .frube-statistics-container {
     font-size: 16px; 
     vertical-align: middle;
-    width: 35%;
+    width: 31%;
   }
 }
 
@@ -482,7 +462,48 @@ font-family: 'Material Icons';
     top: 65%;
   }
 }
-
+@media (max-width: 480px) {
+  .frube-video-controls {
+    z-index: 100;
+  }
+  .frube-action-container {
+    padding: 0 4px;
+    }
+  .frube-playlist {
+    min-height: 100px;
+    flex-flow: row wrap;
+  }
+  .frube-statistics-container {
+    width: 30%;
+  }
+  .frube-action-controls {
+    margin-top: 10px;
+  }
+  .frube-action-container {
+    padding: 0 6px;
+  }
+  .frube-likes-container {
+    float: left;
+  }
+  .frube-playlist-controller-filter {
+    width: 100%;
+    padding-left: 0;
+  }
+   .frube-playlist-controller-repeat,
+  .frube-playlist-controller-shuffle,
+  .frube-playlist-controller-quality {
+    min-width: inherit;
+    width: inherit;
+    flex-basis: 33.33%;
+  }
+  .frube-playlist-controller-filter {
+    text-align: left;
+    padding-left: 1em;
+  }
+  .frube-statistics-container {
+    width: 36%;
+  }
+}
 /* take this, mdl action button! */
 .frube-action form .mdl-button.mdl-button--colored,
 .frube-action form .mdl-button.mdl-button--colored:visited,
