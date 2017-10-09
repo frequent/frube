@@ -47,14 +47,14 @@
           </div>
           <div class="frube-action-container">
             <form name="frube-trending-up">
-              <button type="submit" data-video="{video_id}" {disabled_rate} class="frube-icon mdl-button mdl-button--icon mdl-js-button" title="Wii. Play more often.">
+              <button type="submit" data-video="{video_id}" {disabled_rate} class="frube-trending-up frube-icon mdl-button mdl-button--icon mdl-js-button" title="Wii. Play more often.">
                 <i class="material-icons">trending_up</i>
               </button>
             </form>
           </div>
           <div class="frube-action-container">
             <form name="frube-trending-down">
-              <button type="submit" data-video="{video_id}" {disabled_rate} class="frube-icon mdl-button mdl-button--icon mdl-js-button" title="Meh. Play less.">
+              <button type="submit" data-video="{video_id}" {disabled_rate} class="frube-trending-down frube-icon mdl-button mdl-button--icon mdl-js-button" title="Meh. Play less.">
                 <i class="material-icons">trending_down</i>
               </button>
             </form>
@@ -155,10 +155,10 @@
       </div>
       <div class="frube-edit-custom-cover-container">
         <div class="mdl-textfield mdl-js-textfield mdl-textfield--file">
-          <img src="{video_cover}" alt="{video_artist} - {video_title} | {video_cover}" class="frube-edit-custom-cover-image" />
+          <img src="{video_cover}" alt="{video_artist} - {video_title} | {video_cover}" class="frube-edit-cover-image" />
           <input class="mdl-textfield__input frube-edit-cover" name="frube-edit-cover" placeholder="Custom thumbnail" type="text" readonly/>
           <div class="mdl-button mdl-button--icon mdl-button--file">
-            <i class="frube-icons material-icons">attach_file</i><input type="file" class="frube-upload" name="frube-upload">
+            <i class="frube-icons material-icons">{bad_indicator}</i><input type="file" class="frube-upload" name="frube-upload">
           </div>
         </div>
       </div>
@@ -256,7 +256,7 @@
               <div class="mdl-textfield mdl-js-textfield mdl-textfield--expandable mdl-textfield--floating-label mdl-textfield--align-right">
                 <label class="mdl-button mdl-js-button mdl-button--icon" for="fixed-header-drawer-exp"><i class="material-icons">search</i></label>
                 <div class="mdl-textfield__expandable-holder">
-                  <input class="mdl-textfield__input frube-search-input" name="frube-search-input" placeholder="Search videos" type="text" id="fixed-header-drawer-exp">
+                  <input class="mdl-textfield__input frube-search-input" autofocus name="frube-search-input" placeholder="Search videos" type="text" id="fixed-header-drawer-exp">
                 </div>
               </div>
             </form>
@@ -280,7 +280,7 @@
               <div class="frube-player-controller frube-hidden">
                 <ul class=" mdl-list">
                   <li class="mdl-list__item">
-                    <input class="mdl-slider mdl-js-slider frube-slider" type="range" min="0" max="100" value="0" tabindex="0" />
+                    <input class="mdl-slider mdl-js-slider frube-slider" name="frube-track-seek" type="range" min="0" max="100" value="0" tabindex="0" />
                   </li>
                   <li class="frube-controller-buttons mdl-list__item">
                     <div class="frube-controller-video">
@@ -310,21 +310,21 @@
               <div class="frube-playlist-controller-repeat mdl-card__supporting-text mdl-card--border">
                 <div class="frube-playlist-switch-icon"><i class="frube-icon material-icons">repeat_one</i></div>
                 <label class="mdl-switch mdl-js-switch">
-                   <input type="checkbox" class="frube-btn-repeat mdl-switch__input" />
+                   <input type="checkbox" class="frube-btn-repeat mdl-switch__input" name="frube-config" data-action="repeat" />
                   <span class="mdl-switch__label"></span>
                 </label>
               </div>
               <div class="frube-playlist-controller-shuffle mdl-card__supporting-text mdl-card--border">
                 <div class="frube-playlist-switch-icon"><i class="frube-icon material-icons">shuffle</i></div>
                 <label class="mdl-switch mdl-js-switch">
-                   <input type="checkbox" class="frube-btn-shuffle mdl-switch__input" />
+                   <input type="checkbox" class="frube-btn-shuffle mdl-switch__input" name="frube-config" data-action="shuffle" />
                   <span class="mdl-switch__label"></span>
                 </label>
               </div>
               <div class="frube-playlist-controller-quality mdl-card__supporting-text mdl-card--border">
                 <div class="frube-playlist-switch-icon"><i class="frube-icon material-icons">hd</i></div>
                 <label class="mdl-switch mdl-js-switch">
-                  <input type="checkbox" class="frube-btn-quality mdl-switch__input" />
+                  <input type="checkbox" class="frube-btn-quality mdl-switch__input" name="frube-config" data-action="quality" />
                   <span class="mdl-switch__label"></span>
                 </label>
               </div>
@@ -377,7 +377,7 @@
       data-gadget-sandbox="public">
     </div>
     <div data-gadget-url="gadget_jio.html"
-      data-gadget-scope="token_jio"
+      data-gadget-scope="setting_jio"
       data-gadget-sandbox="public">
     </div>
   </body>

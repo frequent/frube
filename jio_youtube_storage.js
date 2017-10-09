@@ -1,9 +1,9 @@
 /**
  * Youtube (Data) Storage. Type = "youtube".
  */
-/*global jIO, RSVP, UriTemplate, JSON, Query, SimpleQuery, ComplexQuery*/
+/*global jIO, RSVP, UriTemplate, JSON, Query*/
 /*jslint nomen: true*/
-(function (jIO, RSVP, UriTemplate, JSON, Query, SimpleQuery, ComplexQuery) {
+(function (jIO, RSVP, UriTemplate, JSON, Query) {
   "use strict";
 
   var GET_URL = "https://www.googleapis.com/youtube/v3/videos?" +
@@ -63,8 +63,13 @@
   };
 
   YoutubeStorage.prototype.buildQuery = function (options) {
-    var key = this._api_key;
-    var query = Query.parseStringToObject(options.query);
+    var key;
+    var query;
+    if (options.query === undefined) {
+      throw new jIO.util.jIOError("Query parameter is required", 400);
+    }
+    key = this._api_key;
+    query = Query.parseStringToObject(options.query);
     if (query.type === undefined) {
       throw new jIO.util.jIOError("Query must be SimpleQuery or ComplexQuery",
                                     400);
@@ -109,4 +114,4 @@
 
   jIO.addStorage('youtube', YoutubeStorage);
 
-} (jIO, RSVP, UriTemplate, JSON, Query, SimpleQuery, ComplexQuery));
+} (jIO, RSVP, UriTemplate, JSON, Query));
