@@ -632,15 +632,6 @@ font-family: 'Material Icons';
 }
 
 /* credit */
-.frube-credit {
-  display: inline-block;
-  color: rgba(0,0,0,.54);
-  padding: 9px 0;
-  -moz-box-sizing: border-box;
-  -webkit-box-sizing: border-box;
-  box-sizing: border-box;
-  font-size: 12px;
-}
 .frube-credit a {
   color: rgb(244,67,54);
 }
