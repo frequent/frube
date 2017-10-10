@@ -635,6 +635,15 @@ font-family: 'Material Icons';
 .frube-credit a {
   color: rgb(244,67,54);
 }
+/* search more */
+.frube-search-more {
+  width: 100%;
+  text-align: center;
+  padding-top: .5em;
+}
+.frube-search-more button {
+  color: rgba(117, 117, 117, .6);
+}
 
 /* spin until this is JS-promisable */
 .frube-spin .frube-icon {
