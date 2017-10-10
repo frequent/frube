@@ -10,10 +10,6 @@
   // https://developers.google.com/youtube/player_parameters?playerVersion=HTML5
   // https://getmdl.io/components/index.html
 
-  // fix scroll trigger and add pointer
-  // fix ugly connection dropbox popup
-  // refresh playlist after sync, bit by bit?
-
   /////////////////////////////
   // parameters
   /////////////////////////////
@@ -997,10 +993,7 @@
       var dict = gadget.property_dict;
       var state = gadget.state;
       var query = getElem(gadget.element, ".frube-filter-input").value;
-      return gadget.clearBuffer()
-        .push(function () {
-          return gadget.frube_allDocs({"include_docs": true});
-        })
+      return gadget.frube_allDocs({"include_docs": true})
         .push(function (my_response) {
           var len = my_response.data.total_rows;
           var oldest_timestamp = getTimeStamp();
@@ -1058,43 +1051,43 @@
           if (state.zero_stamp !== oldest_timestamp) {
             gadget.state.zero_stamp = oldest_timestamp;
           }
+          return gadget.clearBuffer();
         });
     })
 
     .declareMethod("refreshSearchResults", function () {
       var gadget = this;
-      return gadget.clearBuffer()
-        .push(function () {
-          var dict = gadget.property_dict;
-          var catalog = dict.search_result_dict;
-          var list = dict.queue_list;
-          var response = STR;
-          var item_id;
-          var item;
-          var video_id;
-          var is_listed;
-          for (item_id in catalog) {
-            if (catalog.hasOwnProperty(item_id)) {
-              item = catalog[item_id];
-              video_id = item.id.videoId;
-              is_listed = list.indexOf(video_id) > -1;
-              response += getTemplate(GADGET_KLASS, "search_template").supplant({
-                "video_id": video_id,
-                "title": item.snippet.title,
-                "thumbnail_url": item.snippet.thumbnails.medium.url,
-                "overlay": is_listed ? (OVERLAY + SPC + LISTED) : STR,
-                "disabled": is_listed ? DISABLED : STR,
-                "class": is_listed ? OPAQUE : STR
-              });
-            }
-          }
-          if (response !== STR) {
-            setDom(dict.search_results, response, true);
-          }
-          if (gadget.state.play !== null) {
-            setVideoControls(dict, gadget.state.play);
-          }
-        });
+      var dict = gadget.property_dict;
+      var catalog = dict.search_result_dict;
+      var list = dict.queue_list;
+      var response = STR;
+      var item_id;
+      var item;
+      var video_id;
+      var is_listed;
+      for (item_id in catalog) {
+        if (catalog.hasOwnProperty(item_id)) {
+          item = catalog[item_id];
+          video_id = item.id.videoId;
+          is_listed = list.indexOf(video_id) > -1;
+          response += getTemplate(GADGET_KLASS, "search_template").supplant({
+            "video_id": video_id,
+            "title": item.snippet.title,
+            "thumbnail_url": item.snippet.thumbnails.medium.url,
+            "overlay": is_listed ? (OVERLAY + SPC + LISTED) : STR,
+            "disabled": is_listed ? DISABLED : STR,
+            "class": is_listed ? OPAQUE : STR
+          });
+        }
+      }
+      if (response !== STR) {
+        response += getTemplate(GADGET_KLASS, "load_template".supplant());
+        setDom(dict.search_results, response, true);
+      }
+      if (gadget.state.play !== null) {
+        setVideoControls(dict, gadget.state.play);
+      }
+      return gadget.clearBuffer();
     })
 
     .declareMethod("jumpVideo", function (my_jump) {
@@ -1163,17 +1156,15 @@
     })
 
     .declareMethod("enterSearch", function () {
-      if (this.state.mode === SEARCHING) {
-        return;
+      if (this.state.mode !== SEARCHING) {
+        return this.stateChange({"mode": SEARCHING});
       }
-      return this.stateChange({"mode": SEARCHING});
     })
 
     .declareMethod("exitSearch", function () {
-      if (this.state.mode === WATCHING) {
-        return;
+      if (this.state.mode !== WATCHING) {
+        return this.stateChange({"mode": WATCHING});
       }
-      return this.stateChange({"mode": WATCHING});
     })
 
     .declareMethod("triggerSearchFromScroll", function () {
@@ -1183,20 +1174,14 @@
       var main_pos = main.scrollTop;
       var height_trigger;
       var sec_trigger;
-
-      if (state.mode === SEARCHING) {
+      if (state.mode === SEARCHING && state.is_searching !== true) {
         if (main_pos >= state.last_main_pos) {
           gadget.state.last_main_pos = main_pos;
-
           height_trigger = main_pos + main.clientHeight + state.scroll_trigger;
           if (height_trigger >= main.scrollHeight) {
             sec_trigger = getTimeStamp() - state.search_time > state.scroll_buffer;
-
-            if (!state.is_searching && sec_trigger) {
-              return RSVP.all([
-                gadget.enterSearch(),
-                gadget.runSearch(true)
-              ]);
+            if (sec_trigger) {
+              return gadget.runSearch(true);
             }
 
           }
@@ -1213,12 +1198,12 @@
         state.is_searching = false;
         return;
       }
-      if (!my_next_page || Object.keys(dict.search_result_dict).length === 1) {
+      if (!my_next_page) {
         dict.search_result_dict = {};
+        gadget.state.last_main_pos = 0;
       }
-
-      state.is_searching = true;
-      state.search_time = getTimeStamp();
+      gadget.state.is_searching = true;
+      gadget.state.search_time = getTimeStamp();
       return gadget.stateChange({"loader": true})
         .push(function () {
           var token = STR;
@@ -1246,12 +1231,14 @@
             item = response.data.rows[i];
             dict.search_result_dict[item.id.videoId] = item;
           }
-          gadget.state.is_searching = false;
           gadget.state.next_page_token = response.nextPageToken;
           return RSVP.all([
             gadget.refreshSearchResults(),
             gadget.stateChange({"loader": null})
           ]);
+        })
+        .push(function () {
+          gadget.state.is_searching = false;
         })
         .push(undefined, function (error) {
           unsetLoader(dict.action_button);
@@ -1321,6 +1308,7 @@
           return gadget.refreshPlaylist();
         }
       }
+      return;
     })
 
     .declareMethod("updateSettings", function () {
@@ -1360,7 +1348,6 @@
     .declareJob("bufferKeyInput", function (my_event, my_input) {
       var gadget = this;
       var state = gadget.state;
-
       // new key inputs will cancel previous job unless there was a 500ms lag
       return new RSVP.Queue()
         .push(function() {
@@ -1561,6 +1548,8 @@
           return playOrPause(this.property_dict.player);
         case "frube-set-volume":
           return setVolume(this.property_dict.player, event);
+        case "frube-search-more":
+          return this.runSearch(true);
         case "frube-home":
           this.property_dict.main.scrollTop = 0;
           break;
