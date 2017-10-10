@@ -200,27 +200,6 @@
       <a class="github-fork-ribbon right-top" href="https://github.com/frequent/frube" data-ribbon="Get Frube on GitHub" title="Get Frube on Github">Get Frube on GitHub</a>
     </dialog>
 
-    <dialog class="mdl-dialog frube-dialog-configure">
-      <h2 class="mdl-dialog__title">Configure</h2>
-      <form name="frube-dialog" data-action="configure">
-        <div class="mdl-dialog__content">
-          <p><span class="frube-error"></span>Provide your API keys to search videos and store meta with Frube.</p>
-          <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
-            <input class="mdl-textfield__input frube-youtube-key" type="text" id="frube-configure-youtube-api">
-            <label class="mdl-textfield__label" for="frube-configure-youtube-api">Youtube Data API Key (Search)</label>
-          </div>
-          <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
-            <input class="mdl-textfield__input frube-dropbox-key" type="text" id="frube-configure-dropbox-api">
-            <label class="mdl-textfield__label" for="frube-configure-dropbox-api">Dropbox API Key (Storage)</label>
-          </div>
-        </div>
-        <div class="mdl-dialog__actions">
-          <button type="submit" class="mdl-button mdl-js-button mdl-js-ripple-effect frube-dialog-submit">Configure</button>
-          <button type="submit" class="mdl-button frube-dialog-close">Cancel</button>
-        </div>
-        </form>
-    </dialog>
-
     <dialog class="mdl-dialog frube-dialog-edit">
       <h2 class="mdl-dialog__title">Edit Video Info</h2>
       <form name="frube-dialog" data-action="edit">
@@ -247,13 +226,8 @@
             <button type="submit" class="frube-btn-sync mdl-button mdl-js-button mdl-js-ripple-effect" disabled><i class="frube-icon material-icons">sync_disabled</i></button>
           </form>
           <ul class="mdl-menu mdl-menu--bottom-left mdl-js-menu mdl-js-ripple-effect" for="frube-open-menu">
-            <li class="mdl-menu__item mdl-menu__item--full-bleed-divider">
-              <span class="mdl-list__item-primary-content frube-connector-dropbox" name="frube-connector-dropbox"><i class="material-icons mdl-list__item-icon">check_box_outline_blank</i>Dropbox</span>
-            </li>
-            <li class="mdl-menu__item frube-custom-menu-action">
-              <form name="frube-dialog" data-action="configure">
-                <button type="submit" class="mdl-button mdl-js-button-mdl-js-ripple-effect frube-dialog-open">Configure</button>
-              </form>
+            <li class="mdl-menu__item mdl-menu__item--full-bleed-divider" name="frube-connector-dropbox">
+              <span class="mdl-list__item-primary-content frube-connector-dropbox"><i class="material-icons mdl-list__item-icon">check_box_outline_blank</i>Dropbox</span>
             </li>
             <li class="mdl-menu__item frube-custom-menu-action">
               <form name="frube-dialog" data-action="about">

@@ -10,6 +10,9 @@
   // https://developers.google.com/youtube/player_parameters?playerVersion=HTML5
   // https://getmdl.io/components/index.html
 
+  // fix ugly connection dropbox popup
+  // refresh playlist after sync, bit by bit?
+
   /////////////////////////////
   // parameters
   /////////////////////////////
@@ -18,7 +21,6 @@
   var AND = " - ";
   var ARR = [];
   var BUTTON = "button";
-  var CONFIGURE = "configure";
   var CLOSE = "frube-dialog-close";
   var DELETED = "frube-video-deleted";
   var DIALOG = ".frube-dialog-";
@@ -44,7 +46,6 @@
   var PLAYING = "frube-video-playing";
   var POS = "data-position";
   var QUALITY = ".frube-btn-quality";
-  var QUOTA = "quotaExceeded";
   var REMOVE = "delete_sweep";
   var REPEAT = ".frube-btn-repeat";
   var SEARCH = "search";
@@ -548,14 +549,6 @@
         });
     })
 
-    .declareMethod("setError", function (my_message, my_focus) {
-      var gadget = this;
-      var error_element = getElem(element, ".frube-error");
-      error_element.textContent = my_message;
-      error_element.classList.remove(HIDDEN);
-      return gadget.handleDialog(null, CONFIGURE, my_focus);
-    })
-
     .declareMethod("handleError", function (my_error) {
       var gadget = this;
 
@@ -569,12 +562,6 @@
       // jIO getAttachment
       if (my_error.status_code === 404) {
         return 0;
-      }
-      if (my_error.code === 400) {
-        return gadget.setError("(Invalid Key) ");
-      }
-      if (my_error.code === 408) {
-        return gadget.setError("(Timeout/Invalid Key) ", 1);
       }
       throw my_error;
     })
@@ -668,9 +655,6 @@
           return;
         })
         .push(undefined, function (error) {
-          if (error.type === FORBIDDEN && error.detail === QUOTA) {
-            return gadget.setError("(Quota exceeded) ");
-          }
           throw error;
         });
     })
@@ -855,9 +839,6 @@
           DIALOG_POLYFILL.registerDialog(dialog);
         }
         dialog.showModal();
-        if (my_focus) {
-          dialog.querySelectorAll("input")[my_focus].focus();
-        }
         return;
       }
 
@@ -882,21 +863,6 @@
           })
         );
       }
-      if (action === "configure") {
-        input = getElem(dialog, ".frube-youtube-key");
-        if (input.value) {
-          promise_list.push(gadget.tube_create(getTubeConfig(input.value)));
-          promise_list.push(gadget.runSearch(null, true));
-          input.value = STR;
-        }
-        input = getElem(dialog, ".frube-dropbox-key");
-        if (input.value) {
-          promise_list.push(gadget.connectAndSyncWithDropbox(input.value));
-          input.value = STR;
-        }
-        dialog.close();
-      }
-      return RSVP.all(promise_list);
     })
 
     .declareMethod("editVideo", function (my_event, my_video_id) {
@@ -1242,9 +1208,6 @@
         })
         .push(undefined, function (error) {
           unsetLoader(dict.action_button);
-          if (error.type === FORBIDDEN && error.detail === QUOTA) {
-            return gadget.setError("(Quota exceeded) ");
-          }
           if (error.target && error.target.status === 400) {
             return gadget.handleError(JSON.parse(error.target.response).error);
           }

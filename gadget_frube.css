@@ -618,9 +618,6 @@ font-family: 'Material Icons';
 	clip: rect(1px,1px,1px,1px);
   visibility: hidden;
 }
-.frube-error {
-  color: rgb(244,67,54);
-}
 .frube-disabled {
   opacity: .3;
 }
