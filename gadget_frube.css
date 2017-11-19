@@ -269,7 +269,17 @@
 .frube-playlist-controller-filter .mdl-textfield--expandable .mdl-button--icon {
   top: 0;
 }
-
+.frube-playlist-controller-playlist {
+  padding: 16px 0; 
+  width: 50%;
+}
+.frube-playlist-controller-playlist .mdl-button {
+  font-size: 14px;
+  color: rgb(117, 117, 117);
+  font-weight: normal;
+  text-transform: none;
+  white-space: nowrap;
+}
 .frube-playlist-controller-filter {
   text-align: right;
 }
@@ -279,12 +289,15 @@
 }
 .frube-playlist-switch-icon {
   display: inline-block;
-  vertical-align: middle;
   margin-right: 24px;
 }
 @media (max-width: 1023px) {
   .frube-playlist-switch-icon {
     margin-right: 0;
+    line-height: 36px;
+  }
+  .frube-playlist-switch-icon .frube-icon {
+    vertical-align: middle;
   }
 }
 
@@ -485,11 +498,7 @@ font-family: 'Material Icons';
   .frube-likes-container {
     float: left;
   }
-  .frube-playlist-controller-filter {
-    width: 100%;
-    padding-left: 0;
-  }
-   .frube-playlist-controller-repeat,
+  .frube-playlist-controller-repeat,
   .frube-playlist-controller-shuffle,
   .frube-playlist-controller-quality {
     min-width: inherit;
@@ -497,8 +506,19 @@ font-family: 'Material Icons';
     flex-basis: 33.33%;
   }
   .frube-playlist-controller-filter {
-    text-align: left;
+    text-align: right;
+    width: 50%;
     padding-left: 1em;
+  }
+  .frube-playlist-controller-playlist {
+    width: auto;
+    max-width: 40%;
+  }
+  .frube-playlist-controller-playlist .mdl-button {
+    width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   .frube-statistics-container {
     width: 36%;
@@ -547,11 +567,79 @@ font-family: 'Material Icons';
   padding: 0;
   min-width: 16px;
 }
-.frube-action-info {
+.frube-playlist-info {
   font-size: 12px;
   padding-right: 6px;
   color: rgb(117, 117, 117);
-}    
+  vertical-align: middle;
+  text-transform: none;
+}
+.frube-dialog-playlist-actions {
+  padding: 0;
+  max-height: 36px;
+  overflow: hidden;
+}
+.frube-playlist-title {
+  padding-left: 0;
+}
+.frube-playlist-entry {
+  width: 100%;
+}
+.frube-playlist-switch {
+  float: left;
+  width: 70%;
+}
+.frube.playlist-switch button {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.frube-playlist-filter,
+.frube-playlist-create {
+  display: inline-block;
+  vertical-align: middle;
+}
+.frube-playlist-filter {
+  max-width: 82%;
+}
+.frube-playlist-toggle .is-focused .frube-button-toggle {
+  display: none;
+}
+.frube-playlist-switch,
+.frube-playlist-delete,
+.frube-playlist-toggle,
+.frube-playlist-save {
+  display: inline-block;
+  vertical-align: middle;
+}
+.frube-hidden .frube-playlist-title {
+  display: none;
+}
+.frube-playlist-title .mdl-button {
+  text-transform: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 74%;
+  width: auto;
+  padding-right: 0;
+  padding-left: 4px;
+  text-align: left;
+}
+.frube-playlist-switch .frube-playlist-title {
+  width: 100%;
+  text-align: left;
+}
+.frube-playlist-entry .is-focused .mdl-textfield__expandable-holder {
+  margin-left: 0;
+  display: inline-block;
+}
+.frube-playlist-entry .mdl-textfield {
+  padding: 0;
+}
+.frube-playlist-entry .mdl-textfield .mdl-button {
+  top: 0;
+}
 /* loading video blanks */
 .frube-search-results .mdl-card__media,
 .frube-playlist-results .mdl-card__media {
@@ -618,7 +706,11 @@ font-family: 'Material Icons';
 	clip: rect(1px,1px,1px,1px);
   visibility: hidden;
 }
-.frube-disabled {
+.frube-hidden:hover {
+  background: 0 none;
+}
+.frube-disabled,
+.mdl-button:disabled {
   opacity: .3;
 }
 .frube-btn-sync:disabled .frube-icon {
@@ -803,4 +895,3 @@ dialog.fixed {
   border-color: #fff;
   border-color: rgba(255, 255, 255, 0.7);
 }
-
