@@ -7,20 +7,19 @@
 
     <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
     <link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.red-indigo.min.css" />
-    <script src="https://code.getmdl.io/1.3.0/material.min.js"></script>
+    <link rel="stylesheet" href="gadget_frube.css" />
 
+    <script src="https://code.getmdl.io/1.3.0/material.min.js"></script>
     <script src="https://www.youtube.com/iframe_api"></script>
     <script src="polyfill.dialog.js"></script>
 
     <script src="rsvp.latest.js"></script>
     <script src="renderjs.latest.js"></script>
     <script src="jio.latest.js"></script>
-    <script src="jio_youtube_storage.js"></script>
     <script src="gadget_global.js"></script>
     <script src="gadget_frube.js"></script>
 
-    <link rel="stylesheet" href="gadget_frube.css" />
-
+    <!-- video controller (video info/rating) -->
     <script id="video_template" type="text/x-supplant">
       <div class="mdl-card__title frube-title-container">
         <h3 class="mdl-card__title-text frube-video-title">{title}</h3>
@@ -39,7 +38,7 @@
         </div>
         <div class="frube-action-controls">
           <div class="frube-action-container">
-            <form name="frube-playlist-{action_title}">
+            <form name="frube-track-{action_title}">
               <button type="submit" data-video="{video_id}" class="frube-icon mdl-button mdl-button--icon mdl-js-button" title="{action_hint}">
                 <i class="material-icons">{action_icon}</i>
               </button>
@@ -60,7 +59,7 @@
             </form>
           </div>
           <div class="frube-action-container">
-            <form name="frube-playlist-next">
+            <form name="frube-track-next">
               <button type="submit" data-video="{video_id}" {disabled_next} class="frube-icon mdl-button mdl-button--icon mdl-js-button" title="Play next.">
                 <i class="material-icons">skip_next</i>
               </button>
@@ -70,6 +69,7 @@
       </div>
     </script>
 
+    <!-- queue entry -->
     <script id="queue_template" type="text/x-supplant">
       <div class="frube-video-card mdl-cell {overlay} mdl-cell--3-col mdl-cell--6-col-phone mdl-shadow--2dp" data-video="{video_id}">
         <div class="mdl-card">
@@ -80,30 +80,30 @@
             <h3 class="mdl-card__title-text" data-video="{video_id}">{title}</h3>
           </div>
           <div class="mdl-card__actions mdl-card--border frube-overlay-actions">
-            <form name="frube-playlist-edit" data-action="edit">
-              <button type="submit" class="mdl-button mdl-button--icon mdl-js-button mdl-js-ripple-effect" data-video="{video_id}">
+            <form name="frube-track-edit" data-action="edit">
+              <button type="submit" class="mdl-button mdl-button--icon mdl-js-button" data-video="{video_id}" title="Edit video info">
                 <i class="material-icons frube-icon">edit</i>
               </button>
             </form>
-            <form name="frube-playlist-remove">
-              <button type="submit" class="mdl-button mdl-button--icon mdl-js-button mdl-js-ripple-effect" data-video="{video_id}">
+            <form name="frube-track-remove">
+              <button type="submit" class="mdl-button mdl-button--icon mdl-js-button" data-video="{video_id}" title="Delete video from playlist">
                 <i class="material-icons frube-icon">delete_sweep</i>
               </button>
             </form>
-            <form name="frube-playlist-play">
-              <button type="submit" class="mdl-button mdl-button--icon mdl-js-button mdl-js-ripple-effect" data-video="{video_id}">
+            <form name="frube-track-play">
+              <button type="submit" class="mdl-button mdl-button--icon mdl-js-button" data-video="{video_id}" title="Play Video">
                 <i class="material-icons frube-icon">play_arrow</i>
               </button>
             </form>
             <div class="mdl-layout-spacer"></div>
-            <form name="frube-playlist-front">
-              <button type="submit" class="mdl-button mdl-button--icon mdl-js-button mdl-js-ripple-effect" data-position="{pos}" data-video="{video_id}" {disable_first}>
+            <form name="frube-track-front">
+              <button type="submit" class="mdl-button mdl-button--icon mdl-js-button" data-position="{pos}" data-video="{video_id}" {disable_first} title="Move video forward">
                 <i class="material-icons frube-icon">arrow_left</i>
               </button>
             </form>
             <button disabled class="frube-track-score mdl-button mdl-js-button">{pos}</button>
-            <form name="frube-playlist-back">
-              <button type="submit" class="mdl-button mdl-button--icon mdl-js-button mdl-js-ripple-effect" data-position="{pos}" data-video="{video_id}" {disable_last}>
+            <form name="frube-track-back">
+              <button type="submit" class="mdl-button mdl-button--icon mdl-js-button" data-position="{pos}" data-video="{video_id}" {disable_last} title="Move video backward">
                 <i class="material-icons frube-icon">arrow_right</i>
               </button>
             </form>
@@ -112,6 +112,7 @@
       </div>
     </script>
 
+    <!-- search result entry -->
     <script id="search_template" type="text/x-supplant">
       <div class="frube-search-card mdl-cell {overlay} mdl-cell--3-col mdl-cell--6-col-phone mdl-shadow--2dp" data-video="{video_id}">
         <div class="mdl-card">
@@ -123,15 +124,17 @@
           </div>
           <div class="mdl-card__supporting-text frube-hidden"></div>
           <div class="mdl-card__actions mdl-card--border frube-overlay-actions">
-            <form name="frube-playlist-play">
-              <button type="submit" class="mdl-button mdl-button--icon mdl-js-button mdl-js-ripple-effect" data-video="{video_id}">
+            <form name="frube-track-play">
+              <button type="submit" class="mdl-button mdl-button--icon mdl-js-button" data-video="{video_id}">
                 <i class="material-icons frube-icon">play_arrow</i>
               </button>
             </form>
             <div class="mdl-layout-spacer"></div>
-            <span class="frube-action-info">Add to Playlist</span>
-            <form name="frube-playlist-add">
-              <button type="submit" class="mdl-button mdl-button--icon mdl-js-button mdl-js-ripple-effect {class}" data-video="{video_id}" {disabled}>
+            <form name="frube-playlist-select">
+              <button type="submit" class="frube-playlist-info mdl-button mdl-js-button {class}" {disabled}>{active_playlist}</button>
+            </form>
+            <form name="frube-track-add">
+              <button type="submit" class="mdl-button mdl-button--icon mdl-js-button {class}" data-video="{video_id}" {disabled}>
                 <i class="material-icons frube-icon">playlist_add</i>
               </button>
             </form>
@@ -140,6 +143,7 @@
       </div>
     </script>
 
+    <!-- edit dialog content -->
     <script id="edit_template" type="text/x-supplant">
       <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
         <input class="mdl-textfield__input frube-edit-artist" type="text" name="frube-edit-artist" value="{video_artist}">
@@ -156,27 +160,65 @@
       <div class="frube-edit-custom-cover-container">
         <div class="mdl-textfield mdl-js-textfield mdl-textfield--file">
           <img src="{video_cover}" alt="{video_artist} - {video_title} | {video_cover}" class="frube-edit-cover-image" />
-          <input class="mdl-textfield__input frube-edit-cover" name="frube-edit-cover" placeholder="Custom thumbnail" type="text" readonly/>
+          <input class="mdl-textfield__input frube-edit-cover" name="frube-edit-cover" placeholder="Custom Thumbnail" type="text" readonly/>
           <div class="mdl-button mdl-button--icon mdl-button--file">
             <i class="frube-icons material-icons">{bad_indicator}</i><input type="file" class="frube-upload" name="frube-upload">
           </div>
         </div>
       </div>
     </script>
-    
+
+    <!-- video overlay -->
     <script id="status_template" type="text/x-supplant">
       <div class="frube-overlay frube-video-{status}" name="frube-video-{status}"></div>
     </script>
 
+    <!-- loading spinner -->
     <script id="loader_template" type="text/x-supplant">
       <div class="mdl-spinner mdl-js-spinner mdl-spinner--single-color is-active frube-loader"></div>
     </script>
 
+    <!-- search more trailer -->
     <script id="load_template" type="text/x-supplant">
       <div class="frube-search-more">
         <form name="frube-search-more">
-          <button type="submit" class="mdl-button mdl-js-button mdl-js-ripple-effect">Load More</button>
+          <button type="submit" class="mdl-button mdl-js-button">Load More</button>
         </form>
+      </div>
+    </script>
+
+    <!-- playlist select dialog entry -->
+    <script id="playlist_template" type="text/x-supplant">
+      <div class="mdl-dialog__actions frube-dialog-playlist-actions">
+        <div class="frube-playlist-entry">
+          <form name="frube-playlist-toggle" class="frube-playlist-toggle" data-playlist="{playlist_id}">
+            <div class="mdl-textfield mdl-js-textfield mdl-textfield--expandable frube-playlist-expander">
+              <button type="submit" class="mdl-button mdl-js-button mdl-button--icon frube-button-toggle" for="frube-playlist-edit-{playlist_count}">
+                <i class="material-icons frube-icon">edit</i>
+              </button>
+              <div class="mdl-textfield__expandable-holder">
+                <input class="mdl-textfield__input frube-playlist-name" placeholder="Enter Playlist name" type="text" id="frube-playlist-edit-{playlist_count}">
+                <label class="mdl-textfield__label" for="frube-playlist-edit-{playlist_count}">Edit Playlist</label>
+              </div>
+            </div>
+          </form>
+          <form name="frube-playlist-save" class="frube-playlist-save frube-hidden" data-playlist="{playlist_id}">
+            <button type="submit" class="mdl-button mdl-button--icon mdl-js-button">
+              <i class="material-icons frube-icon">save</i>
+            </button>
+          </form>
+          <form name="frube-playlist-delete" class="frube-playlist-delete" data-playlist="{playlist_id}">
+            <button type="submit" class="frube-delete-trigger mdl-button mdl-button--icon mdl-js-button" {disabled}>
+              <i class="material-icons frube-icon">delete_sweep</i>
+            </button>
+          </form>
+          <form name="frube-playlist-switch" class="frube-playlist-switch" data-playlist="{playlist_id}">
+            <div class="frube-playlist-title">
+              <button type="submit" class="mdl-button mdl-js-button">{playlist_title}</button>
+              <span class="frube-playlist-stats">[{playlist_count}]{playlist_active}</span>
+            </div>
+          </form>
+        </div>
       </div>
     </script>
 
@@ -200,12 +242,36 @@
       <a class="github-fork-ribbon right-top" href="https://github.com/frequent/frube" data-ribbon="Get Frube on GitHub" title="Get Frube on Github">Get Frube on GitHub</a>
     </dialog>
 
+    <dialog class="mdl-dialog frube-dialog-playlist">
+      <h2 class="mdl-dialog__title">Select Playlist</h2>
+      <div class="mdl-dialog__content frube-dialog-content">
+        <form name="frube-dialog" data-action="playlist" class="frube-playlist-filter">
+          <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+            <input class="mdl-textfield__input frube-playlist-input" type="text" name="frube-playlist-input" id="frube-playlist-input" placeholder="Filter or Create Playlist" />
+            <label class="mdl-textfield__label" for="frube-playlist-input">Playlist</label>
+          </div>
+        </form>
+        <form name="frube-playlist-create" class="frube-playlist-create frube-hidden">
+          <button type="submit" class="mdl-button mdl-button--icon mdl-js-button">
+            <i class="material-icons frube-icon">add_box</i>
+          </button>
+        </form>
+        <div class="frube-playlist-container"></div>
+      </div>
+      <div class="mdl-dialog__actions">
+          <form name="frube-dialog" data-action="playlist">
+            <button type="submit" class="mdl-button frube-dialog-close">Close</button>
+          </form>
+          <div class="mdl-layout-spacer"></div>
+        </div>
+    </dialog>
+
     <dialog class="mdl-dialog frube-dialog-edit">
       <h2 class="mdl-dialog__title">Edit Video Info</h2>
       <form name="frube-dialog" data-action="edit">
         <div class="mdl-dialog__content frube-dialog-content"></div>
         <div class="mdl-dialog__actions">
-          <button type="submit" class="mdl-button mdl-js-button mdl-js-ripple-effect frube-dialog-submit">Save</button>
+          <button type="submit" class="mdl-button mdl-js-button frube-dialog-submit">Save</button>
           <button type="submit" class="mdl-button frube-dialog-close">Cancel</button>
         </div>
       </form>
@@ -215,7 +281,7 @@
       <header class="mdl-layout__header">
         <div class="mdl-layout__header-row">
           <form name="frube-home">
-            <button type="submit" class="mdl-layout-title mdl-button mdl-js-button mdl-js-ripple-effect">Frube</button>
+            <button type="submit" class="mdl-layout-title mdl-button mdl-js-button">Frube</button>
           </form>
           <!--form name="frube-open-menu-->
           <button id="frube-open-menu" class="mdl-button mdl-js-button mdl-button--icon">
@@ -223,15 +289,17 @@
           </button>
           <!--/form-->
           <form name="frube-sync">
-            <button type="submit" class="frube-btn-sync mdl-button mdl-js-button mdl-js-ripple-effect" disabled><i class="frube-icon material-icons">sync_disabled</i></button>
+            <button type="submit" class="frube-btn-sync mdl-button mdl-js-button" disabled><i class="frube-icon material-icons">sync_disabled</i></button>
           </form>
-          <ul class="mdl-menu mdl-menu--bottom-left mdl-js-menu mdl-js-ripple-effect" for="frube-open-menu">
-            <li class="mdl-menu__item mdl-menu__item--full-bleed-divider" name="frube-connector-dropbox">
-              <span class="mdl-list__item-primary-content frube-connector-dropbox"><i class="material-icons mdl-list__item-icon">check_box_outline_blank</i>Dropbox</span>
+          <ul class="mdl-menu mdl-menu--bottom-left mdl-js-menu" for="frube-open-menu">
+            <li class="mdl-menu__item mdl-menu__item--full-bleed-divider frube-custom-menu-action">
+              <form name="frube-connector-dropbox">
+                <button type="submit" class="mdl-button mdl-js-button">Connect Dropbox</button>
+              </form>
             </li>
             <li class="mdl-menu__item frube-custom-menu-action">
               <form name="frube-dialog" data-action="about">
-                <button type="submit" class="mdl-button mdl-js-button mdl-js-ripple-effect frube-dialog-open">About</button>
+                <button type="submit" class="mdl-button mdl-js-button">About</button>
               </form>
             </li>
           </ul>
@@ -239,9 +307,9 @@
           <nav class="mdl-navigation">
             <form name="frube-search-source">
               <div class="mdl-textfield mdl-js-textfield mdl-textfield--expandable mdl-textfield--floating-label mdl-textfield--align-right">
-                <label class="mdl-button mdl-js-button mdl-button--icon" for="fixed-header-drawer-exp"><i class="material-icons">search</i></label>
+                <label class="mdl-button mdl-js-button mdl-button--icon" for="frube-player-drawer-track-search"><span class="material-icons">search</span></label>
                 <div class="mdl-textfield__expandable-holder">
-                  <input class="mdl-textfield__input frube-search-input" autofocus name="frube-search-input" placeholder="Search videos" type="text" id="fixed-header-drawer-exp">
+                  <input class="mdl-textfield__input frube-search-input" name="frube-search-input" placeholder="Search videos" type="text" id="frube-player-drawer-track-search">
                 </div>
               </div>
             </form>
@@ -251,7 +319,7 @@
 
       <main class="frube-page-content mdl-layout__content">
         
-        <!-- player grid --->        
+        <!-- player grid -->
         <div class="mdl-grid">
           <div class="frube-player-container mdl-cell mdl-cell--12-col">
             <div id="player"></div>
@@ -269,13 +337,13 @@
                   </li>
                   <li class="frube-controller-buttons mdl-list__item">
                     <div class="frube-controller-video">
-                      <form name="frube-playlist-previous">
+                      <form name="frube-track-previous">
                         <button class="mdl-button mdl-js-button" type="submit"><i class="frube-icon material-icons">skip_previous</i></button>
                       </form>
                       <form name="frube-play-pause">
                         <button class="frube-btn-play-pause mdl-button mdl-js-button" type="submit"><i class="frube-icon material-icons">pause</i></button>
                       </form>
-                      <form name="frube-playlist-next">
+                      <form name="frube-track-next">
                         <button class="mdl-button mdl-js-button frube-next" type="submit"><i class="frube-icon material-icons">skip_next</i></button>
                       </form>
                       <form name="frube-set-volume">
@@ -285,7 +353,7 @@
                   </li>
                 </ul>
               </div>
-             
+
               <!-- current video info -->
               <div class="frube-video-info"></div>
             </div>
@@ -313,15 +381,20 @@
                   <span class="mdl-switch__label"></span>
                 </label>
               </div>
+              <div class="frube-playlist-controller-playlist mdl-card__supporting-text mdl-card--border">
+                <form name="frube-playlist-select" class="frube-playlist-indicator">
+                  <button type="submit" class="mdl-button mdl-js-button frube-playlist-id"></button>
+                </form>
+              </div>
               <div class="frube-playlist-controller-filter mdl-card__supporting-text mdl-card--border">
                 <form name="frube-filter-source">
                   <div class="mdl-textfield mdl-js-textfield mdl-textfield--expandable">
-                    <label class="mdl-button mdl-js-button mdl-button--icon" for="frube-player-drawer-exp">
-                      <i class="material-icons">filter_list</i>
+                    <label class="mdl-button mdl-js-button mdl-button--icon" for="frube-player-drawer-track-filter">
+                      <span class="material-icons">filter_list</span>
                     </label>
                     <div class="mdl-textfield__expandable-holder">
-                      <input class="mdl-textfield__input frube-filter-input" placeholder="Filter Playlist" type="text" id="frube-player-drawer-exp" name="frube-filter-input">
-                      <label class="mdl-textfield__label" for="frube-player-drawer-exp">Filter Playlist</label>
+                      <input class="mdl-textfield__input frube-filter-input" placeholder="Filter Playlist" type="text" id="frube-player-drawer-track-filter" name="frube-filter-input">
+                      <label class="mdl-textfield__label" for="frube-player-drawer-track-filter">Filter Playlist</label>
                     </div>
                   </div>
                 </form>

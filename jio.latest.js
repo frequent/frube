@@ -6312,8 +6312,8 @@ return new Parser;
    * @param  {String} [way="ascending"] 'ascending' or 'descending'
    * @return {Function} The sort function
    */
-  function sortFunction(key, way) {
-    var result;
+  function sortFunction(key, way, key_schema) {
+    var result, cast_to;
     if (way === 'descending') {
       result = 1;
     } else if (way === 'ascending') {
@@ -6321,6 +6321,29 @@ return new Parser;
     } else {
       throw new TypeError("Query.sortFunction(): " +
                           "Argument 2 must be 'ascending' or 'descending'");
+    }
+    if (key_schema !== undefined &&
+        key_schema.key_set !== undefined &&
+        key_schema.key_set[key] !== undefined &&
+        key_schema.key_set[key].cast_to !== undefined) {
+      if (typeof key_schema.key_set[key].cast_to === "string") {
+        cast_to = key_schema.cast_lookup[key_schema.key_set[key].cast_to];
+      } else {
+        cast_to = key_schema.key_set[key].cast_to;
+      }
+      return function (a, b) {
+        var f_a = cast_to(a[key]), f_b = cast_to(b[key]);
+        if (typeof f_b.cmp === 'function') {
+          return result * f_b.cmp(f_a);
+        }
+        if (f_a > f_b) {
+          return -result;
+        }
+        if (f_a < f_b) {
+          return result;
+        }
+        return 0;
+      };
     }
     return function (a, b) {
       // this comparison is 5 times faster than json comparison
@@ -6346,6 +6369,7 @@ return new Parser;
     };
   }
 
+
   /**
    * Sort a list of items, according to keys and directions.
    *
@@ -6353,7 +6377,7 @@ return new Parser;
    * @param  {Array} list The item list to sort
    * @return {Array} The filtered list
    */
-  function sortOn(sort_on_option, list) {
+  function sortOn(sort_on_option, list, key_schema) {
     var sort_index;
     if (!Array.isArray(sort_on_option)) {
       throw new TypeError("jioquery.sortOn(): " +
@@ -6363,7 +6387,8 @@ return new Parser;
          sort_index -= 1) {
       list.sort(sortFunction(
         sort_on_option[sort_index][0],
-        sort_on_option[sort_index][1]
+        sort_on_option[sort_index][1],
+        key_schema
       ));
     }
     return list;
@@ -6426,6 +6451,35 @@ return new Parser;
     return list;
   }
 
+  function checkKeySchema(key_schema) {
+    var prop;
+
+    if (key_schema !== undefined) {
+      if (typeof key_schema !== 'object') {
+        throw new TypeError("Query().create(): " +
+                            "key_schema is not of type 'object'");
+      }
+      // key_set is mandatory
+      if (key_schema.key_set === undefined) {
+        throw new TypeError("Query().create(): " +
+                            "key_schema has no 'key_set' property");
+      }
+      for (prop in key_schema) {
+        if (key_schema.hasOwnProperty(prop)) {
+          switch (prop) {
+          case 'key_set':
+          case 'cast_lookup':
+          case 'match_lookup':
+            break;
+          default:
+            throw new TypeError("Query().create(): " +
+                               "key_schema has unknown property '" + prop + "'");
+          }
+        }
+      }
+    }
+  }
+
   /**
    * The query to use to filter a list of objects.
    * This is an abstract class.
@@ -6433,7 +6487,10 @@ return new Parser;
    * @class Query
    * @constructor
    */
-  function Query() {
+  function Query(key_schema) {
+
+    checkKeySchema(key_schema);
+    this._key_schema = key_schema || {};
 
     /**
      * Called before parsing the query. Must be overridden!
@@ -6506,7 +6563,7 @@ return new Parser;
     }
 
     if (option.sort_on) {
-      sortOn(option.sort_on, item_list);
+      sortOn(option.sort_on, item_list, this._key_schema);
     }
 
     if (option.limit) {
@@ -6845,7 +6902,7 @@ return new Parser;
    */
   QueryFactory.create = function (object, key_schema) {
     if (object === "") {
-      return new Query();
+      return new Query(key_schema);
     }
     if (typeof object === "string") {
       object = parseStringToObject(object);
@@ -6877,35 +6934,6 @@ return new Parser;
     throw new TypeError("This object is not a query");
   }
 
-  function checkKeySchema(key_schema) {
-    var prop;
-
-    if (key_schema !== undefined) {
-      if (typeof key_schema !== 'object') {
-        throw new TypeError("SimpleQuery().create(): " +
-                            "key_schema is not of type 'object'");
-      }
-      // key_set is mandatory
-      if (key_schema.key_set === undefined) {
-        throw new TypeError("SimpleQuery().create(): " +
-                            "key_schema has no 'key_set' property");
-      }
-      for (prop in key_schema) {
-        if (key_schema.hasOwnProperty(prop)) {
-          switch (prop) {
-          case 'key_set':
-          case 'cast_lookup':
-          case 'match_lookup':
-            break;
-          default:
-            throw new TypeError("SimpleQuery().create(): " +
-                               "key_schema has unknown property '" + prop + "'");
-          }
-        }
-      }
-    }
-  }
-
   /**
    * The SimpleQuery inherits from Query, and compares one metadata value
    *
@@ -6917,11 +6945,7 @@ return new Parser;
    * @param  {String} spec.value The value of the metadata to compare
    */
   function SimpleQuery(spec, key_schema) {
-    Query.call(this);
-
-    checkKeySchema(key_schema);
-
-    this._key_schema = key_schema || {};
+    Query.call(this, key_schema);
 
     /**
      * Operator to use to compare object values
@@ -8224,7 +8248,7 @@ return new Parser;
         var ceilHeapSize = function (v) {
             // The asm.js spec says:
             // The heap object's byteLength must be either
-            // 2^n for n in [12, 24) or 2^24 * n for n â¥ 1.
+            // 2^n for n in [12, 24) or 2^24 * n for n ≥ 1.
             // Also, byteLengths smaller than 2^16 are deprecated.
             var p;
             // If v is smaller than 2^16, the smallest possible solution
@@ -10308,7 +10332,11 @@ return new Parser;
     CREATE_DIR_URL = "https://api.dropboxapi.com/2/files/create_folder_v2",
     METADATA_URL = "https://api.dropboxapi.com/2/files/get_metadata",
     LIST_FOLDER_URL = "https://api.dropboxapi.com/2/files/list_folder",
-    LIST_MORE_URL = "https://api.dropboxapi.com/2/files/list_folder/continue";
+    LIST_MORE_URL = "https://api.dropboxapi.com/2/files/list_folder/continue",
+    BATCH_START_URL = "https://content.dropboxapi.com/2/files/upload_session/start",
+    BATCH_FINISH_URL = "https://api.dropboxapi.com/2/files/upload_session/finish_batch",
+    BATCH_UPLOAD_URL = "https://content.dropboxapi.com/2/files/upload_session/append_v2",
+    BATCH_STATUS_URL = "https://api.dropboxapi.com/2/files/upload_session/finish_batch/check";
 
   function restrictDocumentId(id) {
     if (id.indexOf("/") !== 0) {
@@ -10389,6 +10417,103 @@ return new Parser;
       });
   }
 
+  function triggerDelayedCommit(context, trigger) {
+    return new RSVP.Queue()
+      .push(function () {
+        return RSVP.any([RSVP.delay(context._batch_buffer), trigger]);
+      })
+      .push(function (payload) {
+        if (payload && payload.cancel) {
+          return;
+        }
+        return new RSVP.Queue()
+          .push(function () {
+              return jIO.util.ajax({
+                type: "POST",
+                url: BATCH_FINISH_URL,
+                headers: {
+                  "Authorization": "Bearer " + context._access_token,
+                  "Content-Type": "application/json",
+                },
+                data: JSON.stringify(payload || buildCommitAndCleanEntries(context))
+              });
+          })
+          .push(function (evt) {
+            return pollForCommitFinish(context, JSON.parse(evt.target.response).async_job_id);
+          })
+          .push(function (entries) {
+            context._batch_dict.done = context._batch_dict.done.concat(entries);
+            if (Object.keys(context._batch_dict.entries).length === 0) {
+              return finishBatch(context);
+            }
+          });
+      });
+  }
+
+  function buildCommitAndCleanEntries(context) {
+    var entries = context._batch_dict.entries;
+    return {"entries": Object.keys(entries).map(function (id) {
+      var item = {
+        "cursor": {"session_id": id, "offset": entries[id].size},
+        "commit": {
+          "path": entries[id].path,
+          "mode": "overwrite",
+          "autorename": false,
+          "mute": false
+        }
+      };
+      delete context._batch_dict.entries[id];
+      return item;
+    })};
+  }
+
+  function pollForCommitFinish(context, job_id) {
+    return new RSVP.Queue()
+      .push(function () {
+        return jIO.util.ajax({
+          type: "POST",
+          url: BATCH_STATUS_URL,
+          headers: {
+            "Authorization": "Bearer " + context._access_token,
+            "Content-Type": "application/json",
+          },
+          data: JSON.stringify({"async_job_id": job_id})
+        });
+      })
+      .push(function (evt) {
+        var status = JSON.parse(evt.target.response);
+        if (status['.tag'] === "in_progress") {
+          return new RSVP.Queue()
+            .push(function () {
+              return RSVP.delay(context._batch_buffer);
+            })
+            .push(function () {
+              return pollForCommitFinish(context, job_id);
+            });
+        }
+        return status.entries;
+      });
+  }
+
+  function finishBatch(context) {
+    var error_type,
+      error_reason;
+    return new RSVP.Queue()
+      .push(function () {
+        return RSVP.all(context._batch_dict.done.map(function (item) {
+          if (item[".tag"] === "failure") {
+            error_type = item.failure[".tag"];
+            error_reason = JSON.stringify(item.failure[error_type]);
+            throw new jIO.util.jIOError("sync failed: " + error_reason + ".",
+                                        400);
+          }
+        }));
+      })
+      .push(function () {
+        context._batch_dict.done = [];
+      });
+  }
+
   /**
    * The JIO Dropbox Storage extension
    *
@@ -10400,9 +10525,15 @@ return new Parser;
       throw new TypeError("Access Token' must be a string " +
                           "which contains more than one character.");
     }
+    if (spec.batch_upload) {
+      this._batch_upload = spec.batch_upload;
+      this._batch_buffer = parseInt(spec.batch_buffer || 3000, 10);
+      this._batch_dict = {"entries": {}, "defer": {}, "done": []};
+      this._batch_list = [];
+    }
     this._access_token = spec.access_token;
   }
-
+  
   DropboxStorage.prototype.put = function (id, param) {
     var that = this;
     id = restrictDocumentId(id);
@@ -10502,28 +10633,87 @@ return new Parser;
   //to pass this limit, but upload process becomes more complex to implement.
   //
   //putAttachment will also create a folder if you try to put an attachment
-  //to an inexisting foler.
-
+  //to an inexisting folder.
   DropboxStorage.prototype.putAttachment = function (id, name, blob) {
-    id = restrictDocumentId(id);
-    restrictAttachmentId(name);
+    var context = this,
+      id = restrictDocumentId(id),
+      path;
 
-    return jIO.util.ajax({
-      type: "POST",
-      url: UPLOAD_URL,
-      headers: {
-        "Authorization": "Bearer " + this._access_token,
-        "Content-Type": "application/octet-stream",
-        "Dropbox-API-Arg": JSON.stringify({
-          "path": id + "/" + name,
-          "mode": "overwrite",
-          "autorename": false,
-          "mute": false
-        })
-      },
-      data: blob
-    });
+    restrictAttachmentId(name);
+    if (!context._batch_upload) {
+      return jIO.util.ajax({
+        type: "POST",
+        url: UPLOAD_URL,
+        headers: {
+          "Authorization": "Bearer " + context._access_token,
+          "Content-Type": "application/octet-stream",
+          "Dropbox-API-Arg": JSON.stringify({
+            "path": id + "/" + name,
+            "mode": "overwrite",
+            "autorename": false,
+            "mute": false
+          })
+        },
+        data: blob
+      });
+    }
+
+    // batch upload allows up to 1000 sessions (get session_id, upload), which
+    // can be closed in a single finish_batch call. The following commits after
+    // the max number of uploads or buffer_delay milliseconds without a 
+    // subsequent putAttachment call.
+    return new RSVP.Queue()
+      .push(function () {
+        return jIO.util.ajax({
+          type: "POST",
+          url: BATCH_START_URL,
+          headers: {
+            "Authorization": "Bearer " + context._access_token,
+            "Content-Type": "application/octet-stream",
+            "Dropbox-API-Arg": JSON.stringify({"close": false}),
+          }
+        });
+      })
+      .push(function (evt) {
+        var session_id = JSON.parse(evt.target.response).session_id;
+        path = id + "/" + name;
+        context._batch_dict.entries[session_id] = {path: path, size: blob.size};
+        return jIO.util.ajax({
+          type: "POST",
+          url: BATCH_UPLOAD_URL,
+          headers: {
+            "Authorization": "Bearer " + context._access_token,
+            "Content-Type": "application/octet-stream",
+            "Dropbox-API-Arg": JSON.stringify({
+              "cursor": {"session_id": session_id, "offset": 0},
+              "close": true
+            })
+          },
+          data: blob
+        });
+      })
+      .push(function () {
+        var len = context._batch_list.length,
+          trigger = new RSVP.defer(),
+          resolver;
+
+        // trigger delayed commit within batch limits, else commit without delay
+        if (0 < len && len < 1000) {
+          context._batch_list[len - 1].resolve({cancel: true});
+        } else {
+          trigger.resolve(buildCommitAndCleanEntries(context));
+          context._batch_list = [];
+        }
+
+        context._batch_list.push(trigger);
+        resolver = triggerDelayedCommit(context, trigger.promise);
+        return resolver;
+      })
+      .push(undefined, function (error) {
+        throw error;
+      });
   };
+  
 
   DropboxStorage.prototype.getAttachment = function (id, name) {
     var context = this;
@@ -11956,9 +12146,36 @@ return new Parser;
 }(jIO, UriTemplate, FormData, RSVP, URI, Blob,
   SimpleQuery, ComplexQuery));
 ;/*jslint nomen: true*/
-/*global RSVP*/
-(function (jIO, RSVP) {
+/*global RSVP, jiodate*/
+(function (jIO, RSVP, jiodate) {
   "use strict";
+
+  function dateType(str) {
+    return jiodate.JIODate(new Date(str).toISOString());
+  }
+
+  function initKeySchema(storage, spec) {
+    var property;
+    for (property in spec.schema) {
+      if (spec.schema.hasOwnProperty(property)) {
+        if (spec.schema[property].type === "string" &&
+            spec.schema[property].format === "date-time") {
+          storage._key_schema.key_set[property] = {
+            read_from: property,
+            cast_to: "dateType"
+          };
+          if (storage._key_schema.cast_lookup.dateType === undefined) {
+            storage._key_schema.cast_lookup.dateType = dateType;
+          }
+        } else {
+          throw new jIO.util.jIOError(
+            "Wrong schema for property: " + property,
+            400
+          );
+        }
+      }
+    }
+  }
 
   /**
    * The jIO QueryStorage extension
@@ -11968,7 +12185,8 @@ return new Parser;
    */
   function QueryStorage(spec) {
     this._sub_storage = jIO.createJIO(spec.sub_storage);
-    this._key_schema = spec.key_schema;
+    this._key_schema = {key_set: {}, cast_lookup: {}};
+    initKeySchema(this, spec);
   }
 
   QueryStorage.prototype.get = function () {
@@ -12168,7 +12386,7 @@ return new Parser;
 
   jIO.addStorage('query', QueryStorage);
 
-}(jIO, RSVP));
+}(jIO, RSVP, jiodate));
 ;/*jslint nomen: true*/
 /*global RSVP, Blob*/
 (function (jIO, RSVP, Blob) {

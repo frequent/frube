@@ -9,8 +9,6 @@
   var OPTION_DICT = {
     "youtube_id": "AIzaSyD_ZX5na0fPbcLbO5sZ2hWD-FxR-Xd2_TM",
     "dropbox_id": "rz2ua0dyty5lxx7"
-    //"youtube_id": "",
-    //"dropbox_id": ""
   };
 
   rJS(window)
