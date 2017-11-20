@@ -406,7 +406,7 @@
     var item = my_dict.current_video;
     var info = my_dict.video_info;
     setDom(info, getTemplate(GADGET_KLASS, "video_template").supplant({
-      "title": item.snippet.title,
+      "title": is_queued ? setTitle(item) : item.snippet.title,
       "video_id": my_video_id,
       "views": parseInt(item.statistics.viewCount, 10).toLocaleString(),
       "score": item.score.toFixed(5),
@@ -731,7 +731,7 @@
         })
         .push(function (frube_response) {
           var data = frube_response;
-          var item = dict.current_video = tube_data.items[0];
+          var item = dict.current_video = mergeDict(tube_data.items[0], data);
           if (item) {
             window.document.title = item.snippet.title;
             dict.current_video.score = getScore(data.upvote_list, data.downvote_list, gadget.state.zero_stamp);
@@ -925,7 +925,7 @@
       }
       if (action === "edit") {
         dialog.close();
-        return gadget.setVideoInfo(getAttr(event, ID));
+        return gadget.setVideoInfo(getAttr(event, ID), dialog);
       }
     })
 
@@ -933,12 +933,12 @@
       var gadget = this;
       return gadget.frube_get(my_id)
         .push(function (video) {
-          video.custom_title = getElem(dialog, ".frube-edit-title").value;
-          video.custom_album = getElem(dialog, ".frube-edit-album").value;
-          video.custom_artist = getElem(dialog, ".frube-edit-artist").value;
-          video.custom_cover = getElem(dialog, ".frube-edit-cover").value;
+          video.custom_title = getElem(my_dialog, ".frube-edit-title").value;
+          video.custom_album = getElem(my_dialog, ".frube-edit-album").value;
+          video.custom_artist = getElem(my_dialog, ".frube-edit-artist").value;
+          video.custom_cover = getElem(my_dialog, ".frube-edit-cover").value;
           return RSVP.all([
-            gadget.frube_put(video_id, video),
+            gadget.frube_put(my_id, video),
             gadget.stateChange({"blur": true}),
             gadget.refreshPlaylist()
           ]);
