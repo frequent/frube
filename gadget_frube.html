@@ -67,14 +67,14 @@
           </div>
         </div>
       </div>
-    </script>
+    </script> 
 
     <!-- queue entry -->
     <script id="queue_template" type="text/x-supplant">
       <div class="frube-video-card mdl-cell {overlay} mdl-cell--3-col mdl-cell--6-col-phone mdl-shadow--2dp" data-video="{video_id}">
         <div class="mdl-card">
           <figure class="mdl-card__media material-icons">
-            <img src="{thumbnail_url}" data-video="{video_id}" alt="" />
+            <img class="frube-lazy" src="{fallback_url}" data-src="{thumbnail_url}" data-video="{video_id}" alt="" />
           </figure>
           <div class="mdl-card__title">
             <h3 class="mdl-card__title-text" data-video="{video_id}">{title}</h3>

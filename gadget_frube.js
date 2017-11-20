@@ -62,6 +62,7 @@
 
   var GADGET_KLASS = rJS(window);
   var DIALOG_POLYFILL = window.dialogPolyfill;
+  var INTERSECTION_OBSERVER = window.IntersectionObserver;
 
   /////////////////////////////
   // methods
@@ -469,6 +470,26 @@
     return {"active_list": active_list, "dump": doc_dump};
   }
 
+  function observeImage(my_dict, my_image_list) {
+    if (!my_dict.observer) {
+      return;
+    }
+    my_image_list.forEach(function (image) {
+      my_dict.observer.observe(image);
+    });
+  }
+
+  function loadImage(entries, observer) {
+    entries.forEach(function (entry) {
+      var img = entry.target;
+      if (img.classList.contains("frube-lazy")) {
+        img.classList.remove("frube-lazy");
+        img.setAttribute("src", img.getAttribute("data-src"));
+        observer.unobserve(img);
+      }
+    });
+  }
+
   GADGET_KLASS
 
     /////////////////////////////
@@ -587,6 +608,9 @@
 
       window.componentHandler.upgradeDom();
       mergeDict(dict, my_option_dict);
+      if (INTERSECTION_OBSERVER !== undefined) {
+        dict.observer = new INTERSECTION_OBSERVER(loadImage, {"threshold": 0.5});
+      }
 
       return gadget.evaluateRemoteConnection()
         .push(function () {
@@ -1355,6 +1379,7 @@
           var queue = new RSVP.Queue();
           dict.queue_list = playlist.queue_list;
           tracklist.forEach(function (doc, pos) {
+            var cover = doc.custom_cover || doc.original_cover;
             if (!doc.portal_type) {
               doc.portal_type = "track";
               dict.buffer_dict[doc.id] = doc;
@@ -1365,7 +1390,8 @@
             html_content += getTemplate(GADGET_KLASS, "queue_template").supplant({
               "video_id": doc.id,
               "title": doc.title,
-              "thumbnail_url": doc.custom_cover || doc.original_cover,
+              "fallback_url": dict.observer ? STR : cover,
+              "thumbnail_url": dict.observer ? cover : STR,
               "pos": doc.pos,
               "disable_first": pos === 0 ? DISABLED : STR,
               "disable_last": pos === len - 1 ? DISABLED : STR,
@@ -1381,6 +1407,7 @@
             );
           } else {
             setDom(dict.playlist, html_content, true);
+            observeImage(dict, dict.playlist.querySelectorAll("img"));
           }
           if (state.zero_stamp !== oldest_timestamp) {
             gadget.state.zero_stamp = oldest_timestamp;
@@ -1791,3 +1818,4 @@
 
 }(window, rJS, RSVP, YT, JSON, Blob, URL, Math, SimpleQuery, Query,
   ComplexQuery));
+
