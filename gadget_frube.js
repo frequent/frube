@@ -446,7 +446,7 @@
     }).filter(Boolean).sort(dynamicSort("-pos"));
   }
 
-  function getPlaylist(my_data, my_state, my_active_list, my_flag) {
+  function getPlaylist(my_data, my_state, my_active_list) {
     var root_list;
     var active_list;
     var doc_dump = [];
@@ -463,8 +463,8 @@
         return doc.id;
       }
     }).filter(Boolean);
-    active_list = active_list || root_list || {"queue_list": []};
-    if (active_list.queue_list.length === 0 && my_flag === "sync") {
+    active_list = active_list || root_list || {queue_list: []};
+    if (root_list && (active_list.id === root_list.id)) {
       active_list.queue_list = track_list;
     }
     return {"active_list": active_list, "dump": doc_dump};
@@ -508,7 +508,7 @@
       quality: LO,
       dropbox_connected: null,
       active_list: null,
-      root_list: "Default Playlist"
+      root_list: "Tracklist"
     })
 
     /////////////////////////////
@@ -1372,7 +1372,9 @@
           var oldest_timestamp = getTimeStamp();
           var html_content = STR;
           var query = getElem(gadget.element, ".frube-filter-input").value;
-          var playlist_data = getPlaylist(data, state, active_list, my_flag);
+
+          // XXX refactor
+          var playlist_data = getPlaylist(data, state, active_list);
           var playlist = playlist_data.active_list;
           var tracklist = filterTracklist(playlist_data, playlist, query);
           var len = tracklist.length;
@@ -1423,6 +1425,8 @@
           }
           if (playlist.id === undefined) {
             queue.push(gadget.createPlaylist(state.root_list, true));
+          } else {
+            queue.push(gadget.frube_put(playlist.id, playlist));
           }
           return queue;
         });
@@ -1541,7 +1545,7 @@
       }
       return gadget.frube_put(codify(id, 0), {
         "portal_type": PLAYLIST,
-        "queue_list": gadget.property_dict.queue_list,
+        "queue_list": is_root ? gadget.property_dict.queue_list : [],
         "root": is_root ? true : undefined,
         "id": codify(id, 0)
       })
@@ -1818,4 +1822,3 @@
 
 }(window, rJS, RSVP, YT, JSON, Blob, URL, Math, SimpleQuery, Query,
   ComplexQuery));
-
