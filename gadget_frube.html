@@ -67,14 +67,14 @@
           </div>
         </div>
       </div>
-    </script>
+    </script> 
 
     <!-- queue entry -->
     <script id="queue_template" type="text/x-supplant">
       <div class="frube-video-card mdl-cell {overlay} mdl-cell--3-col mdl-cell--6-col-phone mdl-shadow--2dp" data-video="{video_id}">
         <div class="mdl-card">
           <figure class="mdl-card__media material-icons">
-            <img src="{thumbnail_url}" data-video="{video_id}" alt="" />
+            <img class="frube-lazy" src="{fallback_url}" data-src="{thumbnail_url}" data-video="{video_id}" alt="" />
           </figure>
           <div class="mdl-card__title">
             <h3 class="mdl-card__title-text" data-video="{video_id}">{title}</h3>
@@ -211,7 +211,7 @@
             <button type="submit" class="frube-delete-trigger mdl-button mdl-button--icon mdl-js-button" {disabled}>
               <i class="material-icons frube-icon">delete_sweep</i>
             </button>
-          </form>          
+          </form>
           <form name="frube-playlist-switch" class="frube-playlist-switch" data-playlist="{playlist_id}">
             <div class="frube-playlist-title">
               <button type="submit" class="mdl-button mdl-js-button">{playlist_title}</button>
@@ -319,7 +319,7 @@
 
       <main class="frube-page-content mdl-layout__content">
         
-        <!-- player grid -->        
+        <!-- player grid -->
         <div class="mdl-grid">
           <div class="frube-player-container mdl-cell mdl-cell--12-col">
             <div id="player"></div>
