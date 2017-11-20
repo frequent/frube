@@ -175,8 +175,8 @@
     return {"type": "youtube", "api_key": my_id};
   }
 
-  function setVideoHash(my_dict) {
-    return getVideoHash() || my_dict.queue_list[0] || null;    
+  function setVideoHash(my_list) {
+    return getVideoHash() || my_list[getRandomDigit(my_list.length - 1)] || null;    
   }
 
   function getVideoHash() {
@@ -621,7 +621,7 @@
           ]);
         })
         .push(function () {
-          var video = setVideoHash(dict);
+          var video = setVideoHash(dict.queue_list);
           var promise_list = [gadget.stateChange({loader: null, play: video})];
           if (!video) {
             promise_list.push(gadget.enterSearch());
@@ -1403,7 +1403,7 @@
           if (state.play !== null) {
             setVideoControls(dict, state.play);
           }
-          if (len === 0 && !setVideoHash(dict)) {
+          if (len === 0 && !setVideoHash(dict.queue_list)) {
             setDom(dict.playlist, getTemplate(GADGET_KLASS, "status_template")
               .supplant({"status": PLAYLIST}), true
             );
