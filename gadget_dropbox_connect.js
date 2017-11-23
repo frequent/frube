@@ -6,7 +6,6 @@
   /////////////////////////////
   // parameters
   /////////////////////////////
-  var REQUEST_TIMEOUT = 30000;
   var SESSION = "session_jio";
   var STATE = "state";
   var SLASH = "/";
@@ -98,12 +97,10 @@
         return window.promiseEventListener(popup, "load", true);
       });
 
+      // Note: no longer RSVP.any with a timeout. if popup throws, we're stuck.
       return new RSVP.Queue()
         .push(function () {
-          return RSVP.any([
-            resolver,
-            RSVP.delay(REQUEST_TIMEOUT)
-          ]);
+          return resolver;
         })
         .push(function (my_ouath_dict) {
           popup.close();
