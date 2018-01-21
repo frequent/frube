@@ -784,15 +784,13 @@
       var gadget = this;
       var dict = gadget.property_dict;
       var state = gadget.state;
-      var list = state.mode === SEARCHING ? dict.search_list : dict.queue_list;
-      var index = list.indexOf(state.play);
-      if (!my_jump || list.length === 0) {
-        return null;
-      }
-      if (my_jump) {
+      var list = state.mode === SEARCHING ? dict.search_list.map(function (item) {
+        return item.id.videoId;
+      }) : dict.queue_list;
+      if (my_jump === null) {
         return gadget.getRandomId();
       }
-      return list[index + my_jump] || null;
+      return list[list.indexOf(state.play) + my_jump] || null;
     })
 
     .declareMethod("rankVideo", function (my_id, my_pos, my_shift) {
