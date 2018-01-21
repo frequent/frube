@@ -519,7 +519,7 @@
       var element = gadget.element;
 
       gadget.property_dict = {
-        search_result_dict: {},
+        search_list: [],
         buffer_dict: {},
         filter_list: [],
         queue_list: [],
@@ -783,30 +783,16 @@
     .declareMethod("getVideoId", function (my_jump) {
       var gadget = this;
       var dict = gadget.property_dict;
-
-      return new RSVP.Queue()
-        .push(function () {
-          var queue_list = dict.queue_list;
-          var len = queue_list.length;
-          var new_id;
-          var i;
-
-          if (!my_jump && len > 0) {
-            return gadget.getRandomId();
-          }
-          for (i = 0; i < len; i += 1) {
-            if (queue_list[i] === gadget.state.play) {
-              new_id = queue_list[i + my_jump];
-            }
-          }
-          if (new_id) {
-            return new_id;
-          }
-          if (my_jump < 0) {
-            return queue_list[len - 1];
-          }
-          return null;
-        });
+      var state = gadget.state;
+      var list = state.mode === SEARCHING ? dict.search_list : dict.queue_list;
+      var index = list.indexOf(state.play);
+      if (!my_jump || list.length === 0) {
+        return null;
+      }
+      if (my_jump) {
+        return gadget.getRandomId();
+      }
+      return list[index + my_jump] || null;
     })
 
     .declareMethod("rankVideo", function (my_id, my_pos, my_shift) {
@@ -873,7 +859,7 @@
         dict.player_container.classList.add(HIDDEN);
         dict.player.destroy();
       }
-      dict.search_result_dict = {};
+      dict.search_list = [];
       dict.video_controller.classList.add(HIDDEN);
       dict.player_controller.classList.add(HIDDEN);
       purgeDom(dict.video_info);
@@ -975,7 +961,9 @@
     .declareMethod("addVideo", function (my_video_id, my_element) {
       var gadget = this;
       var dict = gadget.property_dict;
-      var meta = dict.search_result_dict[my_video_id] || dict.current_video;
+      var meta = dict.search_list.filter(function (item) {
+        return item.id.videoId === my_video_id ? item : undefined;
+      }).pop() || dict.current_video;
       if (dict.buffer_dict.hasOwnProperty(my_video_id)) {
         setButtonIcon(getElem(my_element, BUTTON), ADD);
         setOverlay(getVideo(dict.search_results, my_video_id), LISTED, "remove");
@@ -1046,8 +1034,8 @@
       var list = dict.queue_list;
       var response = STR;
       var is_listed;
-      Object.keys(dict.search_result_dict).forEach(function (key) {
-        var item = dict.search_result_dict[key];
+      dict.search_list.forEach(function (item) {
+        var key = item.id.videoId;
         is_listed = list.indexOf(key) > -1;
         response += getTemplate(GADGET_KLASS, "search_template").supplant({
           "video_id": key,
@@ -1173,7 +1161,6 @@
             if (sec_trigger) {
               return gadget.runSearch(true);
             }
-
           }
         }
       }
@@ -1183,13 +1170,12 @@
       var gadget = this;
       var dict = gadget.property_dict;
       var state = gadget.state;
-
       if (state.is_searching && !my_skip) {
         state.is_searching = false;
-        return;
+        return gadget.stateChange({"loader": null});
       }
       if (!my_next_page) {
-        dict.search_result_dict = {};
+        dict.search_list = [];
         gadget.state.last_main_pos = 0;
       }
       gadget.state.is_searching = true;
@@ -1219,7 +1205,7 @@
           }
           for (i = 0; i < response.data.total_rows; i += 1) {
             item = response.data.rows[i];
-            dict.search_result_dict[item.id.videoId] = item;
+            dict.search_list.push(item);
           }
           gadget.state.next_page_token = response.nextPageToken;
           return RSVP.all([
@@ -1231,14 +1217,14 @@
           gadget.state.is_searching = false;
         })
         .push(undefined, function (error) {
-          if (!error.target) {
+          gadget.state.is_searching = false;
+          if (error.target === undefined) {
             throw error;
           }
-          unsetLoader(dict.action_button);
           if (error.target.status === 400) {
             return gadget.handleError(JSON.parse(error.target.response).error);
           }
-          gadget.state.is_searching = false;
+          return gadget.stateChange({"loader": null});
         });
     })
 
@@ -1609,6 +1595,7 @@
             return gadget.exitSearch();
           }
           if (my_input === SEARCH) {
+            gadget.state.is_searching = false;
             return gadget.enterSearch();
           }
           return gadget.filterPlaylist();
@@ -1696,7 +1683,9 @@
         return gadget.loadVideo(getVideoHash());
       }
       function handleScroll(event) {
-        return gadget.triggerSearchFromScroll(event);
+        if (!gadget.state.is_searching) {
+          return gadget.triggerSearchFromScroll(event);
+        }
       }
 
       return RSVP.all([
