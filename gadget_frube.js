@@ -708,7 +708,9 @@
                 //"fs": 0
               }
             });
-          } else {
+
+          // let's see if this goes smoothly
+          } else if (player.loadVideoById) {
             player.loadVideoById(my_video_id);
           }
           return;
@@ -1809,3 +1811,4 @@
 
 }(window, rJS, RSVP, YT, JSON, Blob, URL, Math, SimpleQuery, Query,
   ComplexQuery));
+
