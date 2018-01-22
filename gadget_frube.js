@@ -330,12 +330,9 @@
     return Math.round(Math.random() * (my_len - 1), 0);
   }
 
-  function swapVideo(my_element, my_id) {
-    var current_video = getVideo(my_element, my_id);
+  function swapVideo(my_element) {
     var next_video = getVideo(my_element, getVideoHash());
-    if (current_video) {
-      setOverlay(current_video, PLAYING, "remove");
-    }
+    setOverlay(getElem(my_element, "." + PLAYING), PLAYING, "remove");
     if (next_video) {
       setOverlay(next_video, PLAYING, "add");
     }
@@ -736,6 +733,7 @@
           var item = dict.current_video = mergeDict(tube_data.items[0], data);
           if (item) {
             window.document.title = item.snippet.title;
+            swapVideo(dict.playlist);
             dict.current_video.score = getScore(data.upvote_list, data.downvote_list, gadget.state.zero_stamp);
             setVideoControls(dict, my_video_id);
             setVideoSlider(dict.video_slider, item.contentDetails);
@@ -1261,7 +1259,7 @@
           dict.video_controller.classList.add(HIDDEN);
         } else {
           window.location.hash = delta.play;
-          swapVideo(dict.playlist, video_hash);
+          swapVideo(dict.playlist);
           dict.video_controller.classList.remove(HIDDEN);
         }
       }
