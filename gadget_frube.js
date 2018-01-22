@@ -1030,8 +1030,10 @@
     })
 
     .declareMethod("refreshSearchResults", function () {
-      var dict = this.property_dict;
-      var active_list = this.state.active_list;
+      var gadget = this;
+      var dict = gadget.property_dict;
+      var state = gadget.state;
+      var active_list = state.active_list;
       var list = dict.queue_list;
       var response = STR;
       var is_listed;
@@ -1043,6 +1045,7 @@
           "title": item.snippet.title,
           "thumbnail_url": item.snippet.thumbnails.medium.url,
           "overlay": is_listed ? (OVERLAY + SPC + LISTED) : STR,
+          "playing": state.play === key ? (OVERLAY + SPC + PLAYING) : STR,
           "disabled": is_listed ? DISABLED : STR,
           "class": is_listed ? OPAQUE : STR,
           "active_playlist": codify(active_list, 1)
@@ -1052,7 +1055,7 @@
         response += getTemplate(GADGET_KLASS, "load_template".supplant());
         setDom(dict.search_results, response, true);
       }
-      if (this.state.play !== null) {
+      if (state.play !== null) {
         setVideoControls(dict, this.state.play);
       }
     })
@@ -1798,3 +1801,4 @@
 
 }(window, rJS, RSVP, YT, JSON, Blob, URL, Math, SimpleQuery, Query,
   ComplexQuery));
+
