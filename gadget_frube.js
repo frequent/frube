@@ -1706,8 +1706,6 @@
       switch (target.getAttribute(NAME)) {
         case "frube-video-searching":
           return this.property_dict.search_input.focus();
-        case "frube-view-switch":
-          return this.stateChange({"mode": this.state.mode === SEARCHING ? WATCHING : SEARCHING});
         case "frube-upload":
           return setFileInput(this.element, event);
       }
@@ -1750,6 +1748,8 @@
 
     .onEvent("submit", function (event) {
       switch (event.target.getAttribute(NAME)) {
+        case "frube-view-switch":
+          return this.stateChange({"mode": this.state.mode === SEARCHING ? WATCHING : SEARCHING});
         case "frube-connector-dropbox":
           return this.connectAndSyncWithDropbox();
         case "frube-track-remove":
