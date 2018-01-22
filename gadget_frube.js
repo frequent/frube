@@ -261,16 +261,6 @@
     };
   }
 
-  // https://stackoverflow.com/a/39336206/
-  function isConstructor(value) {
-    try {
-      new new Proxy(value, {construct() { return {}; }});
-      return true;
-    } catch (err) {
-      return false;
-    }
-  }
-
   //https://stackoverflow.com/a/4760279
   function dynamicSort(prop) {
     var sortOrder = 1;
@@ -669,9 +659,6 @@
 
       return new RSVP.Queue()
         .push(function () {
-          return gadget.throttleQueueForDependencies(YT.Player);
-        })
-        .push(function () {
           return gadget.getSetting("quality");
         })
         .push(function (quality) {
@@ -680,31 +667,43 @@
         .push(function () {
           var player = dict.player;
           var main = dict.main;
+
+          function handleReady(my_event) {
+            return my_event.target.playVideo();
+          }
+          function handleError(my_event) {
+            return gadget.handleError(my_event);
+          }
+          function handleStateChange() {
+            return gadget.videoOnStateChange();
+          }
+
           if (!player || (player && !player.h)) {
-            dict.player = new YT.Player("player", {
-              "videoId": my_video_id,
-              "width": main.clientWidth,
-              "height": Math.max(main.clientWidth * 0.66 * 9 / 16, 250),
-              "events": {
-                "onReady": function (event) {
-                  event.target.playVideo();
-                },
-                "onStateChange": function () {
-                  return gadget.videoOnStateChange();
-                },
-                "onError": function (event) {
-                  return gadget.handleError(event);
-                }
-              },
-              "playerVars": {
-                "showinfo": 0,
-                "disablekb": 1,
-                "iv_load_policy": 3,
-                "rel": 0,
-                "vq": gadget.state.quality,
-                //"fs": 0
-              }
-            });
+            while (true) {
+              try {
+                dict.player = new YT.Player("player", {
+                  "videoId": my_video_id,
+                  "width": main.clientWidth,
+                  "height": Math.max(main.clientWidth * 0.66 * 9 / 16, 250),
+                  "events": {
+                    "onReady": handleReady,
+                    "onStateChange": handleStateChange,
+                    "onError": handleError
+                  },
+                  "playerVars": {
+                    "showinfo": 0,
+                    "disablekb": 1,
+                    "iv_load_policy": 3,
+                    "rel": 0,
+                    "vq": gadget.state.quality,
+                    //"fs": 0
+                  }
+                });
+              break;
+            } catch (err) {
+              continue;
+            }
+          }
 
           // let's see if this goes smoothly
           } else if (player.loadVideoById) {
@@ -1609,20 +1608,6 @@
         });
     })
 
-    .declareJob("throttleQueueForDependencies", function (my_dependency) {
-      var gadget = this;
-      if (isConstructor(my_dependency)) {
-        return;
-      }
-      return new RSVP.Queue()
-        .push(function () {
-          return RSVP.delay(250);
-        })
-        .push(function () {
-          return gadget.throttleQueueForDependencies(my_dependency);
-        });
-    })
-    
     .declareJob("waitForNetwork", function (my_video_id) {
       var gadget = this;
       var dict = gadget.property_dict;
