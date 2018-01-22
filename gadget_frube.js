@@ -320,9 +320,10 @@
     return Math.round(Math.random() * (my_len - 1), 0);
   }
 
-  function swapVideo(my_element) {
-    var next_video = getVideo(my_element, getVideoHash());
-    setOverlay(getElem(my_element, "." + PLAYING), PLAYING, "remove");
+  function swapVideo(my_dict, my_mode) {
+    var list = my_mode === SEARCHING ? my_dict.search_results : my_dict.playlist;
+    var next_video = getVideo(list, getVideoHash());
+    setOverlay(getElem(list, "." + PLAYING), PLAYING, "remove");
     if (next_video) {
       setOverlay(next_video, PLAYING, "add");
     }
@@ -729,11 +730,12 @@
         })
         .push(function (frube_response) {
           var data = frube_response;
+          var state = gadget.state;
           var item = dict.current_video = mergeDict(tube_data.items[0], data);
           if (item) {
             window.document.title = item.snippet.title;
-            swapVideo(dict.playlist);
-            dict.current_video.score = getScore(data.upvote_list, data.downvote_list, gadget.state.zero_stamp);
+            swapVideo(dict, state.mode);
+            dict.current_video.score = getScore(data.upvote_list, data.downvote_list, state.zero_stamp);
             setVideoControls(dict, my_video_id);
             setVideoSlider(dict.video_slider, item.contentDetails);
           }
@@ -783,13 +785,15 @@
       var gadget = this;
       var dict = gadget.property_dict;
       var state = gadget.state;
+
+      // XXX improve, in search always jump +1 regardless of repeat/shuffle
       var list = state.mode === SEARCHING ? dict.search_list.map(function (item) {
         return item.id.videoId;
       }) : dict.queue_list;
-      if (my_jump === null) {
+      if (my_jump === null && state.mode !== SEARCHING) {
         return gadget.getRandomId();
       }
-      return list[list.indexOf(state.play) + my_jump] || null;
+      return list[list.indexOf(state.play) + my_jump || 1] || null;
     })
 
     .declareMethod("rankVideo", function (my_id, my_pos, my_shift) {
@@ -1258,7 +1262,7 @@
           dict.video_controller.classList.add(HIDDEN);
         } else {
           window.location.hash = delta.play;
-          swapVideo(dict.playlist);
+          swapVideo(dict, state.mode);
           dict.video_controller.classList.remove(HIDDEN);
         }
       }
