@@ -171,6 +171,25 @@
     return getLocalConfig(my_fallback);
   }
 
+  function setVideoDict(my_id, my_meta) {
+    return {
+      "id": my_id,
+      "type": my_meta.id.kind,
+      "portal_type": "track",
+      "original_title": my_meta.snippet.title,
+      "original_artist": STR,
+      "original_cover": my_meta.snippet.thumbnails.medium.url,
+      "custom_title": STR,
+      "custom_artist": STR,
+      "custom_album": STR,
+      "custom_cover": STR,
+      "upvote_list": [],
+      "downvote_list": [],
+      "timestamp": new Date().getTime(),
+      "pos": 0
+    };
+  }
+
   function getTubeConfig(my_id) {
     return {"type": "youtube", "api_key": my_id};
   }
@@ -365,26 +384,51 @@
     return new SimpleQuery({"key": my_key, "value": my_val, "type": "simple"});
   }
 
-  function updateFileInput(my_element, my_event) {
-    return new RSVP.Queue()
-      .push(function () {
-        return resizeFileToBase64(my_event.target.files[0]);
-      })
-      .push(function (blob) {
-        getElem(my_element, ".frube-edit-cover-image").src =
-        getElem(my_element, ".frube-edit-cover").value = blob;
-        my_event.target.previousElementSibling.textContent = "delete";
+  function updateFileInput(my_target) {
+    var queue = new RSVP.Queue();
+    var form = my_target.parentElement.parentElement;
+    var file = my_target.files[0];
+    var is_text = file.type === 'text/plain';
+    getElem(form, ".frube-validation-label").classList.add(HIDDEN);
+    if (form.getAttribute(NAME) === "frube-playlist-create") {
+      if (!is_text) {
+        getElem(form, ".frube-validation-label").classList.remove(HIDDEN);
+        return;
+      }
+      queue.push(function () {
+        return window.promiseReadAsText(file);
+      }).push(function (raw) {
+        getElem(form, ".frube-playlist-upload").value = JSON.stringify(raw.split(/\r?\n/));
       });
+    } else {
+      if (is_text) {
+        getElem(form, ".frube-validation-label").classList.remove(HIDDEN);
+        return;
+      }
+      queue.push(function () {
+        return resizeFileToBase64(my_target.files[0]);
+      }).push(function (blob) {
+        getElem(form, ".frube-edit-cover-image").src =
+        getElem(form, ".frube-edit-cover").value = blob;
+      });
+    }
+    return queue;
   }
 
-  function setFileInput(my_element, my_event) {
+  function setFileInput(my_event) {
     var bad_indicator = my_event.target.previousElementSibling;
+    var parent = my_event.target.parentElement.parentElement;
     if (bad_indicator.textContent === "delete") {
-      bad_indicator.textContent = "attach_file";
-      getElem(my_element, ".frube-edit-cover-image").src = PLACEHOLDER;
-      getElem(my_element, ".frube-edit-cover").value = STR;
-      my_event.preventDefault();
-      return false;
+      getElem(parent, ".frube-upload-file").value = STR;
+      try {
+        bad_indicator.textContent = "attach_file";
+        getElem(parent, ".frube-edit-cover-image").src = PLACEHOLDER;
+      } catch (e) {
+        bad_indicator.textContent = "file_upload";
+      } finally {
+        my_event.preventDefault();
+        return false;
+      }
     }
   }
 
@@ -543,7 +587,7 @@
     // declared methods
     /////////////////////////////
 
-    // jio bridge
+    // ---------------------- JIO bridge ---------------------------------------
     .declareMethod("route", function (my_scope, my_call, my_p1, my_p2, my_p3) {
       return this.getDeclaredGadget(my_scope)
         .push(function (my_gadget) {
@@ -590,6 +634,7 @@
       return this.route(SETTING, "removeAttachment", my_id, my_tag);
     })
 
+    // -------------------.--- Render ------------------------------------------
     .declareMethod("render", function (my_option_dict) {
       var gadget = this;
       var dict = gadget.property_dict;
@@ -621,12 +666,29 @@
         });
     })
 
-    .declareMethod("evaluateRemoteConnection", function () {
+    .declareMethod("handleDialog", function (my_event, my_action) {
       var gadget = this;
-      return gadget.getSetting("token")
-        .push(function (token) {
-          return gadget.setRemoteConnection(token);
-        });
+      var action = my_action || my_event.target.getAttribute(ACTION);
+      var dialog = getElem(gadget.element, (DIALOG + action));
+      var active_element = window.document.activeElement;
+      if (active_element && active_element.classList.contains(CLOSE)) {
+        dialog.close();
+        return;
+      }
+      if (!dialog.open) {
+        if (!dialog.showModal) {
+          DIALOG_POLYFILL.registerDialog(dialog);
+        }
+        dialog.showModal();
+        if (action === PLAYLIST) {
+          return gadget.filterPlaylist();
+        }
+        return;
+      }
+      if (action === "edit") {
+        dialog.close();
+        return gadget.setVideoInfo(getAttr(event, ID), dialog);
+      }
     })
 
     .declareMethod("handleError", function (my_error) {
@@ -646,6 +708,85 @@
       throw my_error;
     })
 
+    .declareMethod("getRandomId", function () {
+      var gadget = this;
+      var dict = gadget.property_dict;
+      var select_list = [];
+      var len = dict.queue_list.length;
+      var pick = Math.round(len/5, 0);
+      var id;
+
+      if (pick === 0) {
+        return getRandomDigit(len);
+      }
+      while (select_list.length <= pick) {
+        id = dict.queue_list[getRandomDigit(len)];
+        if (select_list.indexOf(id) === -1) {
+          select_list.push(gadget.frube_get(id));
+        }
+      }
+
+      return new RSVP.Queue()
+        .push(function () {
+          return RSVP.all(select_list);
+        })
+        .push(function (my_result_list) {
+          var high_score_id;
+
+          my_result_list.reduce(function (total, item) {
+            var score = getScore(item.upvote_list, item.downvote_list, gadget.state.zero_stamp);
+            if (score > total) {
+              high_score_id = id;
+              return score;
+            }
+            return total;
+          }, 0);
+
+          return high_score_id || my_result_list[getRandomDigit(pick)].id;
+        });
+    })
+
+    .declareMethod("resetFrube", function (my_offline) {
+      var gadget = this;
+      var dict = gadget.property_dict;
+
+      window.location.hash = STR;
+      dict.search_input.value = STR;
+      if (dict.player && dict.player.getPlayerState() <= 0) {
+        dict.player_container.classList.add(HIDDEN);
+        dict.player.destroy();
+      }
+      dict.search_list = [];
+      dict.video_controller.classList.add(HIDDEN);
+      dict.player_controller.classList.add(HIDDEN);
+      purgeDom(dict.video_info);
+      unsetSearch(dict.search_results, my_offline);
+      return RSVP.all([
+        gadget.refreshSearchResults(),
+        gadget.enterSearch()
+      ]);
+    })
+
+    .declareMethod("updateSlider", function () {
+      var gadget = this;
+      var state = gadget.state;
+      var dict = gadget.property_dict;
+      var player = dict.player;
+      var slider = dict.video_slider;
+
+      if (state.mode === WATCHING) {
+        return;
+      }
+      if (state.slider_in_use || !slider.MaterialSlider) {
+        return;
+      }
+      if (!player || !player.getCurrentTime) {
+        return;
+      }
+      slider.MaterialSlider.change(player.getCurrentTime());
+    })
+
+    // -------------------------- Video ----------------------------------------
     .declareMethod("loadVideo", function (my_video_id) {
       var gadget = this;
       var dict = gadget.property_dict;
@@ -743,44 +884,6 @@
         });
     })
 
-    .declareMethod("getRandomId", function () {
-      var gadget = this;
-      var dict = gadget.property_dict;
-      var select_list = [];
-      var len = dict.queue_list.length;
-      var pick = Math.round(len/5, 0);
-      var id;
-
-      if (pick === 0) {
-        return getRandomDigit(len);
-      }
-      while (select_list.length <= pick) {
-        id = dict.queue_list[getRandomDigit(len)];
-        if (select_list.indexOf(id) === -1) {
-          select_list.push(gadget.frube_get(id));
-        }
-      }
-
-      return new RSVP.Queue()
-        .push(function () {
-          return RSVP.all(select_list);
-        })
-        .push(function (my_result_list) {
-          var high_score_id;
-
-          my_result_list.reduce(function (total, item) {
-            var score = getScore(item.upvote_list, item.downvote_list, gadget.state.zero_stamp);
-            if (score > total) {
-              high_score_id = id;
-              return score;
-            }
-            return total;
-          }, 0);
-
-          return high_score_id || my_result_list[getRandomDigit(pick)].id;
-        });
-    })
-
     .declareMethod("getVideoId", function (my_jump) {
       var gadget = this;
       var dict = gadget.property_dict;
@@ -850,25 +953,20 @@
       }
     })
 
-    .declareMethod("resetFrube", function (my_offline) {
+    .declareMethod("setVideoInfo", function (my_id, my_dialog) {
       var gadget = this;
-      var dict = gadget.property_dict;
-
-      window.location.hash = STR;
-      dict.search_input.value = STR;
-      if (dict.player && dict.player.getPlayerState() <= 0) {
-        dict.player_container.classList.add(HIDDEN);
-        dict.player.destroy();
-      }
-      dict.search_list = [];
-      dict.video_controller.classList.add(HIDDEN);
-      dict.player_controller.classList.add(HIDDEN);
-      purgeDom(dict.video_info);
-      unsetSearch(dict.search_results, my_offline);
-      return RSVP.all([
-        gadget.refreshSearchResults(),
-        gadget.enterSearch()
-      ]);
+      return gadget.frube_get(my_id)
+        .push(function (video) {
+          video.custom_title = getElem(my_dialog, ".frube-edit-title").value;
+          video.custom_album = getElem(my_dialog, ".frube-edit-album").value;
+          video.custom_artist = getElem(my_dialog, ".frube-edit-artist").value;
+          video.custom_cover = getElem(my_dialog, ".frube-edit-cover").value;
+          return RSVP.all([
+            gadget.frube_put(my_id, video),
+            gadget.stateChange({"blur": true}),
+            gadget.refreshPlaylist()
+          ]);
+        });
     })
 
     .declareMethod("removeVideo", function (my_video_id, my_element) {
@@ -889,47 +987,6 @@
         setVideoControls(dict, gadget.state.play);
       }
       return gadget.stateChange({"blur": true});
-    })
-
-    .declareMethod("handleDialog", function (my_event, my_action) {
-      var gadget = this;
-      var action = my_action || my_event.target.getAttribute(ACTION);
-      var dialog = getElem(gadget.element, (DIALOG + action));
-      var active_element = window.document.activeElement;
-      if (active_element && active_element.classList.contains(CLOSE)) {
-        dialog.close();
-        return;
-      }
-      if (!dialog.open) {
-        if (!dialog.showModal) {
-          DIALOG_POLYFILL.registerDialog(dialog);
-        }
-        dialog.showModal();
-        if (action === PLAYLIST) {
-          return gadget.filterPlaylist();
-        }
-        return;
-      }
-      if (action === "edit") {
-        dialog.close();
-        return gadget.setVideoInfo(getAttr(event, ID), dialog);
-      }
-    })
-
-    .declareMethod("setVideoInfo", function (my_id, my_dialog) {
-      var gadget = this;
-      return gadget.frube_get(my_id)
-        .push(function (video) {
-          video.custom_title = getElem(my_dialog, ".frube-edit-title").value;
-          video.custom_album = getElem(my_dialog, ".frube-edit-album").value;
-          video.custom_artist = getElem(my_dialog, ".frube-edit-artist").value;
-          video.custom_cover = getElem(my_dialog, ".frube-edit-cover").value;
-          return RSVP.all([
-            gadget.frube_put(my_id, video),
-            gadget.stateChange({"blur": true}),
-            gadget.refreshPlaylist()
-          ]);
-        });
     })
 
     .declareMethod("editVideo", function (my_event, my_video_id) {
@@ -959,12 +1016,12 @@
       }
     })
 
-    .declareMethod("addVideo", function (my_video_id, my_element) {
+    .declareMethod("addVideo", function (my_video_id, my_element, my_meta) {
       var gadget = this;
       var dict = gadget.property_dict;
       var meta = dict.search_list.filter(function (item) {
         return item.id.videoId === my_video_id ? item : undefined;
-      }).pop() || dict.current_video;
+      }).pop() || my_meta || dict.current_video;
       if (dict.buffer_dict.hasOwnProperty(my_video_id)) {
         setButtonIcon(getElem(my_element, BUTTON), ADD);
         setOverlay(getVideo(dict.search_results, my_video_id), LISTED, "remove");
@@ -972,24 +1029,7 @@
       } else {
         setButtonIcon(getElem(my_element, BUTTON), UNDO);
         setOverlay(getVideo(dict.search_results, my_video_id), LISTED, "add");
-
-        // stack for storing
-        dict.buffer_dict[my_video_id] = {
-          "id": my_video_id,
-          "type": meta.id.kind,
-          "portal_type": "track",
-          "original_title": meta.snippet.title,
-          "original_artist": STR,
-          "original_cover": meta.snippet.thumbnails.medium.url,
-          "custom_title": STR,
-          "custom_artist": STR,
-          "custom_album": STR,
-          "custom_cover": STR,
-          "upvote_list": [],
-          "downvote_list": [],
-          "timestamp": new Date().getTime(),
-          "pos": 0
-        };
+        dict.buffer_dict[my_video_id] = setVideoDict(my_video_id, meta);
       }
       if (gadget.state.mode === WATCHING) {
         setVideoControls(dict, gadget.state.play);
@@ -1029,37 +1069,6 @@
         });
     })
 
-    .declareMethod("refreshSearchResults", function () {
-      var gadget = this;
-      var dict = gadget.property_dict;
-      var state = gadget.state;
-      var active_list = state.active_list;
-      var list = dict.queue_list;
-      var response = STR;
-      var is_listed;
-      dict.search_list.forEach(function (item) {
-        var key = item.id.videoId;
-        is_listed = list.indexOf(key) > -1;
-        response += getTemplate(GADGET_KLASS, "search_template").supplant({
-          "video_id": key,
-          "title": item.snippet.title,
-          "thumbnail_url": item.snippet.thumbnails.medium.url,
-          "overlay": is_listed ? (OVERLAY + SPC + LISTED) : STR,
-          "playing": state.play === key ? (OVERLAY + SPC + PLAYING) : STR,
-          "disabled": is_listed ? DISABLED : STR,
-          "class": is_listed ? OPAQUE : STR,
-          "active_playlist": codify(active_list, 1)
-        });
-      });
-      if (response !== STR) {
-        response += getTemplate(GADGET_KLASS, "load_template".supplant());
-        setDom(dict.search_results, response, true);
-      }
-      if (state.play !== null) {
-        setVideoControls(dict, this.state.play);
-      }
-    })
-
     .declareMethod("jumpVideo", function (my_jump) {
       var gadget = this;
       var element = gadget.element;
@@ -1076,23 +1085,13 @@
         });
     })
 
-    .declareMethod("updateSlider", function () {
+    // ------------------------- Connection ------------------------------------
+    .declareMethod("evaluateRemoteConnection", function () {
       var gadget = this;
-      var state = gadget.state;
-      var dict = gadget.property_dict;
-      var player = dict.player;
-      var slider = dict.video_slider;
-
-      if (state.mode === WATCHING) {
-        return;
-      }
-      if (state.slider_in_use || !slider.MaterialSlider) {
-        return;
-      }
-      if (!player || !player.getCurrentTime) {
-        return;
-      }
-      slider.MaterialSlider.change(player.getCurrentTime());
+      return gadget.getSetting("token")
+        .push(function (token) {
+          return gadget.setRemoteConnection(token);
+        });
     })
 
     .declareMethod("connectAndSyncWithDropbox", function() {
@@ -1135,6 +1134,38 @@
             gadget.stateChange({"mode": WATCHING})
           ]);
         });
+    })
+
+    // --------------------------- Search --------------------------------------
+    .declareMethod("refreshSearchResults", function () {
+      var gadget = this;
+      var dict = gadget.property_dict;
+      var state = gadget.state;
+      var active_list = state.active_list;
+      var list = dict.queue_list;
+      var response = STR;
+      var is_listed;
+      dict.search_list.forEach(function (item) {
+        var key = item.id.videoId;
+        is_listed = list.indexOf(key) > -1;
+        response += getTemplate(GADGET_KLASS, "search_template").supplant({
+          "video_id": key,
+          "title": item.snippet.title,
+          "thumbnail_url": item.snippet.thumbnails.medium.url,
+          "overlay": is_listed ? (OVERLAY + SPC + LISTED) : STR,
+          "playing": state.play === key ? (OVERLAY + SPC + PLAYING) : STR,
+          "disabled": is_listed ? DISABLED : STR,
+          "class": is_listed ? OPAQUE : STR,
+          "active_playlist": codify(active_list, 1)
+        });
+      });
+      if (response !== STR) {
+        response += getTemplate(GADGET_KLASS, "load_template".supplant());
+        setDom(dict.search_results, response, true);
+      }
+      if (state.play !== null) {
+        setVideoControls(dict, this.state.play);
+      }
     })
 
     .declareMethod("enterSearch", function () {
@@ -1232,6 +1263,7 @@
         });
     })
 
+    // ------------------------ Statechange ------------------------------------
     .declareMethod("stateChange", function (delta) {
       var gadget = this;
       var dict = gadget.property_dict;
@@ -1307,6 +1339,7 @@
       return RSVP.all(promise_list);
     })
 
+    // ------------------------- Settings --------------------------------------
     .declareMethod("updateSettings", function () {
       var gadget = this;
       return RSVP.all(
@@ -1342,6 +1375,18 @@
       return this.setting_putAttachment("/", my_setting, new Blob([
         JSON.stringify(payload)
       ], {type: "text/plain"}));
+    })
+
+    // ------------------------- Playlists -------------------------------------
+    .declareMethod("downloadPlaylist", function (my_id, my_queue_list) {
+      var link = window.document.createElement('a');
+      link.href = window.URL.createObjectURL(
+        new Blob([my_queue_list.join("\n")], {type: 'text/plain'})
+      );
+      link.download = my_id + ".txt";
+      window.document.body.appendChild(link);
+      link.click();
+      window.document.body.removeChild(link);
     })
 
     .declareMethod("refreshPlaylist", function (my_flag) {
@@ -1526,25 +1571,49 @@
         });
     })
 
-    .declareMethod("createPlaylist", function (my_id, is_root) {
+    .declareMethod("createPlaylist", function (my_id, my_root) {
       var gadget = this;
-      var element = getElem(gadget.element, ".frube-playlist-filter input");
-      var id = my_id || element.value;
+      var element = gadget.element;
+      var input = getElem(element, ".frube-playlist-filter input");
+      var upload = getElem(element, ".frube-playlist-upload");
+      var list = [];
+      var id = my_id || input.value;
       if (id === undefined || id === STR) {
         return;
       }
-      return gadget.frube_put(codify(id, 0), {
-        "portal_type": PLAYLIST,
-        "queue_list": is_root ? gadget.property_dict.queue_list : [],
-        "root": is_root ? true : undefined,
-        "id": codify(id, 0)
-      })
-      .push(function () {
-        if (is_root === undefined) {
-          element.value = STR;
-          return gadget.filterPlaylist();
-        }
-      });
+      if (upload && upload.value) {
+        list = JSON.parse(upload.value).filter(Boolean);
+        upload.value = STR;
+      }
+      return new RSVP.Queue()
+        .push(function () {
+          return RSVP.all(list.map(function (id) {
+            return gadget.frube_get(id)
+              .push(undefined, function(error) {
+                if (error.status_code === 404) {
+                  return gadget.tube_get(id)
+                    .push(function (meta) {
+                      return gadget.frube_put(id, setVideoDict(id, meta.items[0]));
+                    });
+                }
+                throw error;
+              });
+          }));
+        })
+        .push(function () {
+          return gadget.frube_put(codify(id, 0), {
+            "portal_type": PLAYLIST,
+            "queue_list": my_root ? gadget.property_dict.queue_list : list,
+            "root": my_root ? true : undefined,
+            "id": codify(id, 0)
+          });
+        })
+        .push(function () {
+          if (my_root === undefined) {
+            input.value = STR;
+            return gadget.filterPlaylist();
+          }
+        });
     })
 
     /////////////////////////////
@@ -1659,6 +1728,14 @@
         .push(function () {
           sync_button.classList.remove(SPIN);
           return gadget.refreshPlaylist("sync");
+        })
+        .push(undefined, function (my_error) {
+          sync_button.classList.remove(SPIN);
+          setButtonIcon(sync_button, "sync_disabled");
+          if (!window.navigator.onLine) {
+            return;
+          }
+          throw my_error;
         });
     })
 
@@ -1699,7 +1776,7 @@
         case "frube-video-searching":
           return this.property_dict.search_input.focus();
         case "frube-upload":
-          return setFileInput(this.element, event);
+          return setFileInput(event);
       }
     }, false, false)
 
@@ -1723,7 +1800,7 @@
         case "frube-track-seek":
           return this.property_dict.player.seekTo(target.value, true);
         case "frube-upload":
-          return updateFileInput(this.element, event);
+          return updateFileInput(event.target);
       }
     }, false, false)
 
@@ -1782,6 +1859,8 @@
           return this.runSearch(true);
         case "frube-playlist-create":
           return this.createPlaylist();
+        case "frube-playlist-download":
+          return this.downloadPlaylist(this.state.active_list, this.property_dict.queue_list);
         case "frube-playlist-save":
           return this.savePlaylist(event);
         case "frube-playlist-toggle":

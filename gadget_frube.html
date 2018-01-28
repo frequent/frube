@@ -160,7 +160,8 @@
       <div class="frube-edit-custom-cover-container">
         <div class="mdl-textfield mdl-js-textfield mdl-textfield--file">
           <img src="{video_cover}" alt="{video_artist} - {video_title} | {video_cover}" class="frube-edit-cover-image" />
-          <input class="mdl-textfield__input frube-edit-cover" name="frube-edit-cover" placeholder="Custom Thumbnail" type="text" readonly/>
+          <label class="mdl-textfield__label is-focused frube-hidden frube-validation-label" for="frube-edit-cover">Invalid image format</label>
+          <input class="mdl-textfield__input frube-edit-cover frube-upload-file" id="frube-edit-cover" name="frube-edit-cover" placeholder="Custom Thumbnail" type="text" readonly/>
           <div class="mdl-button mdl-button--icon mdl-button--file">
             <i class="frube-icons material-icons">{bad_indicator}</i><input type="file" class="frube-upload" name="frube-upload">
           </div>
@@ -247,14 +248,19 @@
       <div class="mdl-dialog__content frube-dialog-content">
         <form name="frube-dialog" data-action="playlist" class="frube-playlist-filter">
           <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
-            <input class="mdl-textfield__input frube-playlist-input" type="text" name="frube-playlist-input" id="frube-playlist-input" placeholder="Filter or Create Playlist" />
+            <input class="mdl-textfield__input frube-playlist-input" type="text" name="frube-playlist-input" id="frube-playlist-input" placeholder="Filter, load or create Playlist" />
             <label class="mdl-textfield__label" for="frube-playlist-input">Playlist</label>
           </div>
         </form>
         <form name="frube-playlist-create" class="frube-playlist-create frube-hidden">
-          <button type="submit" class="mdl-button mdl-button--icon mdl-js-button">
+          <button type="submit" class="mdl-button mdl-button--icon mdl-js-button frube-submit-button">
             <i class="material-icons frube-icon">add_box</i>
           </button>
+          <label class="mdl-textfield__label is-focused frube-hidden frube-validation-label" for="frube-playlist-upload">Invalid file format</label>
+          <input class="mdl-textfield__input frube-playlist-upload frube-upload-file" id="frube-playlist-upload" name="frube-file-upload" placeholder="Upload file" type="text" readonly/>
+          <div class="mdl-button mdl-button--icon mdl-button--file">
+            <i class="frube-icons material-icons">file_upload</i><input type="file" class="frube-upload" name="frube-upload">
+          </div>
         </form>
         <div class="frube-playlist-container"></div>
       </div>
@@ -397,6 +403,11 @@
                       <label class="mdl-textfield__label" for="frube-player-drawer-track-filter">Filter Playlist</label>
                     </div>
                   </div>
+                </form>
+              </div>
+              <div class="frube-playlist-controller-download mdl-card__supporting-text mdl-card--border">
+                <form name="frube-playlist-download" class="frube-playlist-download">
+                  <button type="submit" class="frube-icon mdl-button mdl-button--icon mdl-js-button"><i class="frube-icon material-icons">file_download</i></button>
                 </form>
               </div>
             </div>
