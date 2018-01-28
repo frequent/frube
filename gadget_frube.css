@@ -145,12 +145,13 @@
   }
   .frube-controller-video {
     width: 84%;
+    margin: 0 auto;
   }
   .frube-controller-video .mdl-button {
     min-width: 48px;
   }
   .frube-controller-video .mdl-button {
-    padding: 0 14px;
+    padding: 0 12px;
   }
 }
 
@@ -479,15 +480,25 @@ font-family: 'Material Icons';
   }
 }
 @media (max-width: 480px) {
+  .frube-player-controller .mdl-list {
+    margin-top: 4px;
+  }
+  .frube-home-button {
+    padding: 8px;
+  }
+  .frube-btn-sync {
+    padding: 0;
+    min-width: 32px;
+  }
   .frube-video-controls {
     z-index: 100;
   }
-  .frube-action-container {
-    padding: 0 4px;
-    }
   .frube-playlist {
     min-height: 100px;
     flex-flow: row wrap;
+  }
+  .frube-title-container h3 {
+    font-size: 16px;
   }
   .frube-statistics-container {
     width: 30%;
@@ -496,7 +507,7 @@ font-family: 'Material Icons';
     margin-top: 10px;
   }
   .frube-action-container {
-    padding: 0 6px;
+    padding: 0;
   }
   .frube-likes-container {
     float: left;
@@ -514,11 +525,12 @@ font-family: 'Material Icons';
   }
   .frube-playlist-controller-download {
     width: 15%;
+    text-align: center;
   }
   .frube-playlist-controller-download,
   .frube-playlist-controller-filter {
-    padding-left: .5em;
-    padding-right: .5em;
+    padding-left: 0;
+    padding-right: 0;
     -webkit-box-sizing: border-box;
     -moz-box-sizing: border-box;
     box-sizing: border-box;
@@ -534,7 +546,7 @@ font-family: 'Material Icons';
     text-overflow: ellipsis;
   }
   .frube-statistics-container {
-    width: 36%;
+    width: 39%;
   }
 }
 /* take this, mdl action button! */
@@ -582,7 +594,7 @@ font-family: 'Material Icons';
 }
 
 /* force 3 columns on smaller layouts */
-@media (max-width: 839px) and (min-width: 480px) {
+@media (min-width: 480px) and (max-width: 839px) {
   .mdl-cell--3-col {
     width: calc(33% - 16px);
   }
@@ -944,4 +956,3 @@ dialog.fixed {
   border-color: #fff;
   border-color: rgba(255, 255, 255, 0.7);
 }
-
