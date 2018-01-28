@@ -263,6 +263,9 @@
   min-width: 100px;
   width: auto;
 }
+.frube-playlist-controller-download {
+  width: 15%;
+}
 .frube-playlist-controller-filter .mdl-textfield {
   padding: 0;
 }
@@ -270,7 +273,7 @@
   top: 0;
 }
 .frube-playlist-controller-playlist {
-  padding: 16px 0; 
+  padding: 16px 0;
   width: 50%;
 }
 .frube-playlist-controller-playlist .mdl-button {
@@ -507,8 +510,18 @@ font-family: 'Material Icons';
   }
   .frube-playlist-controller-filter {
     text-align: right;
-    width: 50%;
-    padding-left: 1em;
+    width: 53%;
+  }
+  .frube-playlist-controller-download {
+    width: 15%;
+  }
+  .frube-playlist-controller-download,
+  .frube-playlist-controller-filter {
+    padding-left: .5em;
+    padding-right: .5em;
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
   }
   .frube-playlist-controller-playlist {
     width: auto;
@@ -567,12 +580,22 @@ font-family: 'Material Icons';
   padding: 0;
   min-width: 16px;
 }
+
+/* force 3 columns on smaller layouts */
+@media (max-width: 839px) and (min-width: 480px) {
+  .mdl-cell--3-col {
+    width: calc(33% - 16px);
+  }
+}
 .frube-playlist-info {
   font-size: 12px;
   padding-right: 6px;
   color: rgb(117, 117, 117);
   vertical-align: middle;
   text-transform: none;
+}
+.frube-dialog-playlist .frube-dialog-content {
+  padding: 20px 16px 4px 16px;
 }
 .frube-dialog-playlist-actions {
   padding: 0;
@@ -595,9 +618,19 @@ font-family: 'Material Icons';
   text-overflow: ellipsis;
 }
 .frube-playlist-filter,
-.frube-playlist-create {
+.frube-playlist-create,
+.frube-playlist-upload {
   display: inline-block;
   vertical-align: middle;
+}
+.frube-playlist-upload {
+  width: 82%;
+  margin-right: .5em;
+}
+.frube-playlist-create .frube-submit-button {
+  float: right;
+  clear: both;
+  margin-top: -2.25em;
 }
 .frube-playlist-filter {
   max-width: 82%;
@@ -666,6 +699,22 @@ font-family: 'Material Icons';
   pointer-events: all;
 }
 /* file upload */
+.frube-playlist-create {
+  position: relative;
+}
+.frube-edit-custom-cover-container .mdl-textfield .frube-validation-label,
+.frube-playlist-create .frube-validation-label {
+  color: rgb(244,67,54);
+  font-size: 12px;
+  top: -1em;
+  width: auto;
+  visibility: visible;
+  line-height: 1em;
+}
+.frube-edit-custom-cover-container .mdl-textfield .frube-validation-label {
+  line-height: 15em;
+  top: 0;
+}
 .frube-edit-custom-cover-container img {
   width: auto;
   max-height: 100px;
@@ -895,3 +944,4 @@ dialog.fixed {
   border-color: #fff;
   border-color: rgba(255, 255, 255, 0.7);
 }
+
