@@ -294,6 +294,7 @@
 .frube-playlist-switch-icon {
   display: inline-block;
   margin-right: 24px;
+  vertical-align: middle;
 }
 @media (max-width: 1023px) {
   .frube-playlist-switch-icon {
