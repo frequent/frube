@@ -228,7 +228,7 @@
     <dialog class="mdl-dialog frube-dialog-about">
       <h2 class="mdl-dialog__title">Frube?</h2>
       <div class="mdl-dialog__content">
-        <p>They may take away the content. Your taste, you can keep!</p>
+        <p>They may have the content. But your taste, you can keep!</p>
         <p class="frube-credit">
           Made with <a href="https://getmdl.io/">MDL</a>, <a href="https://renderjs.nexedi.com">RenderJS</a> &amp; 
           <a href="https://jio.nexedi.com">jIO</a>
@@ -294,7 +294,7 @@
             <i class="material-icons">more_vert</i>
           </button>
           <!--/form-->
-          <form name="frube-sync">
+          <form name="frube-sync" class="frube-sync">
             <button type="submit" class="frube-btn-sync mdl-button mdl-js-button" disabled><i class="frube-icon material-icons">sync_disabled</i></button>
           </form>
           <ul class="mdl-menu mdl-menu--bottom-left mdl-js-menu" for="frube-open-menu">
@@ -310,12 +310,15 @@
             </li>
           </ul>
           <div class="mdl-layout-spacer"></div>
+          <form name="frube-list" class="frube-list">
+            <button type="submit" class="frube-btn-list mdl-button mdl-js-button mdl-button--icon"><i class="material-icons">library_music</i></button>
+          </form>
           <nav class="mdl-navigation">
             <form name="frube-search-source">
               <div class="mdl-textfield mdl-js-textfield mdl-textfield--expandable mdl-textfield--floating-label mdl-textfield--align-right">
                 <label class="mdl-button mdl-js-button mdl-button--icon" for="frube-player-drawer-track-search"><span class="material-icons">search</span></label>
                 <div class="mdl-textfield__expandable-holder">
-                  <input class="mdl-textfield__input frube-search-input" name="frube-search-input" autocomplete="off" placeholder="Search videos" type="text" id="frube-player-drawer-track-search">
+                  <input class="mdl-textfield__input frube-search-input" name="frube-search-input" autocomplete="off" placeholder="Search" type="text" id="frube-player-drawer-track-search">
                 </div>
               </div>
             </form>
