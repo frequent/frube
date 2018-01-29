@@ -18,13 +18,13 @@
   var AND = " - ";
   var ARR = [];
   var BUTTON = "button";
+  var CANVAS = "canvas";
   var CLOSE = "frube-dialog-close";
   var CODE = ["encode", "decode"];
   var DELETED = "frube-video-deleted";
   var DIALOG = ".frube-dialog-";
   var DISABLED = "disabled";
   var FILTER = "filter";
-  var FORBIDDEN = 403;
   var FRUBE = "frube_jio";
   var HI = "hd720";
   var HIDDEN = "frube-hidden";
@@ -33,6 +33,7 @@
   var IS_SLIDER = "slider";
   var LIKE = ".frube-like";
   var LISTED = "frube-video-listed";
+  var LOADER = ".frube-loader";
   var LO = "tiny";
   var MINUS = "-";
   var NAME = "name";
@@ -48,21 +49,20 @@
   var REPEAT = ".frube-btn-repeat";
   var SEARCH = "search";
   var SEARCHING = "searching";
-  var SECTION = "section";
   var SETTING = "setting_jio";
   var SHUFFLE = ".frube-btn-shuffle";
   var SPC = " ";
   var SPIN = "frube-spin";
   var STR = "";
-  var SUBMIT = ".frube-dialog-submit";
   var TEN_MINUTES = 600000;
   var TUBE = "tube_jio";
   var UNDO = "undo_edit";
   var WATCHING = "watching";
 
-  var GADGET_KLASS = rJS(window);
+  var KLASS = rJS(window);
   var DIALOG_POLYFILL = window.dialogPolyfill;
   var INTERSECTION_OBSERVER = window.IntersectionObserver;
+  var TEMPLATE_PARSER = /\{([^{}]*)\}/g;
 
   /////////////////////////////
   // methods
@@ -190,12 +190,8 @@
     };
   }
 
-  function getTubeConfig(my_id) {
-    return {"type": "youtube", "api_key": my_id};
-  }
-
-  function setVideoHash(my_list) {
-    return getVideoHash() || my_list[getRandomDigit(my_list.length - 1)] || null;    
+  function setVideoHash(my_arr) {
+    return getVideoHash() || my_arr[getRandomDigit(my_arr.length - 1)] || null;    
   }
 
   function getVideoHash() {
@@ -208,9 +204,8 @@
   function resizeFileToBase64(my_file) {
     return new RSVP.Promise(function (resolve, reject) {
       var img = new Image();
-      var canvas = window.document.createElement("canvas");
-
       img.onload = function () {
+        var canvas = window.document.createElement(CANVAS);
         canvas.width = 320;
         canvas.height = 320;
         canvas.getContext("2d").drawImage(img, 0, 0, 320, 320);
@@ -230,7 +225,7 @@
   }
 
   function setDom(my_node, my_string, my_purge) {
-    var faux_element = window.document.createElement(SECTION);
+    var faux_element = window.document.createElement(CANVAS);
     if (my_purge) {
       purgeDom(my_node);
     }
@@ -266,17 +261,13 @@
     my_element.value = 0;
   }
 
-  // http://javascript.crockford.com/remedial.html
+  // poor man's templates. thx, http://javascript.crockford.com/remedial.html
   if (!String.prototype.supplant) {
     String.prototype.supplant = function (o) {
-      var str = this;
-      return str.replace(
-        /\{([^{}]*)\}/g,
-        function (a, b) {
-          var r = o[b];
-          return typeof r === "string" || typeof r === "number" ? r : a;
-        }
-      );
+      return this.replace(TEMPLATE_PARSER, function (a, b) {
+        var r = o[b];
+        return typeof r === "string" || typeof r === "number" ? r : a;
+      });
     };
   }
 
@@ -299,10 +290,8 @@
     var seconds = 0;
 
     matches.forEach(function (part) {
-      var unit = part.charAt(part.length-1);
       var amount = parseInt(part.slice(0,-1), 10);
-
-      switch (unit) {
+      switch (part.charAt(part.length-1)) {
         case "H":
           seconds += amount * 60 * 60;
           break;
@@ -317,12 +306,12 @@
     return seconds;
   }
 
-  function setVolume(my_player, my_event) {
+  function setVolume(my_player, my_target) {
     if (my_player.isMuted()) {
-      setButtonIcon(getElem(my_event.target, BUTTON), "volume_up");
+      setButtonIcon(getElem(my_target, BUTTON), "volume_up");
       my_player.unMute();
     } else {
-      setButtonIcon(getElem(my_event.target, BUTTON), "volume_off");
+      setButtonIcon(getElem(my_target, BUTTON), "volume_off");
       my_player.mute();
     }
   }
@@ -348,21 +337,17 @@
     }
   }
 
-  function unsetLoader(my_button) {
-    if (getElem(my_button, ".frube-loader")) {
-      my_button.removeChild(getElem(my_button, ".frube-loader"));
-    }
-  }
-
-  function setLoader(my_button) {
-    if (!getElem(my_button, ".frube-loader")) {
-      setDom(my_button, getTemplate(GADGET_KLASS, "loader_template").supplant());
+  function setLoader(my_button, my_purge) {
+    if (getElem(my_button, LOADER) || my_purge) {
+      my_button.removeChild(getElem(my_button, LOADER));
+    } else {
+      setDom(my_button, getTemplate(KLASS, "loader_template").supplant());
       window.componentHandler.upgradeElements(my_button);
     }
   }
 
   function unsetSearch(my_dict, my_offline) {
-    setDom(my_dict, getTemplate(GADGET_KLASS, "status_template").supplant({
+    setDom(my_dict, getTemplate(KLASS, "status_template").supplant({
       "status": my_offline ? OFFLINE : SEARCHING
     }), true);
   }
@@ -406,7 +391,7 @@
         return;
       }
       queue.push(function () {
-        return resizeFileToBase64(my_target.files[0]);
+        return resizeFileToBase64(file);
       }).push(function (blob) {
         getElem(form, ".frube-edit-cover-image").src =
         getElem(form, ".frube-edit-cover").value = blob;
@@ -437,7 +422,7 @@
     var is_buffered = my_dict.buffer_dict.hasOwnProperty(my_video_id);
     var item = my_dict.current_video;
     var info = my_dict.video_info;
-    setDom(info, getTemplate(GADGET_KLASS, "video_template").supplant({
+    setDom(info, getTemplate(KLASS, "video_template").supplant({
       "title": is_queued ? setTitle(item) : item.snippet.title,
       "video_id": my_video_id,
       "views": parseInt(item.statistics.viewCount, 10).toLocaleString(),
@@ -522,7 +507,7 @@
     });
   }
 
-  GADGET_KLASS
+  KLASS
 
     /////////////////////////////
     // state
@@ -648,7 +633,7 @@
       return gadget.evaluateRemoteConnection()
         .push(function () {
           return RSVP.all([
-            gadget.tube_create(getTubeConfig(dict.youtube_id)),
+            gadget.tube_create({"type": "youtube", "api_key": dict.youtube_id}),
             gadget.refreshPlaylist("init"),
             gadget.updateSettings()
           ]);
@@ -993,7 +978,7 @@
       var gadget = this;
       var action = my_event.target.getAttribute(ACTION);
       var dialog = getElem(gadget.element, (DIALOG + action));
-      var button = dialog.querySelector(SPC + SUBMIT);
+      var button = dialog.querySelector(SPC + ".frube-dialog-submit");
 
       if (button) {
         button.setAttribute("data-video", my_video_id);
@@ -1003,7 +988,7 @@
           })
           .push(function (data) {
             setDom(getElem(dialog, ".frube-dialog-content"),
-              getTemplate(GADGET_KLASS, "edit_template").supplant({
+              getTemplate(KLASS, "edit_template").supplant({
                 "video_title": data.custom_title,
                 "video_artist": data.custom_artist,
                 "video_album": data.custom_album,
@@ -1144,23 +1129,22 @@
       var active_list = state.active_list;
       var list = dict.queue_list;
       var response = STR;
-      var is_listed;
       dict.search_list.forEach(function (item) {
         var key = item.id.videoId;
-        is_listed = list.indexOf(key) > -1;
-        response += getTemplate(GADGET_KLASS, "search_template").supplant({
+        var is_listed = list.indexOf(key) > -1;
+        response += getTemplate(KLASS, "search_template").supplant({
           "video_id": key,
           "title": item.snippet.title,
           "thumbnail_url": item.snippet.thumbnails.medium.url,
-          "overlay": is_listed ? (OVERLAY + SPC + LISTED) : STR,
           "playing": state.play === key ? (OVERLAY + SPC + PLAYING) : STR,
+          "overlay": is_listed ? (OVERLAY + SPC + LISTED) : STR,
           "disabled": is_listed ? DISABLED : STR,
           "class": is_listed ? OPAQUE : STR,
           "active_playlist": codify(active_list, 1)
         });
       });
       if (response !== STR) {
-        response += getTemplate(GADGET_KLASS, "load_template".supplant());
+        response += getTemplate(KLASS, "load_template".supplant());
         setDom(dict.search_results, response, true);
       }
       if (state.play !== null) {
@@ -1273,12 +1257,8 @@
       if (delta.hasOwnProperty("blur")) {
         return window.document.activeElement.blur();
       }
-      if (delta.hasOwnProperty("loader") || delta.hasOwnProperty("mode")) {
-        if (delta.loader) {
-          setLoader(dict.action_button);
-        } else {
-          unsetLoader(dict.action_button);
-        }
+      if (delta.hasOwnProperty("loader")) {
+        setLoader(dict.action_button, delta.hasOwnProperty("mode"));
       }
       if (delta.hasOwnProperty("root_list")) {
         state.root_list = delta.root_list;
@@ -1450,7 +1430,7 @@
             if (oldest_timestamp > doc.timestamp) {
               oldest_timestamp = doc.timestamp;
             }
-            html_content += getTemplate(GADGET_KLASS, "queue_template").supplant({
+            html_content += getTemplate(KLASS, "queue_template").supplant({
               "video_id": doc.id,
               "title": doc.title,
               "fallback_url": dict.observer ? STR : cover,
@@ -1465,7 +1445,7 @@
             setVideoControls(dict, state.play);
           }
           if (len === 0 && !setVideoHash(dict.queue_list)) {
-            setDom(dict.playlist, getTemplate(GADGET_KLASS, "status_template")
+            setDom(dict.playlist, getTemplate(KLASS, "status_template")
               .supplant({"status": PLAYLIST}), true
             );
           } else {
@@ -1538,7 +1518,7 @@
             if (noMatch(query, codify(doc.id, 1))) {
               return;
             }
-            html_content += getTemplate(GADGET_KLASS, "playlist_template").supplant({
+            html_content += getTemplate(KLASS, "playlist_template").supplant({
               "playlist_title": codify(doc.id, 1),
               "playlist_id": doc.id,
               "playlist_count": doc.queue_list.length,
@@ -1791,7 +1771,6 @@
     /////////////////////////////
     // on Event
     /////////////////////////////
-    // clickediclick, the less the better
     .onEvent("click", function (event) {
       var target = event.target;
       var video_id = target.getAttribute(ID);
@@ -1882,7 +1861,7 @@
         case "frube-play-pause":
           return playOrPause(this.property_dict.player);
         case "frube-set-volume":
-          return setVolume(this.property_dict.player, event);
+          return setVolume(this.property_dict.player, event.target);
         case "frube-search-more":
           return this.runSearch(true);
         case "frube-playlist-create":
