@@ -1273,7 +1273,7 @@
       if (delta.hasOwnProperty("blur")) {
         return window.document.activeElement.blur();
       }
-      if (delta.hasOwnProperty("loader")) {
+      if (delta.hasOwnProperty("loader") || delta.hasOwnProperty("mode")) {
         if (delta.loader) {
           setLoader(dict.action_button);
         } else {
@@ -1378,6 +1378,32 @@
     })
 
     // ------------------------- Playlists -------------------------------------
+    .declareMethod("showPlaylistInSearch", function () {
+      var gadget = this;
+      return gadget.frube_allDocs({"include_docs": true})
+        .push(function (dump) {
+          gadget.property_dict.search_list = dump.data.rows.map(function (item) {
+            var doc = item.doc;
+            if (doc.portal_type !== "track") {
+              return;
+            }
+            return {
+              "id": {"videoId": doc.id},
+              "snippet": {
+                "title": setTitle(doc),
+                "thumbnails": {
+                  "medium": {"url": doc.custom_cover || doc.original_cover}
+                }
+              }
+            };
+          }).filter(Boolean);
+          return RSVP.all([
+            gadget.refreshSearchResults(),
+            gadget.stateChange({"mode": SEARCHING})
+          ]);
+        });
+    })
+
     .declareMethod("downloadPlaylist", function (my_id, my_queue_list) {
       var link = window.document.createElement('a');
       link.href = window.URL.createObjectURL(
@@ -1821,6 +1847,8 @@
           return this.stateChange({"mode": this.state.mode === SEARCHING ? WATCHING : SEARCHING});
         case "frube-connector-dropbox":
           return this.connectAndSyncWithDropbox();
+        case "frube-list":
+          return this.showPlaylistInSearch();
         case "frube-track-remove":
           return this.removeVideo(getAttr(event, ID), event.target);
         case "frube-track-add":
@@ -1880,4 +1908,3 @@
 
 }(window, rJS, RSVP, YT, JSON, Blob, URL, Math, SimpleQuery, Query,
   ComplexQuery));
-
