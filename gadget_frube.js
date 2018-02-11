@@ -676,21 +676,30 @@
       }
     })
 
-    .declareMethod("handleError", function (my_error) {
+    .declareMethod("handleError", function (my_err, my_err_dict) {
       var gadget = this;
+      var code;
+      var err = my_err.target ? JSON.parse(my_err.target.response).error : my_err;
 
-      if (my_error.resume) {
+      if (err instanceof RSVP.CancellationError) {
+        gadget.state.is_searching = false;
+        return gadget.stateChange({"loader": null});
+      }
+      if (err.resume) {
         return RSVP.all([
           gadget.resetFrube(true),
-          gadget.waitForNetwork(my_error.resume)
+          gadget.waitForNetwork(err.resume)
         ]);
       }
 
-      // jIO getAttachment
-      if (my_error.status_code === 404) {
-        return 0;
+      for (code in my_err_dict) {
+        if (my_err_dict.hasOwnProperty(code)) {
+          if ((err.status_code + "") === code) {
+            return my_err_dict[code];
+          }
+        }
       }
-      throw my_error;
+      throw err;
     })
 
     .declareMethod("getRandomId", function () {
@@ -846,13 +855,7 @@
           return gadget.frube_get(my_video_id);
         })
         .push(undefined, function (error) {
-          if (error.status_code === 404) {
-            return {};
-          }
-          if (error.target && error.target.status === 400) {
-            return gadget.handleError(JSON.parse(error.target.response).error);
-          }
-          throw error;
+          return gadget.handleError(error, {"404": {}});
         })
         .push(function (frube_response) {
           var data = frube_response;
@@ -1049,8 +1052,8 @@
           promise_list.push(gadget.frube_put(my_playlist.id, my_playlist));
           return RSVP.all(promise_list);
         })
-        .push(undefined, function (err) {
-          throw err;
+        .push(undefined, function (error) {
+          throw error;
         });
     })
 
@@ -1105,11 +1108,11 @@
             gadget.frube_create(getFrubeConfig(my_token)),
             gadget.setSetting("token", my_token)
           ]);
-        }, function (connection_error) {
-          if (connection_error.status_code === 400) {
-            return gadget.frube_create(getFrubeConfig(my_token, true));
-          }
-          return gadget.handleError(connection_error);
+        })
+        .push(undefined, function (connection_error) {
+          return gadget.handleError(connection_error, {
+            "400": gadget.frube_create(getFrubeConfig(my_token, true))
+          });
         })
         .push(function () {
           setButtonIcon(dict.sync_button, "sync");
@@ -1236,14 +1239,7 @@
           gadget.state.is_searching = false;
         })
         .push(undefined, function (error) {
-          gadget.state.is_searching = false;
-          if (error.target === undefined) {
-            throw error;
-          }
-          if (error.target.status === 400) {
-            return gadget.handleError(JSON.parse(error.target.response).error);
-          }
-          return gadget.stateChange({"loader": null});
+          return gadget.handleError(error);
         });
     })
 
@@ -1346,7 +1342,9 @@
           }
           return payload[my_setting];
         })
-        .push(undefined, gadget.handleError);
+        .push(undefined, function (my_error) {
+          return gadget.handleError(my_error, {"404": 0});
+        });
     })
 
     .declareMethod("setSetting", function (my_setting, my_value) {
