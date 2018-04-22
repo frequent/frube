@@ -617,12 +617,12 @@
           return RSVP.all([
             gadget.tube_create({"type": "youtube", "api_key": dict.youtube_id}),
             gadget.updateSettings(),
-            gadget.stateChange({"online": window.navigator.onLine, loader: true})
+            gadget.stateChange({"online": window.navigator.onLine})
           ]);
         })
         .push(function () {
           getElem(gadget.element, ".frube-wip").classList.remove("frube-wip");
-          return gadget.stateChange({play: setVideoHash(dict.queue_list), loader: null});
+          return gadget.stateChange({play: setVideoHash(dict.queue_list)});
         });
     })
 
