@@ -1,16 +1,16 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" manifest="gadget_frube.appcache">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Frube Gadget</title>
 
-    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
-    <link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.red-indigo.min.css" />
+    <link rel="stylesheet" href="lib/fonts_googleapis_material_icons.css" />
+    <link rel="stylesheet" href="lib/material_design_lite.1.3.0.min.css" />
     <link rel="stylesheet" href="gadget_frube.css" />
 
-    <script src="https://code.getmdl.io/1.3.0/material.min.js"></script>
-    <script src="https://www.youtube.com/iframe_api"></script>
+    <script src="lib/material_design_lite.1.3.0.min.js"></script>
+    <script src="lib/youtube_iframe_api.min.js"></script>
     <script src="polyfill.dialog.js"></script>
 
     <script src="rsvp.latest.js"></script>
@@ -161,8 +161,8 @@
         <div class="mdl-textfield mdl-js-textfield mdl-textfield--file">
           <img src="{video_cover}" alt="{video_artist} - {video_title} | {video_cover}" class="frube-edit-cover-image" />
           <label class="mdl-textfield__label is-focused frube-hidden frube-validation-label" for="frube-edit-cover">Invalid image format</label>
-          <input class="mdl-textfield__input frube-edit-cover frube-upload-file" id="frube-edit-cover" name="frube-edit-cover" placeholder="Custom Thumbnail" type="text" readonly/>
-          <div class="mdl-button mdl-button--icon mdl-button--file">
+          <input class="mdl-textfield__input frube-edit-cover" id="frube-edit-cover" name="frube-edit-cover" placeholder="Custom Thumbnail" type="text" readonly/>
+          <div class="mdl-button mdl-button--icon mdl-button--file frube-upload-file">
             <i class="frube-icons material-icons">{bad_indicator}</i><input type="file" class="frube-upload" name="frube-upload">
           </div>
         </div>
@@ -258,8 +258,8 @@
           </button>
           <label class="mdl-textfield__label is-focused frube-hidden frube-validation-label" for="frube-playlist-upload">Invalid file format</label>
           <input class="mdl-textfield__input frube-playlist-upload frube-upload-file" id="frube-playlist-upload" name="frube-file-upload" placeholder="Upload file" type="text" readonly/>
-          <div class="mdl-button mdl-button--icon mdl-button--file">
-            <i class="frube-icons material-icons">file_upload</i><input type="file" class="frube-upload" name="frube-upload">
+          <div class="mdl-button mdl-button--icon mdl-button--file frube-upload-button">
+            <i class="frube-icons material-icons frube-upload-icon">file_upload</i><input type="file" class="frube-upload" name="frube-upload">
           </div>
         </form>
         <div class="frube-playlist-container"></div>
@@ -283,7 +283,7 @@
       </form>
     </dialog>
 
-    <div class="mdl-layout mdl-js-layout mdl-layout--fixed-header frube-wip">
+    <div class="mdl-layout mdl-js-layout mdl-layout--fixed-header frube-wip frube-header">
       <header class="mdl-layout__header">
         <div class="mdl-layout__header-row">
           <form name="frube-home">
@@ -300,7 +300,7 @@
           <ul class="mdl-menu mdl-menu--bottom-left mdl-js-menu" for="frube-open-menu">
             <li class="mdl-menu__item mdl-menu__item--full-bleed-divider frube-custom-menu-action">
               <form name="frube-connector-dropbox">
-                <button type="submit" class="mdl-button mdl-js-button">Connect Dropbox</button>
+                <button type="submit" class="mdl-button mdl-js-button frube-dropbox-connect">Connect Dropbox</button>
               </form>
             </li>
             <li class="mdl-menu__item frube-custom-menu-action">
@@ -316,7 +316,7 @@
           <nav class="mdl-navigation">
             <form name="frube-search-source">
               <div class="mdl-textfield mdl-js-textfield mdl-textfield--expandable mdl-textfield--floating-label mdl-textfield--align-right">
-                <label class="mdl-button mdl-js-button mdl-button--icon" for="frube-player-drawer-track-search"><span class="material-icons">search</span></label>
+                <label class="mdl-button mdl-js-button mdl-button--icon frube-search-drawer" for="frube-player-drawer-track-search"><span class="material-icons">search</span></label>
                 <div class="mdl-textfield__expandable-holder">
                   <input class="mdl-textfield__input frube-search-input" name="frube-search-input" autocomplete="off" placeholder="Search" type="text" id="frube-player-drawer-track-search">
                 </div>
