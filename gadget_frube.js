@@ -622,7 +622,7 @@
         })
         .push(function () {
           getElem(gadget.element, ".frube-wip").classList.remove("frube-wip");
-          return gadget.stateChange({play: video, loader: setVideoHash(dict.queue_list)});
+          return gadget.stateChange({play: setVideoHash(dict.queue_list), loader: null});
         });
     })
 
@@ -938,7 +938,7 @@
       } else {
         dict.buffer_dict[my_video_id] = undefined;
         setButtonIcon(getElem(my_element, BUTTON), UNDO);
-        setOverlay(getVideo(dict.playlist, my_video_id), "frube-video-deleted", "add");  
+        setOverlay(getVideo(dict.playlist, my_video_id), "frube-video-deleted", "add");
       }
       if (gadget.state.mode === WATCHING && dict.current_video) {
         setVideoControls(dict, gadget.state.play);
@@ -1277,7 +1277,7 @@
           getElem(element, ".frube-upload-icon").textContent = "file_upload";
           getElem(element, ".frube-upload-button").classList.remove(OPAQUE);
           getElem(element, ".frube-search-drawer").classList.remove(OPAQUE);
-          getElem(element, ".frube-dropbox-connect").removeAttribute(DISABLED);  
+          getElem(element, ".frube-dropbox-connect").removeAttribute(DISABLED);
         } else {
           sync_icon.setAttribute("data-state", sync_icon.textContent);
           sync_icon.textContent = "warning";
