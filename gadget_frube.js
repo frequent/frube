@@ -14,14 +14,10 @@
   // parameters
   /////////////////////////////
   var ACTION = "data-action";
-  var ADD = "playlist_add";
-  var AND = " - ";
   var ARR = [];
   var BUTTON = "button";
   var CANVAS = "canvas";
-  var CLOSE = "frube-dialog-close";
   var CODE = ["encode", "decode"];
-  var DELETED = "frube-video-deleted";
   var DIALOG = ".frube-dialog-";
   var DISABLED = "disabled";
   var FILTER = "filter";
@@ -61,8 +57,11 @@
 
   var KLASS = rJS(window);
   var DIALOG_POLYFILL = window.dialogPolyfill;
+  var LOCATION = window.location;
+  var DOCUMENT = window.document;
   var INTERSECTION_OBSERVER = window.IntersectionObserver;
   var TEMPLATE_PARSER = /\{([^{}]*)\}/g;
+  //var CONFLICT_PARSER = /Conflict on '(.*?)': (.*) !== (.*)/g;
 
   /////////////////////////////
   // methods
@@ -114,12 +113,14 @@
 
   function getLocalConfig(my_fallback) {
     /*
+      return {"type": "indexeddb", "database": "frube"};
+    */
     if (my_fallback) {
       return {"type": "indexeddb", "database": "frube"};
     }
     return {
       "type": "worker",
-      "scope": "/",
+      "scope": LOCATION.pathname,
       "url": "gadget_frube_serviceworker.js",
       "prefetch_url_list": [],
       "prefetch_update": true,
@@ -127,21 +128,10 @@
       "skip_waiting": true,
       "manifest_url": "gadget_frube.appcache",
       "sub_storage": {
-        "type": "index",
-        "index_generator": "gadget_frube_index.js",
-        "index_storage": {
-          "type": "indexeddb",
-          "database": "frube-lookup"
-        },
-        "sub_storage": {
-          "type": "cache",
-          "cache_name": "frube",
-          "version": 1
-        }
+        "type": "indexeddb",
+        "database": "frube"
       }
     };
-    */
-    return {"type": "indexeddb", "database": "frube"};
   }
 
   function getFrubeConfig(my_token, my_fallback) {
@@ -195,7 +185,7 @@
   }
 
   function getVideoHash() {
-    var id = window.location.hash.slice(1, 1 + 11);
+    var id = LOCATION.hash.slice(1, 1 + 11);
     if (id.length === 11) {
       return id;
     }
@@ -205,7 +195,7 @@
     return new RSVP.Promise(function (resolve, reject) {
       var img = new Image();
       img.onload = function () {
-        var canvas = window.document.createElement(CANVAS);
+        var canvas = DOCUMENT.createElement(CANVAS);
         canvas.width = 320;
         canvas.height = 320;
         canvas.getContext("2d").drawImage(img, 0, 0, 320, 320);
@@ -225,7 +215,7 @@
   }
 
   function setDom(my_node, my_string, my_purge) {
-    var faux_element = window.document.createElement(CANVAS);
+    var faux_element = DOCUMENT.createElement(CANVAS);
     if (my_purge) {
       purgeDom(my_node);
     }
@@ -346,12 +336,6 @@
     }
   }
 
-  function unsetSearch(my_dict, my_offline) {
-    setDom(my_dict, getTemplate(KLASS, "status_template").supplant({
-      "status": my_offline ? OFFLINE : SEARCHING
-    }), true);
-  }
-
   function setQueueList(my_id, my_list) {
     if (my_list.indexOf(my_id) === -1) {
       my_list.push(my_id);
@@ -429,7 +413,7 @@
       "score": item.score.toFixed(5),
       "action_title": is_queued ? "remove" : "add",
       "action_hint": is_queued ? "Remove from List": "Add to Playlist",
-      "action_icon": is_buffered ? UNDO : is_queued ? REMOVE : ADD,
+      "action_icon": is_buffered ? UNDO : is_queued ? REMOVE : "playlist_add",
       "disabled_next": my_dict.queue_list.length < 2 ? DISABLED : STR,
       "disabled_rate": is_queued ? STR : DISABLED
     }), true);
@@ -449,7 +433,7 @@
     var artist = my_doc.custom_artist;
     var title = my_doc.custom_title || my_doc.original_title;
     var album = my_doc.custom_album;
-    return [artist, title, album].filter(Boolean).join(AND);
+    return [artist, title, album].filter(Boolean).join(" - ");
   }
 
   function filterTracklist(my_data, my_list, my_query) {
@@ -623,31 +607,22 @@
     .declareMethod("render", function (my_option_dict) {
       var gadget = this;
       var dict = gadget.property_dict;
-
       window.componentHandler.upgradeDom();
       mergeDict(dict, my_option_dict);
       if (INTERSECTION_OBSERVER !== undefined) {
         dict.observer = new INTERSECTION_OBSERVER(loadImage, {"threshold": 0.5});
       }
-
       return gadget.evaluateRemoteConnection()
         .push(function () {
           return RSVP.all([
             gadget.tube_create({"type": "youtube", "api_key": dict.youtube_id}),
-            gadget.refreshPlaylist("init"),
-            gadget.updateSettings()
+            gadget.updateSettings(),
+            gadget.stateChange({"online": window.navigator.onLine, loader: true})
           ]);
         })
         .push(function () {
-          var video = setVideoHash(dict.queue_list);
-          var promise_list = [gadget.stateChange({loader: null, play: video})];
-          if (!video) {
-            promise_list.push(gadget.enterSearch());
-          }
-          return RSVP.all(promise_list);
-        })
-        .push(function () {
           getElem(gadget.element, ".frube-wip").classList.remove("frube-wip");
+          return gadget.stateChange({play: video, loader: setVideoHash(dict.queue_list)});
         });
     })
 
@@ -655,8 +630,8 @@
       var gadget = this;
       var action = my_action || my_event.target.getAttribute(ACTION);
       var dialog = getElem(gadget.element, (DIALOG + action));
-      var active_element = window.document.activeElement;
-      if (active_element && active_element.classList.contains(CLOSE)) {
+      var active_element = DOCUMENT.activeElement;
+      if (active_element && active_element.classList.contains("frube-dialog-close")) {
         dialog.close();
         return;
       }
@@ -685,16 +660,10 @@
         gadget.state.is_searching = false;
         return gadget.stateChange({"loader": null});
       }
-      if (err.resume) {
-        return RSVP.all([
-          gadget.resetFrube(true),
-          gadget.waitForNetwork(err.resume)
-        ]);
-      }
 
       for (code in my_err_dict) {
         if (my_err_dict.hasOwnProperty(code)) {
-          if ((err.status_code + "") === code) {
+          if ((err.status_code + STR) === code) {
             return my_err_dict[code];
           }
         }
@@ -726,7 +695,6 @@
         })
         .push(function (my_result_list) {
           var high_score_id;
-
           my_result_list.reduce(function (total, item) {
             var score = getScore(item.upvote_list, item.downvote_list, gadget.state.zero_stamp);
             if (score > total) {
@@ -740,25 +708,21 @@
         });
     })
 
-    .declareMethod("resetFrube", function (my_offline) {
+    .declareMethod("resetFrube", function (my_video_id, my_offline) {
       var gadget = this;
       var dict = gadget.property_dict;
-
-      window.location.hash = STR;
       dict.search_input.value = STR;
-      if (dict.player && dict.player.getPlayerState() <= 0) {
-        dict.player_container.classList.add(HIDDEN);
+      if (dict.player && dict.player.b) {
         dict.player.destroy();
       }
       dict.search_list = [];
       dict.video_controller.classList.add(HIDDEN);
       dict.player_controller.classList.add(HIDDEN);
       purgeDom(dict.video_info);
-      unsetSearch(dict.search_results, my_offline);
-      return RSVP.all([
-        gadget.refreshSearchResults(),
-        gadget.enterSearch()
-      ]);
+      swapVideo(dict, gadget.state.mode);
+      setDom(dict.search_results, getTemplate(KLASS, "status_template").supplant({
+        "status": my_offline ? OFFLINE : SEARCHING
+      }), true);
     })
 
     .declareMethod("updateSlider", function () {
@@ -789,8 +753,12 @@
       if (!my_video_id) {
         return;
       }
-      if (!window.navigator.onLine) {
-        return gadget.handleError({"resume": my_video_id});
+
+      if (!gadget.state.online) {
+        return RSVP.all([
+          gadget.resetFrube(true, my_video_id),
+          gadget.waitForNetwork(my_video_id)
+        ]);
       }
 
       return new RSVP.Queue()
@@ -860,9 +828,10 @@
         .push(function (frube_response) {
           var data = frube_response;
           var state = gadget.state;
-          var item = dict.current_video = mergeDict(tube_data.items[0], data);
+          var item_list = tube_data.items || [{}];
+          var item = dict.current_video = mergeDict(item_list[0], data);
           if (item) {
-            window.document.title = item.snippet.title;
+            DOCUMENT.title = item.snippet.title;
             swapVideo(dict, state.mode);
             dict.current_video.score = getScore(data.upvote_list, data.downvote_list, state.zero_stamp);
             setVideoControls(dict, my_video_id);
@@ -964,12 +933,12 @@
       // undo = unflag for deletion
       if (dict.buffer_dict.hasOwnProperty(my_video_id)) {
         setButtonIcon(getElem(my_element, BUTTON), REMOVE);
-        setOverlay(getVideo(dict.playlist, my_video_id), DELETED, "remove");
+        setOverlay(getVideo(dict.playlist, my_video_id), "frube-video-deleted", "remove");
         delete dict.buffer_dict[my_video_id];
       } else {
         dict.buffer_dict[my_video_id] = undefined;
         setButtonIcon(getElem(my_element, BUTTON), UNDO);
-        setOverlay(getVideo(dict.playlist, my_video_id), DELETED, "add");  
+        setOverlay(getVideo(dict.playlist, my_video_id), "frube-video-deleted", "add");  
       }
       if (gadget.state.mode === WATCHING && dict.current_video) {
         setVideoControls(dict, gadget.state.play);
@@ -1011,7 +980,7 @@
         return item.id.videoId === my_video_id ? item : undefined;
       }).pop() || my_meta || dict.current_video;
       if (dict.buffer_dict.hasOwnProperty(my_video_id)) {
-        setButtonIcon(getElem(my_element, BUTTON), ADD);
+        setButtonIcon(getElem(my_element, BUTTON), "playlist_add");
         setOverlay(getVideo(dict.search_results, my_video_id), LISTED, "remove");
         delete dict.buffer_dict[my_video_id];
       } else {
@@ -1063,9 +1032,6 @@
       var jump = getElem(element, SHUFFLE).checked ? null : my_jump;
       return gadget.getVideoId(jump)
         .push(function (my_id) {
-          if (my_id === null) {
-            return gadget.resetFrube();
-          }
           return gadget.stateChange({"play": my_id});
         })
         .push(function () {
@@ -1098,16 +1064,15 @@
       var dict = gadget.property_dict;
       if (!my_token) {
         setButtonIcon(dict.sync_button, "sync_disabled");
-        gadget.state.dropbox_connected = null;
-        return gadget.frube_create(getFrubeConfig());
+        return gadget.frube_create(getFrubeConfig())
+          .push(function () {
+            return gadget.refreshPlaylist(true);
+          });
       }
       gadget.state.dropbox_connected = true;
-      return new RSVP.Queue()
+      return gadget.setSetting("token", my_token)
         .push(function () {
-          return RSVP.all([
-            gadget.frube_create(getFrubeConfig(my_token)),
-            gadget.setSetting("token", my_token)
-          ]);
+          return gadget.frube_create(getFrubeConfig(my_token));
         })
         .push(undefined, function (connection_error) {
           return gadget.handleError(connection_error, {
@@ -1117,10 +1082,10 @@
         .push(function () {
           setButtonIcon(dict.sync_button, "sync");
           dict.sync_button.removeAttribute(DISABLED);
-          return RSVP.all([
-            gadget.syncPlaylist(),
-            gadget.stateChange({"mode": WATCHING})
-          ]);
+          return gadget.refreshPlaylist(true);
+        })
+        .push(function () {
+          return gadget.syncPlaylist();
         });
     })
 
@@ -1150,9 +1115,6 @@
         response += getTemplate(KLASS, "load_template".supplant());
         setDom(dict.search_results, response, true);
       }
-      if (state.play !== null) {
-        setVideoControls(dict, this.state.play);
-      }
     })
 
     .declareMethod("enterSearch", function () {
@@ -1167,7 +1129,7 @@
       }
     })
 
-    .declareMethod("triggerSearchFromScroll", function () {
+    .declareMethod("triggerSearchFromScroll", function (my_event) {
       var gadget = this;
       var state = gadget.state;
       var main = event.target;
@@ -1186,6 +1148,7 @@
           }
         }
       }
+      my_event.preventDefault();
     })
 
     .declareMethod("runSearch", function (my_next_page, my_skip) {
@@ -1246,12 +1209,15 @@
     // ------------------------ Statechange ------------------------------------
     .declareMethod("stateChange", function (delta) {
       var gadget = this;
+      var element = gadget.element;
       var dict = gadget.property_dict;
       var state = gadget.state;
       var video_hash;
       var promise_list = [];
+      var sync_icon;
+
       if (delta.hasOwnProperty("blur")) {
-        return window.document.activeElement.blur();
+        return DOCUMENT.activeElement.blur();
       }
       if (delta.hasOwnProperty("loader")) {
         setLoader(dict.action_button, delta.hasOwnProperty("mode"));
@@ -1264,17 +1230,13 @@
         promise_list.push(gadget.setActivePlaylist(state.active_list));
       }
       if (delta.hasOwnProperty("play")) {
-        state.play = delta.play;
-        video_hash = getVideoHash();
-        if (delta.play === video_hash) {
-          promise_list.push(gadget.loadVideo(video_hash));
-        }
-        if (delta.play === null) {
-          dict.video_controller.classList.add(HIDDEN);
-        } else {
-          window.location.hash = delta.play;
+        state.play = window.location.hash = delta.play || STR;
+        if (state.play && state.play === getVideoHash()) {
           swapVideo(dict, state.mode);
           dict.video_controller.classList.remove(HIDDEN);
+          promise_list.push(gadget.loadVideo(state.play));
+        } else {
+          promise_list.push(gadget.resetFrube());
         }
       }
       if (delta.hasOwnProperty("mode")) {
@@ -1304,6 +1266,26 @@
             .push(function () {
               return gadget.refreshPlaylist();
             }));
+        }
+      }
+      if (delta.hasOwnProperty("online")) {
+        state.online = delta.online;
+        sync_icon = getElem(dict.sync_button, ICON);
+        if (state.online) {
+          sync_icon.textContent = sync_icon.getAttribute("data-state") || sync_icon.textContent;
+          dict.search_input.removeAttribute(DISABLED);
+          getElem(element, ".frube-upload-icon").textContent = "file_upload";
+          getElem(element, ".frube-upload-button").classList.remove(OPAQUE);
+          getElem(element, ".frube-search-drawer").classList.remove(OPAQUE);
+          getElem(element, ".frube-dropbox-connect").removeAttribute(DISABLED);  
+        } else {
+          sync_icon.setAttribute("data-state", sync_icon.textContent);
+          sync_icon.textContent = "warning";
+          dict.search_input.setAttribute(DISABLED, DISABLED);
+          getElem(element, ".frube-upload-icon").textContent = "warning";
+          getElem(element, ".frube-upload-button").classList.add(OPAQUE);
+          getElem(element, ".frube-search-drawer").classList.add(OPAQUE);
+          getElem(element, ".frube-dropbox-connect").setAttribute(DISABLED, DISABLED);
         }
       }
       if (delta.hasOwnProperty("quality")) {
@@ -1376,24 +1358,23 @@
             };
           }).filter(Boolean);
           return RSVP.all([
-            gadget.refreshSearchResults(),
             gadget.stateChange({"mode": SEARCHING})
           ]);
         });
     })
 
     .declareMethod("downloadPlaylist", function (my_id, my_queue_list) {
-      var link = window.document.createElement('a');
+      var link = DOCUMENT.createElement('a');
       link.href = window.URL.createObjectURL(
         new Blob([my_queue_list.join("\n")], {type: 'text/plain'})
       );
       link.download = my_id + ".txt";
-      window.document.body.appendChild(link);
+      DOCUMENT.body.appendChild(link);
       link.click();
-      window.document.body.removeChild(link);
+      DOCUMENT.body.removeChild(link);
     })
 
-    .declareMethod("refreshPlaylist", function (my_flag) {
+    .declareMethod("refreshPlaylist", function (my_init) {
       var gadget = this;
       var state = gadget.state;
       return new RSVP.Queue()
@@ -1439,7 +1420,7 @@
               "overlay": state.play === doc.id ? (OVERLAY + SPC + PLAYING) : STR
             });
           });
-          if (state.play !== null) {
+          if (state.play && state.online) {
             setVideoControls(dict, state.play);
           }
           if (len === 0 && !setVideoHash(dict.queue_list)) {
@@ -1459,7 +1440,7 @@
           if (playlist.id && playlist.root) {
             queue.push(gadget.stateChange({"root_list": playlist.id}));
           }
-          if (my_flag === "init") {
+          if (my_init) {
             queue.push(gadget.stateChange({"active_list": playlist.id || root}));
           }
           if (playlist.id === undefined) {
@@ -1558,7 +1539,7 @@
       return gadget.frube_get(current_id)
         .push(function (my_playlist) {
           var promise_list = [gadget.frube_remove(current_id)];
-          window.document.activeElement.blur();
+          DOCUMENT.activeElement.blur();
           my_playlist.id = codify(new_id, 0);
           promise_list.push(gadget.frube_put(codify(new_id, 0), my_playlist));
           if (my_playlist.root) {
@@ -1582,27 +1563,32 @@
       var upload = getElem(element, ".frube-playlist-upload");
       var list = [];
       var id = my_id || input.value;
+
       if (id === undefined || id === STR) {
         return;
       }
-      if (upload && upload.value) {
-        list = JSON.parse(upload.value).filter(Boolean);
-        upload.value = STR;
-      }
+
       return new RSVP.Queue()
         .push(function () {
-          return RSVP.all(list.map(function (id) {
-            return gadget.frube_get(id)
-              .push(undefined, function(error) {
-                if (error.status_code === 404) {
-                  return gadget.tube_get(id)
-                    .push(function (meta) {
-                      return gadget.frube_put(id, setVideoDict(id, meta.items[0]));
-                    });
-                }
-                throw error;
-              });
-          }));
+          if (upload && upload.value && gadget.state.online) {
+            list = JSON.parse(upload.value).filter(Boolean);
+            upload.value = STR;
+
+            // loop over uploaded playlist and add missing songs
+            return RSVP.all(list.map(function (id) {
+              return gadget.frube_get(id)
+                .push(undefined, function(error) {
+                  if (error.status_code === 404) {
+                    return gadget.tube_get(id)
+                      .push(function (meta) {
+                        return gadget.frube_put(id, setVideoDict(id, meta.items[0]));
+                      });
+                  }
+                  throw error;
+                });
+              }));
+          }
+          return;
         })
         .push(function () {
           return gadget.frube_put(codify(id, 0), {
@@ -1633,7 +1619,7 @@
       var input = getElem(expander, "input");
 
       // key submit, field still active, save anyway
-      if (window.document.activeElement.classList.contains("frube-playlist-name")) {
+      if (DOCUMENT.activeElement.classList.contains("frube-playlist-name")) {
         return gadget.savePlaylist(my_event);
       }
 
@@ -1692,16 +1678,16 @@
       var gadget = this;
       var dict = gadget.property_dict;
 
-      return gadget.stateChange({"loader": true})
+      return new RSVP.Queue()
         .push(function () {
           return RSVP.delay(TEN_MINUTES/40);
         })
         .push(function () {
           var status;
-          if (window.navigator.onLine) {
+          if (gadget.state.online) {
             status = getElem(dict.search_results, "div");
             status.className = status.className.replace(OFFLINE, SEARCHING);
-            return gadget.stateChange({"loader": null, "play": my_video_id, "mode": WATCHING});
+            return gadget.stateChange({"play": my_video_id});
           }
           return gadget.waitForNetwork(my_video_id);
         });
@@ -1731,15 +1717,18 @@
         })
         .push(function () {
           sync_button.classList.remove(SPIN);
-          return gadget.refreshPlaylist("sync");
+          return gadget.refreshPlaylist();
         })
-        .push(undefined, function (my_error) {
+        .push(undefined, function (error) {
           sync_button.classList.remove(SPIN);
           setButtonIcon(sync_button, "sync_disabled");
-          if (!window.navigator.onLine) {
+          //if (error.status_code === 409) {
+          //  conflict_data = CONFLICT_PARSER.exec(my_error.message);
+          //}
+          if (!gadget.state.online) {
             return;
           }
-          throw my_error;
+          throw error;
         });
     })
 
@@ -1751,17 +1740,21 @@
       var listener = window.loopEventListener;
 
       function handleHash() {
-        return gadget.loadVideo(getVideoHash());
+        return gadget.stateChange({"play": getVideoHash()});
+      }
+      function handleConnection() {
+        return gadget.stateChange({"online": window.navigator.onLine});
       }
       function handleScroll(event) {
         if (!gadget.state.is_searching) {
           return gadget.triggerSearchFromScroll(event);
         }
       }
-
       return RSVP.all([
         gadget.setting_create({"type": "local", "sessiononly": false}),
         listener(window, "hashchange", false, handleHash),
+        listener(window, "online", false, handleConnection),
+        listener(window, "offline", false, handleConnection),
         listener(gadget.property_dict.main, "scroll", false, handleScroll)
       ]);
     })

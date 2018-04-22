@@ -8064,18 +8064,24 @@ return new Parser;
         var reader = new FileReaderSync(), hasher = new Rusha(4 * 1024 * 1024);
         self.onmessage = function onMessage(event) {
             var hash, data = event.data.data;
-            try {
-                hash = hasher.digest(data);
-                self.postMessage({
-                    id: event.data.id,
-                    hash: hash
-                });
-            } catch (e) {
-                self.postMessage({
-                    id: event.data.id,
-                    error: e.name
-                });
+            /* CUSTOM: this is too catch all vs blabla jobid... */
+            if (event.data.id) {
+            /* CUSTOM END */
+              try {
+                  hash = hasher.digest(data);
+                  self.postMessage({
+                      id: event.data.id,
+                      hash: hash
+                  });
+              } catch (e) {
+                  self.postMessage({
+                      id: event.data.id,
+                      error: e.name
+                  });
+              }
+            /* CUSTOM */
             }
+            /* CUSTOM END */
         };
     }
     var util = {

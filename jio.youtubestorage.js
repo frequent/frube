@@ -99,7 +99,7 @@
       .push(function (data) {
         var obj = JSON.parse(data.target.response || data.target.responseText),
           i;
-        for (i = 0; i < obj.items.length; i += 1) {
+        for (obj.items = obj.items || [], i = 0; i < obj.items.length; i += 1) {
           obj.items[i].value = {};
         }
         obj.items.nextPageToken = obj.nextPageToken;
