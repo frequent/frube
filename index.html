@@ -18,16 +18,97 @@
     <meta name="twitter:url" content="https://www.frube.eu/">
     <meta name="twitter:creator" content="@svenfranck">
 
-    <link rel="icon" href="favicon.png">
-
     <title>Frube</title>
 
+    <link rel="icon" href="favicon.png">
+    <link rel="manifest" href="manifest.json" /> 
+    <!--
+    <link rel="apple-touch-startup-image" href="app/splash-640x1136.png" media="(device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
+    <link rel="apple-touch-startup-image" href="app/splash-750x1294.png" media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
+    <link rel="apple-touch-startup-image" href="app/splash-1242x2148.png" media="(device-width: 414px) and (device-height: 736px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
+    <link rel="apple-touch-startup-image" href="app/splash-1125x2436.png" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
+    <link rel="apple-touch-startup-image" href="app/splash-1536x2048.png" media="(min-device-width: 768px) and (max-device-width: 1024px) and (-webkit-min-device-pixel-ratio: 2) and (orientation: portrait)">
+    <link rel="apple-touch-startup-image" href="app/splash-1668x2224.png" media="(min-device-width: 834px) and (max-device-width: 834px) and (-webkit-min-device-pixel-ratio: 2) and (orientation: portrait)">
+    <link rel="apple-touch-startup-image" href="app/splash-2048x2732.png" media="(min-device-width: 1024px) and (max-device-width: 1024px) and (-webkit-min-device-pixel-ratio: 2) and (orientation: portrait)">
+    -->
+
+    <style type="text/css">
+    .frube-splash:before {
+      width: 100%;
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      display: block;
+      height: 100%;
+      overflow: hidden;
+      z-index: 999999;
+      background-color: #f44336;
+      content: "Frube Youtube Player";
+      color: #fff;
+      font-family: sans-serif;
+      font-size: 1.5em;
+      line-height: 150vh;
+      vertical-align: bottom;
+      text-align: center;
+      font-weight: bold;
+    }
+    </style>
+    <script type="text/javascript">
+      
+      // DIY splashscreen, thx: https://github.com/frequent/splashview
+      var style_element = document.createElement('style');
+      var str = " no-repeat center center fixed;" +
+                " -webkit-background-size: 100%;" +
+                "    -moz-background-size: 100%;" +
+                "      -o-background-size: 100%;" +
+                "         background-size: 100%;" +
+                " -webkit-background-size: cover;" +
+                "    -moz-background-size: cover;" +
+                "      -o-background-size: cover;" +
+                "         background-size: cover;";
+      var w = screen.width;
+      var h = screen.height;
+      var o = window.orientation  ;
+      var r = window.devicePixelRatio;
+      var screen_size = Math.max(w, h);
+      var style_sheet;
+      var url;
+      var dir;
+      
+      document.head.appendChild(style_element);
+      style_sheet = style_element.sheet;
+      
+      // orientation
+      if (window.navigator.platform ==="iPad") {
+        dir = (o === 0 || o === 180)  ? "portrait" : "landscape";
+      } else {
+        dir = (w < h || (o == 0 || o == 180)) ? "portrait" : "landscape";
+      }
+      
+      // size
+      if (screen_size <= 640) {
+        url = "app/" + (1 * r) + "_splash_" + dir + ".png";
+      } else if (screen_size > 640 && screen_size < 1024) {
+        url = "app/" + (2 * r) + "_splash_" + dir + ".png";
+      } else if (screen_size >= 1024) {
+        url = "app/" + (3 * r) + "_splash_" + dir + ".png";
+      }
+      
+      if ('addRule' in style_sheet) { 
+        style_sheet.addRule(".frube-splash:before", "background: url('" + url + "')" + str, 0); 
+      } else if ('insertRule' in sheet) { 
+        style_sheet.insertRule(".frube-splash:before { background: url('" + x + "')" + str + " }", 0); 
+      }
+
+    </script>
     <script type="text/javascript" src="rsvp.latest.js"></script>
     <script type="text/javascript" src="renderjs.latest.js"></script>
     <script type="text/javascript" src="index.js"></script>
 
   </head>
-  <body>
+  <body class="frube-splash">
     <div data-gadget-url="gadget_frube.html"
       data-gadget-scope="frube"
       data-gadget-sandbox="public">

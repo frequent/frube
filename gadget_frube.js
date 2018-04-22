@@ -112,9 +112,6 @@
   }
 
   function getLocalConfig(my_fallback) {
-    /*
-      return {"type": "indexeddb", "database": "frube"};
-    */
     if (my_fallback) {
       return {"type": "indexeddb", "database": "frube"};
     }
@@ -621,8 +618,9 @@
           ]);
         })
         .push(function () {
+          DOCUMENT.body.classList.remove("frube-splash");
           getElem(gadget.element, ".frube-wip").classList.remove("frube-wip");
-          return gadget.stateChange({play: setVideoHash(dict.queue_list)});
+          return gadget.stateChange({play: setVideoHash(dict.queue_list), loader: null});
         });
     })
 
@@ -1064,7 +1062,7 @@
       var dict = gadget.property_dict;
       if (!my_token) {
         setButtonIcon(dict.sync_button, "sync_disabled");
-        return gadget.frube_create(getFrubeConfig())
+        return gadget.frube_create(getFrubeConfig(null, !('serviceWorker' in navigator)))
           .push(function () {
             return gadget.refreshPlaylist(true);
           });
@@ -1878,3 +1876,4 @@
 
 }(window, rJS, RSVP, YT, JSON, Blob, URL, Math, SimpleQuery, Query,
   ComplexQuery));
+

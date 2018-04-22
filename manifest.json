@@ -1,0 +1,24 @@
+{
+  "manifest_version": 1,
+  "version": "1.0.0",
+  "name": "Frube Youtube Player",
+  "short_name": "Frube",
+  "description": "Frube YouTube Player. Keep your playlist private.",
+  "default_locale": "en",
+  "icons": [
+        {
+            "src": "app/frube_192x192.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "app/frube_256x256.png",
+            "sizes": "256x256",
+            "type": "image/png"
+        }
+    ],
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FFFFFF",
+  "theme_color": "#F44336"
+}
