@@ -604,6 +604,12 @@ font-family: 'Material Icons';
     width: calc(33% - 16px);
   }
 }
+/* stack menu above background on small layouts */
+@media (max-width: 479px) {
+  .frube-playlist-menu {
+    z-index: 20;
+  }  
+}
 .frube-playlist-info {
   font-size: 12px;
   padding-right: 6px;
@@ -969,4 +975,3 @@ dialog.fixed {
   border-color: #fff;
   border-color: rgba(255, 255, 255, 0.7);
 }
-
