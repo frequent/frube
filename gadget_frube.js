@@ -695,7 +695,6 @@
           select_list.push(gadget.frube_get(id));
         }
       }
-
       return new RSVP.Queue()
         .push(function () {
           return RSVP.all(select_list);
@@ -705,12 +704,11 @@
           my_result_list.reduce(function (total, item) {
             var score = getScore(item.upvote_list, item.downvote_list, gadget.state.zero_stamp);
             if (score > total) {
-              high_score_id = id;
+              high_score_id = item.id;
               return score;
             }
             return total;
           }, 0);
-
           return high_score_id || my_result_list[getRandomDigit(pick)].id;
         });
     })
@@ -1882,4 +1880,3 @@
 
 }(window, rJS, RSVP, YT, JSON, Blob, URL, Math, SimpleQuery, Query,
   ComplexQuery));
-
