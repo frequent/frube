@@ -97,7 +97,7 @@
   }
 
   function getVideo(my_element, my_video_id) {
-    return getElem(my_element, "div[data-video='" + my_video_id + "']");
+    return getElem(my_element, getVid(my_video_id, "div"));
   }
 
   function setButtonIcon(my_button, my_icon) {
@@ -241,6 +241,10 @@
     if (my_score) {
       my_element.MaterialProgress.setProgress(my_score * 10);
     }
+  }
+
+  function getVid(my_id, my_prefix) {
+    return my_prefix + "[data-video='" + my_id + "']";
   }
 
   function getStyle(my_element, my_style) {
@@ -917,16 +921,20 @@
 
     .declareMethod("setVideoInfo", function (my_id, my_dialog) {
       var gadget = this;
+      var element = gadget.element;
       return gadget.frube_get(my_id)
         .push(function (video) {
           video.custom_title = getElem(my_dialog, ".frube-edit-title").value;
           video.custom_album = getElem(my_dialog, ".frube-edit-album").value;
           video.custom_artist = getElem(my_dialog, ".frube-edit-artist").value;
           video.custom_cover = getElem(my_dialog, ".frube-edit-cover").value;
+          ARR.forEach.call(element.querySelectorAll(getVid(my_id, "h3")), function (h3) {
+            h3.textContent = setTitle(video);
+          });
+          getElem(element, getVid(my_id, "img")).src = video.custom_cover || video.original_cover;
           return RSVP.all([
             gadget.frube_put(my_id, video),
-            gadget.stateChange({"blur": true}),
-            gadget.refreshPlaylist()
+            gadget.stateChange({"blur": true})
           ]);
         });
     })
@@ -1874,3 +1882,4 @@
 
 }(window, rJS, RSVP, YT, JSON, Blob, URL, Math, SimpleQuery, Query,
   ComplexQuery));
+
