@@ -458,7 +458,6 @@ font-family: 'Material Icons';
 }
 .frube-video-searching:before {
   content: "youtube_searched_for";
-  cursor: pointer;
 }
 .frube-video-searching:after {
   content: "Search Youtube to add videos";
@@ -596,6 +595,22 @@ font-family: 'Material Icons';
 .frube-track-score {
   padding: 0;
   min-width: 16px;
+}
+/* override button styles when containing <figure> and <h3> */
+.frube-track-play-button,
+.frube-search-focus-button {
+  padding: 0;
+  border: 0 none;
+  width: 100%;
+  background: transparent;
+  text-align: left;
+}
+.frube-track-play-button:focus,
+.frube-search-focus-button:focus {
+  outline:0;
+}
+.frube-search-focus-button {
+  cursor: pointer;
 }
 
 /* force 3 columns on smaller layouts */
@@ -737,6 +752,12 @@ font-family: 'Material Icons';
 .frube-edit-custom-cover-container .mdl-textfield .frube-validation-label {
   line-height: 15em;
   top: 0;
+}
+.frube-upload-delete {
+  right: 0;
+}
+.frube-upload-delete:not(.frube-hidden) + .frube-upload-file {
+  display: none;
 }
 .frube-edit-custom-cover-container img {
   width: auto;
@@ -975,3 +996,4 @@ dialog.fixed {
   border-color: #fff;
   border-color: rgba(255, 255, 255, 0.7);
 }
+

@@ -243,6 +243,13 @@
     }
   }
 
+  function getStyle(my_element, my_style) {
+    if (my_element.currentStyle) {
+      return my_element.currentSytle[my_style];
+    }
+    return getComputedStyle(my_element, null)[my_style];
+  }
+
   function setVideoSlider(my_element, my_stats) {
     my_element.setAttribute("max", parseDuration(my_stats.duration));
     my_element.value = 0;
@@ -350,11 +357,16 @@
     return new SimpleQuery({"key": my_key, "value": my_val, "type": "simple"});
   }
 
-  function updateFileInput(my_target) {
+  function updateFileInput(my_event) {
     var queue = new RSVP.Queue();
-    var form = my_target.parentElement.parentElement;
-    var file = my_target.files[0];
-    var is_text = file.type === 'text/plain';
+    var target = my_event.target;
+    var form = target.parentElement.parentElement;
+    var file = target.files[0];
+    var is_text;
+    if (!file) {
+      return;
+    }
+    is_text = file.type === 'text/plain';
     getElem(form, ".frube-validation-label").classList.add(HIDDEN);
     if (form.getAttribute(NAME) === "frube-playlist-create") {
       if (!is_text) {
@@ -379,23 +391,6 @@
       });
     }
     return queue;
-  }
-
-  function setFileInput(my_event) {
-    var bad_indicator = my_event.target.previousElementSibling;
-    var parent = my_event.target.parentElement.parentElement;
-    if (bad_indicator.textContent === "delete") {
-      getElem(parent, ".frube-upload-file").value = STR;
-      try {
-        bad_indicator.textContent = "attach_file";
-        getElem(parent, ".frube-edit-cover-image").src = PLACEHOLDER;
-      } catch (e) {
-        bad_indicator.textContent = "file_upload";
-      } finally {
-        my_event.preventDefault();
-        return false;
-      }
-    }
   }
 
   function setVideoControls(my_dict, my_video_id) {
@@ -629,6 +624,7 @@
       var action = my_action || my_event.target.getAttribute(ACTION);
       var dialog = getElem(gadget.element, (DIALOG + action));
       var active_element = DOCUMENT.activeElement;
+      var clear;
       if (active_element && active_element.classList.contains("frube-dialog-close")) {
         dialog.close();
         return;
@@ -644,8 +640,17 @@
         return;
       }
       if (action === "edit") {
+        clear = getElem(my_event.target, ".frube-upload-delete")
+        if (getStyle(clear, "visibility") !== "hidden") {
+          clear.classList.add(HIDDEN);
+          getElem(my_event.target, ".frube-edit-cover").value = STR;
+          getElem(my_event.target, ".frube-edit-cover-image").src = PLACEHOLDER;
+          return;
+        }
         dialog.close();
-        return gadget.setVideoInfo(getAttr(event, ID), dialog);
+        return gadget.setVideoInfo(
+          getElem(dialog, ".frube-dialog-submit").getAttribute(ID), dialog
+        );
       }
     })
 
@@ -706,9 +711,10 @@
         });
     })
 
-    .declareMethod("resetFrube", function (my_video_id, my_offline) {
+    .declareMethod("resetFrube", function (my_offline) {
       var gadget = this;
       var dict = gadget.property_dict;
+      var temp = my_offline ? ["idle_template", OFFLINE] : ["status_template", SEARCHING];
       dict.search_input.value = STR;
       if (dict.player && dict.player.b) {
         dict.player.destroy();
@@ -718,9 +724,10 @@
       dict.player_controller.classList.add(HIDDEN);
       purgeDom(dict.video_info);
       swapVideo(dict, gadget.state.mode);
-      setDom(dict.search_results, getTemplate(KLASS, "status_template").supplant({
-        "status": my_offline ? OFFLINE : SEARCHING
+      setDom(dict.search_results, getTemplate(KLASS, temp[0]).supplant({
+        "status": temp[1]
       }), true);
+      return gadget.stateChange({"mode": SEARCHING});
     })
 
     .declareMethod("updateSlider", function () {
@@ -754,7 +761,7 @@
 
       if (!gadget.state.online) {
         return RSVP.all([
-          gadget.resetFrube(true, my_video_id),
+          gadget.resetFrube(true),
           gadget.waitForNetwork(my_video_id)
         ]);
       }
@@ -963,7 +970,7 @@
                 "video_artist": data.custom_artist,
                 "video_album": data.custom_album,
                 "video_cover": data.custom_cover || PLACEHOLDER,
-                "bad_indicator": data.custom_cover ? "delete" : "attach_file"
+                "video_delete": data.custom_cover ? STR : HIDDEN
               }), true);
             window.componentHandler.upgradeElements(dialog);
             return gadget.handleDialog(null, action);
@@ -1247,7 +1254,7 @@
           dict.player_container.classList.add(HIDDEN);
           dict.player_controller.classList.remove(HIDDEN);
           dict.search_results.classList.remove(HIDDEN);
-          dict.search_input.focus();
+          //dict.search_input.focus();
           promise_list.push(gadget.clearBuffer()
             .push(function () {
               return gadget.refreshSearchResults();
@@ -1272,7 +1279,7 @@
         if (state.online) {
           sync_icon.textContent = sync_icon.getAttribute("data-state") || sync_icon.textContent;
           dict.search_input.removeAttribute(DISABLED);
-          getElem(element, ".frube-upload-icon").textContent = "file_upload";
+          getElem(element, ".frube-upload-icon").textContent = "attach_file";
           getElem(element, ".frube-upload-button").classList.remove(OPAQUE);
           getElem(element, ".frube-search-drawer").classList.remove(OPAQUE);
           getElem(element, ".frube-dropbox-connect").removeAttribute(DISABLED);
@@ -1422,7 +1429,7 @@
             setVideoControls(dict, state.play);
           }
           if (len === 0 && !setVideoHash(dict.queue_list)) {
-            setDom(dict.playlist, getTemplate(KLASS, "status_template")
+            setDom(dict.playlist, getTemplate(KLASS, "idle_template")
               .supplant({"status": PLAYLIST}), true
             );
           } else {
@@ -1579,7 +1586,10 @@
                   if (error.status_code === 404) {
                     return gadget.tube_get(id)
                       .push(function (meta) {
-                        return gadget.frube_put(id, setVideoDict(id, meta.items[0]));
+                        if (meta.items.length > 0) { 
+                          return gadget.frube_put(id, setVideoDict(id, meta.items[0]));
+                        }
+                        return undefined;
                       });
                   }
                   throw error;
@@ -1588,10 +1598,10 @@
           }
           return;
         })
-        .push(function () {
+        .push(function (my_list) {
           return gadget.frube_put(codify(id, 0), {
             "portal_type": PLAYLIST,
-            "queue_list": my_root ? gadget.property_dict.queue_list : list,
+            "queue_list": my_root ? gadget.property_dict.queue_list : my_list.filter(Boolean),
             "root": my_root ? true : undefined,
             "id": codify(id, 0)
           });
@@ -1760,20 +1770,6 @@
     /////////////////////////////
     // on Event
     /////////////////////////////
-    .onEvent("click", function (event) {
-      var target = event.target;
-      var video_id = target.getAttribute(ID);
-      if (video_id) {
-        return this.stateChange({"play": video_id});
-      }
-      switch (target.getAttribute(NAME)) {
-        case "frube-video-searching":
-          return this.property_dict.search_input.focus();
-        case "frube-upload":
-          return setFileInput(event);
-      }
-    }, false, false)
-
     .onEvent("mouseDown", function (event) {
       if (event.target.id === IS_SLIDER) {
         this.state.slider_in_use = true;
@@ -1794,7 +1790,7 @@
         case "frube-track-seek":
           return this.property_dict.player.seekTo(target.value, true);
         case "frube-upload":
-          return updateFileInput(event.target);
+          return updateFileInput(event);
       }
     }, false, false)
 
@@ -1811,6 +1807,8 @@
 
     .onEvent("submit", function (event) {
       switch (event.target.getAttribute(NAME)) {
+        case "frube-search-focus":
+          return this.property_dict.search_input.focus();
         case "frube-view-switch":
           return this.stateChange({"mode": this.state.mode === SEARCHING ? WATCHING : SEARCHING});
         case "frube-connector-dropbox":
@@ -1876,4 +1874,3 @@
 
 }(window, rJS, RSVP, YT, JSON, Blob, URL, Math, SimpleQuery, Query,
   ComplexQuery));
-
