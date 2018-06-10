@@ -73,11 +73,19 @@
     <script id="queue_template" type="text/x-supplant">
       <div class="frube-video-card mdl-cell {overlay} mdl-cell--3-col mdl-cell--6-col-phone mdl-shadow--2dp" data-video="{video_id}">
         <div class="mdl-card">
-          <figure class="mdl-card__media material-icons">
-            <img class="frube-lazy" src="{fallback_url}" data-src="{thumbnail_url}" data-video="{video_id}" alt="" />
-          </figure>
+          <form name="frube-track-play">
+            <button type="submit" data-video="{video_id}" class="frube-track-play-button">
+              <figure class="mdl-card__media material-icons">
+                <img class="frube-lazy" src="{fallback_url}" data-src="{thumbnail_url}" data-video="{video_id}" alt="" />
+              </figure>
+            </button>
+          </form>
           <div class="mdl-card__title">
-            <h3 class="mdl-card__title-text" data-video="{video_id}">{title}</h3>
+            <form name="frube-track-play">
+              <button type="submit" data-video="{video_id}" class="frube-track-play-button">
+                <h3 class="mdl-card__title-text" data-video="{video_id}">{title}</h3>
+              </button>
+            </form>
           </div>
           <div class="mdl-card__actions mdl-card--border frube-overlay-actions">
             <form name="frube-track-edit" data-action="edit">
@@ -116,11 +124,19 @@
     <script id="search_template" type="text/x-supplant">
       <div class="frube-search-card mdl-cell {overlay} {playing} mdl-cell--3-col mdl-cell--6-col-phone mdl-shadow--2dp" data-video="{video_id}">
         <div class="mdl-card">
-          <figure class="mdl-card__media material-icons">
-            <img src="{thumbnail_url}" data-video="{video_id}" alt="" />
-          </figure>
+          <form name="frube-track-play">
+            <button type="submit" data-video="{video_id}" class="frube-track-play-button">
+              <figure class="mdl-card__media material-icons">
+                <img src="{thumbnail_url}" alt="" />
+              </figure>
+            </button>
+          </form>
           <div class="mdl-card__title">
-            <h3 class="mdl-card__title-text" data-video="{video_id}">{title}</h3>
+            <form name="frube-track-play">
+              <button type="submit" data-video="{video_id}" class="frube-track-play-button">
+                <h3 class="mdl-card__title-text" >{title}</h3>
+              </button>
+            </form>
           </div>
           <div class="mdl-card__supporting-text frube-hidden"></div>
           <div class="mdl-card__actions mdl-card--border frube-overlay-actions">
@@ -162,16 +178,29 @@
           <img src="{video_cover}" alt="{video_artist} - {video_title} | {video_cover}" class="frube-edit-cover-image" />
           <label class="mdl-textfield__label is-focused frube-hidden frube-validation-label" for="frube-edit-cover">Invalid image format</label>
           <input class="mdl-textfield__input frube-edit-cover" id="frube-edit-cover" name="frube-edit-cover" placeholder="Custom Thumbnail" type="text" readonly/>
+          <button type="submit" class="mdl-button mdl-js-button mdl-button--icon frube-upload-delete {video_delete}">
+            <i class="material-icons frube-icon">delete</i>
+          </button>
           <div class="mdl-button mdl-button--icon mdl-button--file frube-upload-file">
-            <i class="frube-icons material-icons">{bad_indicator}</i><input type="file" class="frube-upload" name="frube-upload">
+            <input type="file" class="frube-upload" name="frube-upload">
+            <i class="frube-icons material-icons frube-upload-attach">attach_file</i>
           </div>
         </div>
       </div>
     </script>
 
-    <!-- video overlay -->
-    <script id="status_template" type="text/x-supplant">
+    <!-- offline/playlist template -->
+    <script id="idle_template" type="text/x-supplant">
       <div class="frube-overlay frube-video-{status}" name="frube-video-{status}"></div>
+    </script>
+
+    <!-- search template -->
+    <script id="status_template" type="text/x-supplant">
+      <form name="frube-search-focus">
+        <button type="submit" class="frube-search-focus-button">
+          <div class="frube-overlay frube-video-{status}" name="frube-video-{status}"></div>
+        </button>
+      </form>
     </script>
 
     <!-- loading spinner -->
@@ -254,12 +283,13 @@
         </form>
         <form name="frube-playlist-create" class="frube-playlist-create frube-hidden">
           <button type="submit" class="mdl-button mdl-button--icon mdl-js-button frube-submit-button">
-            <i class="material-icons frube-icon">add_box</i>
+            <i class="material-icons frube-icon">save</i>
           </button>
           <label class="mdl-textfield__label is-focused frube-hidden frube-validation-label" for="frube-playlist-upload">Invalid file format</label>
           <input class="mdl-textfield__input frube-playlist-upload frube-upload-file" id="frube-playlist-upload" name="frube-file-upload" placeholder="Upload file" type="text" readonly/>
           <div class="mdl-button mdl-button--icon mdl-button--file frube-upload-button">
-            <i class="frube-icons material-icons frube-upload-icon">file_upload</i><input type="file" class="frube-upload" name="frube-upload">
+            <i class="frube-icons material-icons frube-upload-icon">attach_file</i>
+            <input type="file" class="frube-upload" name="frube-upload">
           </div>
         </form>
         <div class="frube-playlist-container"></div>
@@ -419,7 +449,11 @@
         
         <!-- search grid -->
         <div class="mdl-grid frube-hidden frube-search-results">
-          <div class="frube-overlay frube-video-searching" name="frube-video-searching"></div>
+          <form name="frube-search-focus">
+            <button type="submit" class="frube-search-focus-button">
+              <div class="frube-overlay frube-video-searching" name="frube-video-searching"></div>
+            </button>
+          </form>
         </div>
         
         <!-- queue grid -->
